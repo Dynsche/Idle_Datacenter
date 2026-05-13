@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Datacenter Idle</title>
   <style>
     * {
@@ -53,6 +53,44 @@
       font-size: 26px;
     }
 
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #243447;
+    }
+
+    .tab {
+      background: transparent;
+      border: none;
+      color: #8896a8;
+      padding: 12px 24px;
+      cursor: pointer;
+      font-size: 16px;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      min-width: auto;
+    }
+
+    .tab:hover {
+      color: white;
+      transform: none;
+    }
+
+    .tab.active {
+      color: white;
+      border-bottom-color: #2f7cf6;
+      font-weight: bold;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     .building {
       background: #182433;
       border-radius: 14px;
@@ -97,9 +135,20 @@
     .upgrade {
       background: #243447;
       border-left: 5px solid #2f7cf6;
-      padding: 15px;
+      padding: 20px;
       border-radius: 12px;
       margin-bottom: 15px;
+      min-height: 120px;
+    }
+
+    .upgrade h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .upgrade > div {
+      margin-bottom: 8px;
+      line-height: 1.6;
     }
 
     .offline-box {
@@ -114,6 +163,97 @@
       margin-top: 30px;
       opacity: 0.7;
       font-size: 13px;
+    }
+
+    /* Mobile Optimierung */
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 28px;
+        text-align: center;
+      }
+
+      .topbar {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        padding: 12px;
+      }
+
+      .resource {
+        font-size: 24px;
+      }
+
+      .sub {
+        font-size: 12px;
+      }
+
+      .section-title {
+        font-size: 20px;
+        margin-top: 25px;
+        margin-bottom: 12px;
+      }
+
+      .building {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+        gap: 12px;
+      }
+
+      .building h3 {
+        font-size: 18px;
+      }
+
+      button {
+        width: 100%;
+        min-width: unset;
+        padding: 14px 18px;
+        font-size: 16px;
+        border-radius: 12px;
+        touch-action: manipulation;
+      }
+
+      .buy-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        width: 100%;
+      }
+
+      .buy-buttons button {
+        min-width: unset;
+        padding: 12px 8px;
+        font-size: 14px;
+      }
+
+      .upgrade {
+        padding: 12px;
+      }
+
+      .offline-box {
+        padding: 12px;
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .topbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .resource {
+        font-size: 20px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
     }
 
     .buy-controls {
@@ -168,7 +308,7 @@
 
     <div class="card">
       <div class="sub">Offline Limit</div>
-      <div class="resource"><span id="offlineHours">2h 0m</span></div>
+      <div class="resource"><span id="offlineHours">0h 25m</span></div>
     </div>
 
     <div class="card">
@@ -190,44 +330,76 @@
 
   <div class="section-title">Mitarbeiter & Infrastruktur</div>
 
-  <div style="margin-bottom: 15px;">
-    <div class="sub" style="margin-bottom: 8px;">Kaufmenge:</div>
-    <div class="buy-buttons">
-      <button onclick="setBuyAmount(1)" id="buy1" class="active">x1</button>
-      <button onclick="setBuyAmount(10)" id="buy10">x10</button>
-      <button onclick="setBuyAmount(100)" id="buy100">x100</button>
-      <button onclick="setBuyAmount(-1)" id="buyMax">Max</button>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('buildings')">Gebäude</button>
+    <button class="tab" onclick="switchTab('upgrades')" id="upgradesTab" style="display: none;">Gebäude-Upgrades</button>
+    <button class="tab" onclick="switchTab('research')">Forschung</button>
+    <button class="tab" onclick="switchTab('prestige')">Prestige</button>
+    <button class="tab" onclick="switchTab('stats')">Statistiken</button>
+  </div>
+
+  <div id="tab-buildings" class="tab-content active">
+    <div style="margin-bottom: 15px;">
+      <div class="sub" style="margin-bottom: 8px;">Kaufmenge:</div>
+      <div class="buy-buttons">
+        <button onclick="setBuyAmount(1)" id="buy1" class="active">x1</button>
+        <button onclick="setBuyAmount(10)" id="buy10">x10</button>
+        <button onclick="setBuyAmount(100)" id="buy100">x100</button>
+        <button onclick="setBuyAmount(-1)" id="buyMax">Max</button>
+      </div>
+    </div>
+
+    <div id="buildings"></div>
+  </div>
+
+  <div id="tab-upgrades" class="tab-content">
+    <div id="buildingUpgrades"></div>
+  </div>
+
+  <div id="tab-research" class="tab-content">
+    <div class="upgrade">
+      <h3>Offline Speichererweiterung</h3>
+      <div>Erhöht das Offline-Limit um 25 Minuten</div>
+      <div>Gekauft: <span id="offlineUpgradesCount">0</span>x</div>
+      <div>Kosten: <span id="offlineUpgradeCost">50 MB</span></div>
+      <br>
+      <button id="btnOfflineUpgrade" onclick="buyOfflineUpgrade()">Verbessern</button>
+    </div>
+
+    <div class="upgrade">
+      <h3>KI Optimierung</h3>
+      <div>Verdoppelt die gesamte Produktion - Einmalig</div>
+      <div>Kosten: <span id="aiUpgradeCost">500 MB</span> </div>
+      <br>
+      <button id="btnAIUpgrade" onclick="buyAIUpgrade()">Aktivieren</button>
     </div>
   </div>
 
-  <div id="buildings"></div>
-
-  <div class="section-title">Forschung</div>
-
-  <div class="upgrade">
-    <h3>Offline Speichererweiterung</h3>
-    <div>Erhöht das Offline-Limit um 25 Minuten</div>
-    <div>Kosten: <span id="offlineUpgradeCost">500000</span></div>
-    <br>
-    <button id="btnOfflineUpgrade" onclick="buyOfflineUpgrade()">Verbessern</button>
+  <div id="tab-prestige" class="tab-content">
+    <div class="upgrade">
+      <h3>Neues Datacenter eröffnen</h3>
+      <div>Setzt Fortschritt zurück, erhöht aber dauerhaft die Produktion</div>
+      <div>Benötigt: 1 GB</div>
+      <div class="sub" style="margin-top: 8px;">Aktueller Prestige Level: <span id="prestigeLevel">0</span></div>
+      <div class="sub">Bonus: +<span id="prestigeBonus">0</span>% Produktion</div>
+      <br>
+      <button id="btnPrestige" onclick="prestige()">Prestige</button>
+    </div>
   </div>
 
-  <div class="upgrade">
-    <h3>KI Optimierung</h3>
-    <div>Verdoppelt die gesamte Produktion</div>
-    <div>Kosten: <span id="aiUpgradeCost">5000000</span> </div>
-    <br>
-    <button id="btnAIUpgrade" onclick="buyAIUpgrade()">Aktivieren</button>
-  </div>
-
-  <div class="section-title">Prestige</div>
-
-  <div class="upgrade">
-    <h3>Neues Datacenter eröffnen</h3>
-    <div>Setzt Fortschritt zurück, erhöht aber dauerhaft die Produktion</div>
-    <div>Benötigt: 1 GB</div>
-    <br>
-    <button id="btnPrestige" onclick="prestige()">Prestige</button>
+  <div id="tab-stats" class="tab-content">
+    <div class="upgrade">
+      <h3>📊 Spielstatistiken</h3>
+      <div style="line-height: 1.8;">
+        <div><strong>Gesamt produzierte Daten:</strong> <span id="statTotalData">0 Bit</span></div>
+        <div><strong>Gesamte Klicks:</strong> <span id="statTotalClicks">0</span></div>
+        <div><strong>Gebäude gekauft:</strong> <span id="statBuildingsBought">0</span></div>
+        <div><strong>Upgrades gekauft:</strong> <span id="statUpgradesBought">0</span></div>
+        <div><strong>Prestige durchgeführt:</strong> <span id="statPrestigeCount">0</span></div>
+        <div><strong>Gesamte Spielzeit:</strong> <span id="statPlaytime">0h 0m</span></div>
+        <div><strong>Offline-Zeit genutzt:</strong> <span id="statOfflineTime">0h 0m</span></div>
+      </div>
+    </div>
   </div>
 
   <div class="footer-info">
@@ -237,6 +409,89 @@
   <script>
     const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
 
+    const BUILDING_UPGRADES = [
+      {
+        name: 'Schulungsprogramm',
+        description: '+50% IT-Mitarbeiter Produktion',
+        cost: 10000000,
+        unlockAt: 5000000,
+        targetBuilding: 'IT Mitarbeiter',
+        multiplier: 1.5
+      },
+      {
+        name: 'Ergonomische Arbeitsplätze',
+        description: '+50% Desktop PC Produktion',
+        cost: 50000000,
+        unlockAt: 25000000,
+        targetBuilding: 'Desktop PC',
+        multiplier: 1.5
+      },
+      {
+        name: 'Server-Optimierung',
+        description: '+75% Mini Server & Workstation',
+        cost: 250000000,
+        unlockAt: 125000000,
+        targetBuilding: ['Mini Server', 'Workstation'],
+        multiplier: 1.75
+      },
+      {
+        name: 'Cooling System Upgrade',
+        description: '+100% Server Rack & Blade Server',
+        cost: 2000000000,
+        unlockAt: 1000000000,
+        targetBuilding: ['Server Rack', 'Blade Server'],
+        multiplier: 2.0
+      },
+      {
+        name: 'Redundante Systeme',
+        description: '+150% Datacenter Halle',
+        cost: 10000000000,
+        unlockAt: 5000000000,
+        targetBuilding: 'Datacenter Halle',
+        multiplier: 2.5
+      },
+      {
+        name: 'Edge Computing Protocol',
+        description: '+100% Edge Computing Node & Micro Datacenter',
+        cost: 25000000000,
+        unlockAt: 10000000000,
+        targetBuilding: ['Edge Computing Node', 'Micro Datacenter'],
+        multiplier: 2.0
+      },
+      {
+        name: 'Global CDN Network',
+        description: '+200% CDN Server Farm',
+        cost: 500000000000,
+        unlockAt: 200000000000,
+        targetBuilding: 'CDN Server Farm',
+        multiplier: 3.0
+      },
+      {
+        name: 'Hyperscale Architecture',
+        description: '+250% Cloud Region & Hyperscale Campus',
+        cost: 10000000000000,
+        unlockAt: 4000000000000,
+        targetBuilding: ['Cloud Region', 'Hyperscale Campus'],
+        multiplier: 3.5
+      },
+      {
+        name: 'Ocean Cooling',
+        description: '+300% Submarine Datacenter',
+        cost: 250000000000000,
+        unlockAt: 100000000000000,
+        targetBuilding: 'Submarine Datacenter',
+        multiplier: 4.0
+      },
+      {
+        name: 'Quantum Entanglement',
+        description: '+500% Quantum Computing Cluster',
+        cost: 10000000000000000,
+        unlockAt: 5000000000000000,
+        targetBuilding: 'Quantum Computing Cluster',
+        multiplier: 6.0
+      }
+    ];
+
     const DEFAULT_BUILDINGS = [
       {
         name: 'IT Mitarbeiter',
@@ -245,34 +500,88 @@
         unlockAt: 0
       },
       {
+        name: 'Desktop PC',
+        baseCost: 256,
+        production: 3,
+        unlockAt: 128
+      },
+      {
         name: 'Mini Server',
-        baseCost: 1024,
-        production: 8,
-        unlockAt: 512
+        baseCost: 2048,
+        production: 12,
+        unlockAt: 1024
+      },
+      {
+        name: 'Workstation',
+        baseCost: 16384,
+        production: 48,
+        unlockAt: 8192
       },
       {
         name: 'Server Rack',
-        baseCost: 65536,
-        production: 128,
-        unlockAt: 32768
+        baseCost: 131072,
+        production: 192,
+        unlockAt: 65536
       },
       {
-        name: 'Blade Cluster',
+        name: 'Blade Server',
         baseCost: 1048576,
-        production: 4096,
+        production: 768,
         unlockAt: 524288
       },
       {
+        name: 'Micro Datacenter',
+        baseCost: 8388608,
+        production: 3072,
+        unlockAt: 4194304
+      },
+      {
+        name: 'Edge Computing Node',
+        baseCost: 67108864,
+        production: 12288,
+        unlockAt: 33554432
+      },
+      {
         name: 'Datacenter Halle',
-        baseCost: 268435456,
-        production: 131072,
-        unlockAt: 134217728
+        baseCost: 536870912,
+        production: 49152,
+        unlockAt: 268435456
+      },
+      {
+        name: 'CDN Server Farm',
+        baseCost: 4294967296,
+        production: 196608,
+        unlockAt: 2147483648
       },
       {
         name: 'Cloud Region',
-        baseCost: 1099511627776,
-        production: 8388608,
-        unlockAt: 549755813888
+        baseCost: 34359738368,
+        production: 786432,
+        unlockAt: 17179869184
+      },
+      {
+        name: 'Hyperscale Campus',
+        baseCost: 274877906944,
+        production: 3145728,
+        unlockAt: 137438953472
+      },
+      {
+        name: 'Submarine Datacenter',
+        baseCost: 2199023255552,
+        production: 12582912,
+        unlockAt: 1099511627776
+      },
+      {
+        name: 'Satellite Network',
+        baseCost: 17592186044416,
+        production: 50331648,
+        unlockAt: 8796093022208
+      },
+      {
+        name: 'Quantum Computing Cluster',
+        baseCost: 140737488355328,
+        production: 201326592,
+        unlockAt: 70368744177664
       }
     ];
 
@@ -289,13 +598,25 @@
       clickPower: 1,
       prestige: 0,
       productionMultiplier: 1,
-      offlineLimit: 7200,
+      offlineLimit: 1500,
       lastUpdate: Date.now(),
       aiUpgradeBought: false,
-      offlineUpgradeCost: 500000,
-      aiUpgradeCost: 5000000,
+      offlineUpgradeCost: 50000000,
+      aiUpgradeCost: 500000000,
       buildings: createBuildings(),
-      buyAmount: 1
+      buyAmount: 1,
+      offlineUpgradesBought: 0,
+      buildingUpgrades: [],
+      stats: {
+        totalData: 0,
+        totalClicks: 0,
+        buildingsBought: 0,
+        upgradesBought: 0,
+        prestigeCount: 0,
+        playTime: 0,
+        offlineTime: 0,
+        startTime: Date.now()
+      }
     };
 
     function formatData(bits) {
@@ -310,11 +631,36 @@
       return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${UNITS[unitIndex]}`;
     }
 
+    function getBuildingUpgradeMultiplier(buildingName) {
+      let multiplier = 1;
+      game.buildingUpgrades.forEach(upgradeIndex => {
+        const upgrade = BUILDING_UPGRADES[upgradeIndex];
+        const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding : [upgrade.targetBuilding];
+
+        if (targets.includes(buildingName)) {
+          multiplier *= upgrade.multiplier;
+        }
+      });
+      return multiplier;
+    }
+
     function productionPerSecond() {
       let total = 0;
 
       game.buildings.forEach(building => {
-        total += building.owned * building.production;
+        let buildingProduction = building.owned * building.production;
+
+        // Wende Gebäude-Upgrades an
+        game.buildingUpgrades.forEach(upgradeIndex => {
+          const upgrade = BUILDING_UPGRADES[upgradeIndex];
+          const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding : [upgrade.targetBuilding];
+
+          if (targets.includes(building.name)) {
+            buildingProduction *= upgrade.multiplier;
+          }
+        });
+
+        total += buildingProduction;
       });
 
       return total * game.productionMultiplier * (1 + game.prestige * 0.25);
@@ -329,10 +675,75 @@
       document.getElementById('offlineHours').innerText = `${hours}h ${minutes}m`;
 
       document.getElementById('prestige').innerText = game.prestige;
+      document.getElementById('prestigeLevel').innerText = game.prestige;
+      document.getElementById('prestigeBonus').innerText = (game.prestige * 25).toFixed(0);
       document.getElementById('offlineUpgradeCost').innerText = formatData(game.offlineUpgradeCost);
+      document.getElementById('offlineUpgradesCount').innerText = game.offlineUpgradesBought;
       document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
       updateBuyButtons();
       updateUpgradeButtons();
+      checkUpgradesTabUnlock();
+      updateStats();
+    }
+
+    function updateStats() {
+      if (!game.stats) return;
+
+      document.getElementById('statTotalData').innerText = formatData(game.stats.totalData);
+      document.getElementById('statTotalClicks').innerText = game.stats.totalClicks.toLocaleString();
+      document.getElementById('statBuildingsBought').innerText = game.stats.buildingsBought.toLocaleString();
+      document.getElementById('statUpgradesBought').innerText = game.stats.upgradesBought.toLocaleString();
+      document.getElementById('statPrestigeCount').innerText = game.stats.prestigeCount;
+
+      const totalPlayTime = game.stats.playTime + (Date.now() - game.stats.startTime);
+      const playHours = Math.floor(totalPlayTime / 3600000);
+      const playMinutes = Math.floor((totalPlayTime % 3600000) / 60000);
+      document.getElementById('statPlaytime').innerText = `${playHours}h ${playMinutes}m`;
+
+      const offlineHours = Math.floor(game.stats.offlineTime / 3600);
+      const offlineMinutes = Math.floor((game.stats.offlineTime % 3600) / 60);
+      document.getElementById('statOfflineTime').innerText = `${offlineHours}h ${offlineMinutes}m`;
+    }
+
+    function checkUpgradesTabUnlock() {
+      // Zeige Upgrades-Tab ab 5 MB ODER wenn bereits Upgrades gekauft wurden
+      const upgradesTab = document.getElementById('upgradesTab');
+      if (game.data >= 5000000 || game.buildingUpgrades.length > 0) {
+        upgradesTab.style.display = 'block';
+      }
+    }
+
+    function switchTab(tabName) {
+      // Verstecke alle Tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+
+      // Zeige gewählten Tab
+      document.getElementById('tab-' + tabName).classList.add('active');
+
+      // Aktiviere den geklickten Button
+      const tabButtons = {
+        'buildings': '.tab[onclick*="buildings"]',
+        'upgrades': '#upgradesTab',
+        'research': '.tab[onclick*="research"]',
+        'prestige': '.tab[onclick*="prestige"]',
+        'stats': '.tab[onclick*="stats"]'
+      };
+
+      if (tabButtons[tabName]) {
+        document.querySelector(tabButtons[tabName]).classList.add('active');
+      }
+
+      if (tabName === 'upgrades') {
+        renderBuildingUpgrades();
+      }
+      if (tabName === 'stats') {
+        updateStats();
+      }
     }
 
     function calculateBulkCost(building, amount) {
@@ -424,12 +835,27 @@
           ? `${building.owned} <span style="color: #4ade80;">+${amount}</span>` 
           : building.owned;
 
+        const upgradeMultiplier = getBuildingUpgradeMultiplier(building.name);
+        const totalProduction = building.owned * building.production * upgradeMultiplier;
+        const baseProduction = building.owned * building.production;
+
+        let productionDisplay = '';
+        if (building.owned > 0) {
+          if (upgradeMultiplier > 1) {
+            const bonusPercent = ((upgradeMultiplier - 1) * 100).toFixed(0);
+            productionDisplay = `<div class="sub" style="color: #60a5fa;">Produziert: ${formatData(totalProduction)}/s <span style="color: #4ade80;">(+${bonusPercent}% Upgrade)</span></div>`;
+          } else {
+            productionDisplay = `<div class="sub" style="color: #60a5fa;">Produziert: ${formatData(totalProduction)}/s</div>`;
+          }
+        }
+
         div.innerHTML = `
           <div>
             <h3>${building.name}</h3>
             <div>Besitzt: ${ownedDisplay}</div>
             <div>Kosten: ${formatData(cost)}</div>
-            <div class="sub">+${formatData(building.production)}/s</div>
+            <div class="sub">+${formatData(building.production)}/s pro Einheit</div>
+            ${productionDisplay}
           </div>
           <button onclick="buyBuilding(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
         `;
@@ -438,21 +864,83 @@
       });
     }
 
+    function renderBuildingUpgrades() {
+      const container = document.getElementById('buildingUpgrades');
+      container.innerHTML = '';
+
+      BUILDING_UPGRADES.forEach((upgrade, index) => {
+        const isUnlocked = game.data >= upgrade.unlockAt;
+        const isBought = game.buildingUpgrades.includes(index);
+
+        if (!isUnlocked && !isBought) return;
+
+        const div = document.createElement('div');
+        div.className = 'upgrade';
+
+        if (isBought) {
+          div.style.opacity = '0.6';
+          div.style.borderLeftColor = '#4ade80';
+        }
+
+        const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding.join(', ') : upgrade.targetBuilding;
+        const statusText = isBought ? '<div style="color: #4ade80; font-weight: bold;">✓ Gekauft</div>' : '';
+
+        div.innerHTML = `
+          <h3>${upgrade.name}</h3>
+          <div>${upgrade.description}</div>
+          <div class="sub">Betrifft: ${targets}</div>
+          ${statusText}
+          <div>Kosten: ${formatData(upgrade.cost)}</div>
+          <br>
+          <button onclick="buyBuildingUpgrade(${index})" ${isBought || game.data < upgrade.cost ? 'disabled' : ''}>
+            ${isBought ? 'Bereits gekauft' : 'Kaufen'}
+          </button>
+        `;
+
+        container.appendChild(div);
+      });
+
+      if (container.children.length === 0) {
+        container.innerHTML = '<div class="sub" style="text-align: center; padding: 40px;">Noch keine Upgrades verfügbar.<br>Sammle mehr Daten!</div>';
+      }
+    }
+
+    function buyBuildingUpgrade(index) {
+      const upgrade = BUILDING_UPGRADES[index];
+
+      if (game.buildingUpgrades.includes(index)) return;
+      if (game.data < upgrade.cost) return;
+
+      game.data -= upgrade.cost;
+      game.buildingUpgrades.push(index);
+      if (game.stats) game.stats.upgradesBought++;
+
+      updateUI();
+      renderBuildingUpgrades();
+    }
+
     function manualClick() {
       game.data += game.clickPower;
+      if (game.stats) {
+        game.stats.totalClicks++;
+        game.stats.totalData += game.clickPower;
+      }
       updateUI();
     }
 
     function buyBuilding(index) {
       const building = game.buildings[index];
       const amount = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
+
+      if (amount === 0) return;
+
       const cost = calculateBulkCost(building, amount);
 
-      if (amount > 0 && game.data >= cost) {
+      if (game.data >= cost) {
         game.data -= cost;
         building.owned += amount;
         building.cost = Math.floor(building.baseCost * Math.pow(1.15, building.owned));
-
+        if (game.stats) game.stats.buildingsBought += amount;
         updateUI();
         renderBuildings();
       }
@@ -476,7 +964,9 @@
       if (game.data >= game.offlineUpgradeCost) {
         game.data -= game.offlineUpgradeCost;
         game.offlineLimit += 1500;
+        game.offlineUpgradesBought++;
         game.offlineUpgradeCost = Math.floor(game.offlineUpgradeCost * 2.5);
+        if (game.stats) game.stats.upgradesBought++;
 
         updateUI();
       }
@@ -487,6 +977,7 @@
         game.data -= game.aiUpgradeCost;
         game.productionMultiplier *= 2;
         game.aiUpgradeBought = true;
+        if (game.stats) game.stats.upgradesBought++;
 
         updateUI();
       }
@@ -495,6 +986,7 @@
     function prestige() {
       if (game.data >= 1099511627776) {
         game.prestige++;
+        if (game.stats) game.stats.prestigeCount++;
 
         game.data = 0;
         game.productionMultiplier = 1;
@@ -514,7 +1006,10 @@
       const deltaTime = (now - lastTickTime) / 1000; // in Sekunden
       lastTickTime = now;
 
-      game.data += productionPerSecond() * deltaTime;
+      const produced = productionPerSecond() * deltaTime;
+      game.data += produced;
+      if (game.stats) game.stats.totalData += produced;
+
       updateUI();
 
       frameCounter++;
@@ -525,6 +1020,10 @@
 
     function saveGame() {
       game.lastUpdate = Date.now();
+      if (game.stats) {
+        game.stats.playTime += (Date.now() - game.stats.startTime);
+        game.stats.startTime = Date.now();
+      }
       localStorage.setItem('datacenterIdleSave', JSON.stringify(game));
     }
 
@@ -543,11 +1042,96 @@
         ...loadedGame
       };
 
-      game.buildings = loadedGame.buildings || createBuildings();
+      // Migration: Gebäude-System aktualisieren
+      const oldBuildingNames = ['IT Mitarbeiter', 'Mini Server', 'Server Rack', 'Blade Cluster', 'Datacenter Halle', 'Cloud Region'];
+      const isOldSave = loadedGame.buildings && loadedGame.buildings.length === 6;
 
-      // Migration: Alte 6h-Startwerte auf neue 2h-Basis umrechnen
-      if (game.offlineLimit === 21600) {
-        game.offlineLimit = 7200;
+      if (isOldSave) {
+        // Erstelle neue Gebäude-Liste
+        game.buildings = createBuildings();
+
+        // Übertrage alte Werte
+        loadedGame.buildings.forEach((oldBuilding) => {
+          const newIndex = game.buildings.findIndex(b => b.name === oldBuilding.name);
+          if (newIndex !== -1) {
+            game.buildings[newIndex].owned = oldBuilding.owned;
+            game.buildings[newIndex].cost = oldBuilding.cost;
+          }
+        });
+      } else {
+        game.buildings = loadedGame.buildings || createBuildings();
+      }
+
+      // Stelle sicher dass offlineUpgradesBought existiert (für alte Saves)
+      if (game.offlineUpgradesBought === undefined) {
+        game.offlineUpgradesBought = 0; // Für alte Saves ohne dieses Feld
+      }
+
+      // Migration: Gebäude-Upgrades initialisieren
+      if (game.buildingUpgrades === undefined) {
+        game.buildingUpgrades = [];
+      }
+
+      // Migration: Aktualisiere alte Kosten auf neue Werte - HART RESET
+      // Berechne Kosten basierend auf gekauften Upgrades neu
+      let costsMigrated = false;
+
+      // Offline-Kosten NEU berechnen basierend auf Käufen
+      const expectedOfflineCost = 50000000 * Math.pow(2.5, game.offlineUpgradesBought || 0);
+      console.log('DEBUG: offlineUpgradesBought =', game.offlineUpgradesBought, 'expected =', expectedOfflineCost, 'current =', game.offlineUpgradeCost);
+      game.offlineUpgradeCost = expectedOfflineCost;
+      costsMigrated = true;
+
+      // KI Upgrade: Hart auf 500 MB setzen wenn nicht gekauft
+      console.log('DEBUG: aiUpgradeBought =', game.aiUpgradeBought, 'current cost =', game.aiUpgradeCost);
+      if (!game.aiUpgradeBought) {
+        game.aiUpgradeCost = 500000000; // 500 MB - IMMER
+        costsMigrated = true;
+      }
+
+      if (costsMigrated) {
+        console.log('=== Upgrade-Kosten HART zurückgesetzt ===');
+        console.log('Offline:', game.offlineUpgradeCost);
+        console.log('KI:', game.aiUpgradeCost);
+        // Speichere sofort nach Migration
+        game.lastUpdate = Date.now();
+        localStorage.setItem('datacenterIdleSave', JSON.stringify(game));
+      }
+
+      // Migration: Statistiken initialisieren oder korrigieren
+      if (game.stats === undefined) {
+        // Zähle vorhandene Käufe aus dem Save für komplett neue Stats
+        const totalBuildingsBought = game.buildings.reduce((sum, b) => sum + b.owned, 0);
+        const totalUpgradesBought = game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
+
+        game.stats = {
+          totalData: game.data,
+          totalClicks: 0,
+          buildingsBought: totalBuildingsBought,
+          upgradesBought: totalUpgradesBought,
+          prestigeCount: game.prestige || 0,
+          playTime: 0,
+          offlineTime: 0,
+          startTime: Date.now()
+        };
+      }
+
+      // Stelle sicher dass startTime existiert
+      if (game.stats && game.stats.startTime === undefined) {
+        game.stats.startTime = Date.now();
+      }
+
+      // Automatische Korrektur der Statistiken
+      // Setze auf tatsächliche Werte wenn noch keine Korrektur-Flag gesetzt ist
+      if (game.stats && game.stats.statsCorrected !== true) {
+        const actualUpgrades = game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
+        const actualBuildings = game.buildings.reduce((sum, b) => sum + b.owned, 0);
+
+        game.stats.upgradesBought = actualUpgrades;
+        game.stats.buildingsBought = actualBuildings;
+        game.stats.statsCorrected = true; // Flag setzen damit Korrektur nur einmal läuft
+
+        console.log('Statistiken automatisch korrigiert - Upgrades:', actualUpgrades, 'Gebäude:', actualBuildings);
       }
 
       const now = Date.now();
@@ -560,6 +1144,10 @@
         const gained = offlineSeconds * productionPerSecond();
 
         game.data += gained;
+        if (game.stats) {
+          game.stats.totalData += gained;
+          game.stats.offlineTime += offlineSeconds;
+        }
 
         document.getElementById('offlineInfo').style.display = 'block';
         document.getElementById('offlineInfo').innerHTML = `
@@ -598,6 +1186,26 @@
     });
 
     window.addEventListener('beforeunload', saveGame);
+
+    // Debug-Helfer für die Konsole
+    window.resetStats = function() {
+      if (game.stats) {
+        game.stats.upgradesBought = game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
+        game.stats.buildingsBought = game.buildings.reduce((sum, b) => sum + b.owned, 0);
+        saveGame();
+        updateUI();
+        console.log('Stats zurückgesetzt auf tatsächliche Werte:', game.stats);
+      }
+    };
+
+    window.debugGame = function() {
+      console.log('=== Game Debug Info ===');
+      console.log('Gebäude-Upgrades:', game.buildingUpgrades.length);
+      console.log('Offline-Upgrades:', game.offlineUpgradesBought);
+      console.log('KI-Upgrade:', game.aiUpgradeBought ? 1 : 0);
+      console.log('Summe:', game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0));
+      console.log('Stats zeigt:', game.stats.upgradesBought);
+    };
   </script>
 </body>
 </html>
