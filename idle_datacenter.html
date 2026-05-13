@@ -105,6 +105,29 @@
       opacity: 0.7;
       font-size: 13px;
     }
+
+    .buy-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .buy-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .buy-buttons button {
+      min-width: 60px;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .buy-buttons button.active {
+      background: #1e5bb8;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -146,6 +169,16 @@
   </div>
 
   <div class="section-title">Mitarbeiter & Infrastruktur</div>
+
+  <div style="margin-bottom: 15px;">
+    <div class="sub" style="margin-bottom: 8px;">Kaufmenge:</div>
+    <div class="buy-buttons">
+      <button onclick="setBuyAmount(1)" id="buy1" class="active">x1</button>
+      <button onclick="setBuyAmount(10)" id="buy10">x10</button>
+      <button onclick="setBuyAmount(100)" id="buy100">x100</button>
+      <button onclick="setBuyAmount(-1)" id="buyMax">Max</button>
+    </div>
+  </div>
 
   <div id="buildings"></div>
 
@@ -235,7 +268,8 @@
       aiUpgradeBought: false,
       offlineUpgradeCost: 500000,
       aiUpgradeCost: 5000000,
-      buildings: createBuildings()
+      buildings: createBuildings(),
+      buyAmount: 1
     };
 
     function formatData(bits) {
@@ -269,6 +303,31 @@
       document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
     }
 
+    function calculateBulkCost(building, amount) {
+      let totalCost = 0;
+      let currentOwned = building.owned;
+
+      for (let i = 0; i < amount; i++) {
+        totalCost += Math.floor(building.baseCost * Math.pow(1.15, currentOwned + i));
+      }
+
+      return totalCost;
+    }
+
+    function calculateMaxBuy(building) {
+      let count = 0;
+      let totalCost = 0;
+      let currentOwned = building.owned;
+
+      while (totalCost + Math.floor(building.baseCost * Math.pow(1.15, currentOwned + count)) <= game.data) {
+        totalCost += Math.floor(building.baseCost * Math.pow(1.15, currentOwned + count));
+        count++;
+        if (count > 10000) break;
+      }
+
+      return count;
+    }
+
     function renderBuildings() {
       const container = document.getElementById('buildings');
       container.innerHTML = '';
@@ -277,14 +336,18 @@
         const div = document.createElement('div');
         div.className = 'building';
 
+        const amount = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
+        const cost = amount > 0 ? calculateBulkCost(building, amount) : 0;
+        const buttonText = game.buyAmount === -1 ? `Kaufe ${amount}` : `Kaufe x${game.buyAmount}`;
+
         div.innerHTML = `
           <div>
             <h3>${building.name}</h3>
             <div>Besitzt: ${building.owned}</div>
-            <div>Kosten: ${formatData(building.cost)}</div>
+            <div>Kosten: ${formatData(cost)}</div>
             <div class="sub">+${formatData(building.production)}/s</div>
           </div>
-          <button onclick="buyBuilding(${index})">Kaufen</button>
+          <button onclick="buyBuilding(${index})" ${amount === 0 ? 'disabled' : ''}>${buttonText}</button>
         `;
 
         container.appendChild(div);
@@ -298,15 +361,30 @@
 
     function buyBuilding(index) {
       const building = game.buildings[index];
+      const amount = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
+      const cost = calculateBulkCost(building, amount);
 
-      if (game.data >= building.cost) {
-        game.data -= building.cost;
-        building.owned++;
+      if (amount > 0 && game.data >= cost) {
+        game.data -= cost;
+        building.owned += amount;
         building.cost = Math.floor(building.baseCost * Math.pow(1.15, building.owned));
 
         updateUI();
         renderBuildings();
       }
+    }
+
+    function setBuyAmount(amount) {
+      game.buyAmount = amount;
+
+      ['buy1', 'buy10', 'buy100', 'buyMax'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+
+      const activeId = amount === 1 ? 'buy1' : amount === 10 ? 'buy10' : amount === 100 ? 'buy100' : 'buyMax';
+      document.getElementById(activeId).classList.add('active');
+
+      renderBuildings();
     }
 
     function buyOfflineUpgrade() {
@@ -343,9 +421,16 @@
       }
     }
 
+    let frameCounter = 0;
+
     function gameLoop() {
       game.data += productionPerSecond() / 10;
       updateUI();
+
+      frameCounter++;
+      if (frameCounter % 10 === 0) {
+        renderBuildings();
+      }
     }
 
     function saveGame() {
@@ -394,6 +479,7 @@
 
     loadGame();
     renderBuildings();
+    setBuyAmount(game.buyAmount || 1);
     updateUI();
 
     setInterval(gameLoop, 100);
@@ -406,7 +492,6 @@
     });
 
     window.addEventListener('focus', () => {
-      loadGame();
       renderBuildings();
       updateUI();
     });
