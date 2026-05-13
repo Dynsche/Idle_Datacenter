@@ -84,6 +84,16 @@
       transform: scale(1.03);
     }
 
+    button:disabled {
+      background: #3a3a3a;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    button:disabled:hover {
+      transform: none;
+    }
+
     .upgrade {
       background: #243447;
       border-left: 5px solid #2f7cf6;
@@ -128,6 +138,16 @@
       background: #1e5bb8;
       font-weight: bold;
     }
+
+    .buy-buttons button:disabled {
+      background: #3a3a3a;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .buy-buttons button:disabled:hover {
+      transform: none;
+    }
   </style>
 </head>
 <body>
@@ -148,7 +168,7 @@
 
     <div class="card">
       <div class="sub">Offline Limit</div>
-      <div class="resource"><span id="offlineHours">6</span> h</div>
+      <div class="resource"><span id="offlineHours">2</span> h</div>
     </div>
 
     <div class="card">
@@ -186,10 +206,10 @@
 
   <div class="upgrade">
     <h3>Offline Speichererweiterung</h3>
-    <div>Erhöht das Offline-Limit um 2 Stunden</div>
+    <div>Erhöht das Offline-Limit um 25 Minuten</div>
     <div>Kosten: <span id="offlineUpgradeCost">500000</span></div>
     <br>
-    <button onclick="buyOfflineUpgrade()">Verbessern</button>
+    <button id="btnOfflineUpgrade" onclick="buyOfflineUpgrade()">Verbessern</button>
   </div>
 
   <div class="upgrade">
@@ -197,7 +217,7 @@
     <div>Verdoppelt die gesamte Produktion</div>
     <div>Kosten: <span id="aiUpgradeCost">5000000</span> </div>
     <br>
-    <button onclick="buyAIUpgrade()">Aktivieren</button>
+    <button id="btnAIUpgrade" onclick="buyAIUpgrade()">Aktivieren</button>
   </div>
 
   <div class="section-title">Prestige</div>
@@ -207,7 +227,7 @@
     <div>Setzt Fortschritt zurück, erhöht aber dauerhaft die Produktion</div>
     <div>Benötigt: 1 GB</div>
     <br>
-    <button onclick="prestige()">Prestige</button>
+    <button id="btnPrestige" onclick="prestige()">Prestige</button>
   </div>
 
   <div class="footer-info">
@@ -263,7 +283,7 @@
       clickPower: 1,
       prestige: 0,
       productionMultiplier: 1,
-      offlineLimit: 21600,
+      offlineLimit: 7200,
       lastUpdate: Date.now(),
       aiUpgradeBought: false,
       offlineUpgradeCost: 500000,
@@ -301,6 +321,8 @@
       document.getElementById('prestige').innerText = game.prestige;
       document.getElementById('offlineUpgradeCost').innerText = formatData(game.offlineUpgradeCost);
       document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
+      updateBuyButtons();
+      updateUpgradeButtons();
     }
 
     function calculateBulkCost(building, amount) {
@@ -328,6 +350,50 @@
       return count;
     }
 
+    function canAffordMultiplier(amount) {
+      if (game.buildings.length === 0) return false;
+
+      for (let building of game.buildings) {
+        const actualAmount = amount === -1 ? calculateMaxBuy(building) : amount;
+        if (actualAmount > 0) {
+          const cost = calculateBulkCost(building, actualAmount);
+          if (game.data >= cost) return true;
+        }
+      }
+
+      return false;
+    }
+
+    function updateBuyButtons() {
+      const multipliers = [1, 10, 100, -1];
+      const buttonIds = ['buy1', 'buy10', 'buy100', 'buyMax'];
+
+      multipliers.forEach((mult, index) => {
+        const button = document.getElementById(buttonIds[index]);
+        if (button) {
+          const canAfford = canAffordMultiplier(mult);
+          button.disabled = !canAfford;
+        }
+      });
+    }
+
+    function updateUpgradeButtons() {
+      const offlineBtn = document.getElementById('btnOfflineUpgrade');
+      if (offlineBtn) {
+        offlineBtn.disabled = game.data < game.offlineUpgradeCost;
+      }
+
+      const aiBtn = document.getElementById('btnAIUpgrade');
+      if (aiBtn) {
+        aiBtn.disabled = game.aiUpgradeBought || game.data < game.aiUpgradeCost;
+      }
+
+      const prestigeBtn = document.getElementById('btnPrestige');
+      if (prestigeBtn) {
+        prestigeBtn.disabled = game.data < 1099511627776;
+      }
+    }
+
     function renderBuildings() {
       const container = document.getElementById('buildings');
       container.innerHTML = '';
@@ -338,16 +404,20 @@
 
         const amount = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
         const cost = amount > 0 ? calculateBulkCost(building, amount) : 0;
-        const buttonText = game.buyAmount === -1 ? `Kaufe ${amount}` : `Kaufe x${game.buyAmount}`;
+        const canAfford = amount > 0 && game.data >= cost;
+
+        const ownedDisplay = game.buyAmount === -1 && amount > 0 
+          ? `${building.owned} <span style="color: #4ade80;">+${amount}</span>` 
+          : building.owned;
 
         div.innerHTML = `
           <div>
             <h3>${building.name}</h3>
-            <div>Besitzt: ${building.owned}</div>
+            <div>Besitzt: ${ownedDisplay}</div>
             <div>Kosten: ${formatData(cost)}</div>
             <div class="sub">+${formatData(building.production)}/s</div>
           </div>
-          <button onclick="buyBuilding(${index})" ${amount === 0 ? 'disabled' : ''}>${buttonText}</button>
+          <button onclick="buyBuilding(${index})" ${!canAfford ? 'disabled' : ''}>Kaufe</button>
         `;
 
         container.appendChild(div);
@@ -376,6 +446,7 @@
 
     function setBuyAmount(amount) {
       game.buyAmount = amount;
+      sessionStorage.setItem('buyAmount', amount);
 
       ['buy1', 'buy10', 'buy100', 'buyMax'].forEach(id => {
         document.getElementById(id).classList.remove('active');
@@ -390,7 +461,7 @@
     function buyOfflineUpgrade() {
       if (game.data >= game.offlineUpgradeCost) {
         game.data -= game.offlineUpgradeCost;
-        game.offlineLimit += 7200;
+        game.offlineLimit += 1500;
         game.offlineUpgradeCost = Math.floor(game.offlineUpgradeCost * 2.5);
 
         updateUI();
@@ -455,6 +526,11 @@
 
       game.buildings = loadedGame.buildings || createBuildings();
 
+      // Migration: Alte 6h-Startwerte auf neue 2h-Basis umrechnen
+      if (game.offlineLimit === 21600) {
+        game.offlineLimit = 7200;
+      }
+
       const now = Date.now();
       const offlineSeconds = Math.min(
         Math.floor((now - game.lastUpdate) / 1000),
@@ -472,6 +548,11 @@
           Offline Zeit: ${Math.floor(offlineSeconds / 3600)}h ${Math.floor((offlineSeconds % 3600) / 60)}m ${offlineSeconds % 60}s<br>
           Verdiente Daten: ${formatData(gained)}
         `;
+
+        // Verstecke die Box nach 60 Sekunden
+        setTimeout(() => {
+          document.getElementById('offlineInfo').style.display = 'none';
+        }, 60000);
       } else {
         document.getElementById('offlineInfo').style.display = 'none';
       }
@@ -479,7 +560,8 @@
 
     loadGame();
     renderBuildings();
-    setBuyAmount(game.buyAmount || 1);
+    const savedBuyAmount = sessionStorage.getItem('buyAmount');
+    setBuyAmount(savedBuyAmount ? parseInt(savedBuyAmount) : 1);
     updateUI();
 
     setInterval(gameLoop, 100);
