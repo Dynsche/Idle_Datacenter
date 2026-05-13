@@ -168,7 +168,7 @@
 
     <div class="card">
       <div class="sub">Offline Limit</div>
-      <div class="resource"><span id="offlineHours">2</span> h</div>
+      <div class="resource"><span id="offlineHours">2h 0m</span></div>
     </div>
 
     <div class="card">
@@ -241,32 +241,38 @@
       {
         name: 'IT Mitarbeiter',
         baseCost: 64,
-        production: 1
+        production: 1,
+        unlockAt: 0
       },
       {
         name: 'Mini Server',
         baseCost: 1024,
-        production: 8
+        production: 8,
+        unlockAt: 512
       },
       {
         name: 'Server Rack',
         baseCost: 65536,
-        production: 128
+        production: 128,
+        unlockAt: 32768
       },
       {
         name: 'Blade Cluster',
         baseCost: 1048576,
-        production: 4096
+        production: 4096,
+        unlockAt: 524288
       },
       {
         name: 'Datacenter Halle',
         baseCost: 268435456,
-        production: 131072
+        production: 131072,
+        unlockAt: 134217728
       },
       {
         name: 'Cloud Region',
         baseCost: 1099511627776,
-        production: 8388608
+        production: 8388608,
+        unlockAt: 549755813888
       }
     ];
 
@@ -317,7 +323,11 @@
     function updateUI() {
       document.getElementById('data').innerText = formatData(game.data);
       document.getElementById('perSecond').innerText = formatData(productionPerSecond()) + '/s';
-      document.getElementById('offlineHours').innerText = Math.floor(game.offlineLimit / 3600);
+
+      const hours = Math.floor(game.offlineLimit / 3600);
+      const minutes = Math.floor((game.offlineLimit % 3600) / 60);
+      document.getElementById('offlineHours').innerText = `${hours}h ${minutes}m`;
+
       document.getElementById('prestige').innerText = game.prestige;
       document.getElementById('offlineUpgradeCost').innerText = formatData(game.offlineUpgradeCost);
       document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
@@ -399,6 +409,10 @@
       container.innerHTML = '';
 
       game.buildings.forEach((building, index) => {
+        // Prüfe ob Gebäude freigeschaltet ist
+        const isUnlocked = game.data >= building.unlockAt || building.owned > 0;
+        if (!isUnlocked) return;
+
         const div = document.createElement('div');
         div.className = 'building';
 
@@ -417,7 +431,7 @@
             <div>Kosten: ${formatData(cost)}</div>
             <div class="sub">+${formatData(building.production)}/s</div>
           </div>
-          <button onclick="buyBuilding(${index})" ${!canAfford ? 'disabled' : ''}>Kaufe</button>
+          <button onclick="buyBuilding(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
         `;
 
         container.appendChild(div);
@@ -493,9 +507,14 @@
     }
 
     let frameCounter = 0;
+    let lastTickTime = Date.now();
 
     function gameLoop() {
-      game.data += productionPerSecond() / 10;
+      const now = Date.now();
+      const deltaTime = (now - lastTickTime) / 1000; // in Sekunden
+      lastTickTime = now;
+
+      game.data += productionPerSecond() * deltaTime;
       updateUI();
 
       frameCounter++;
