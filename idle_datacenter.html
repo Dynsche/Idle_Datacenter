@@ -679,7 +679,11 @@
       document.getElementById('prestigeBonus').innerText = (game.prestige * 25).toFixed(0);
       document.getElementById('offlineUpgradeCost').innerText = formatData(game.offlineUpgradeCost);
       document.getElementById('offlineUpgradesCount').innerText = game.offlineUpgradesBought;
+
+      // DEBUG für KI Upgrade
+      console.log('updateUI: aiUpgradeCost =', game.aiUpgradeCost, 'formatted =', formatData(game.aiUpgradeCost));
       document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
+
       updateBuyButtons();
       updateUpgradeButtons();
       checkUpgradesTabUnlock();
@@ -1089,15 +1093,6 @@
         costsMigrated = true;
       }
 
-      if (costsMigrated) {
-        console.log('=== Upgrade-Kosten HART zurückgesetzt ===');
-        console.log('Offline:', game.offlineUpgradeCost);
-        console.log('KI:', game.aiUpgradeCost);
-        // Speichere sofort nach Migration
-        game.lastUpdate = Date.now();
-        localStorage.setItem('datacenterIdleSave', JSON.stringify(game));
-      }
-
       // Migration: Statistiken initialisieren oder korrigieren
       if (game.stats === undefined) {
         // Zähle vorhandene Käufe aus dem Save für komplett neue Stats
@@ -1134,6 +1129,7 @@
         console.log('Statistiken automatisch korrigiert - Upgrades:', actualUpgrades, 'Gebäude:', actualBuildings);
       }
 
+      // Berechne Offline-Produktion BEVOR wir lastUpdate ändern
       const now = Date.now();
       const offlineSeconds = Math.min(
         Math.floor((now - game.lastUpdate) / 1000),
@@ -1162,6 +1158,15 @@
         }, 60000);
       } else {
         document.getElementById('offlineInfo').style.display = 'none';
+      }
+
+      // NACH der Offline-Berechnung: Speichere Migration-Änderungen
+      if (costsMigrated) {
+        console.log('=== Upgrade-Kosten HART zurückgesetzt ===');
+        console.log('Offline:', game.offlineUpgradeCost);
+        console.log('KI:', game.aiUpgradeCost);
+        // Speichere sofort nach Migration - lastUpdate bleibt vom Offline-Gain
+        localStorage.setItem('datacenterIdleSave', JSON.stringify(game));
       }
     }
 
