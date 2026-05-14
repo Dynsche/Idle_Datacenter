@@ -58,6 +58,7 @@
       gap: 10px;
       margin-bottom: 20px;
       border-bottom: 2px solid #243447;
+      flex-wrap: wrap;
     }
 
     .tab {
@@ -70,6 +71,12 @@
       border-bottom: 3px solid transparent;
       transition: all 0.2s;
       min-width: auto;
+    }
+
+    .tab.has-notification::after {
+      content: ' •';
+      color: #4ade80;
+      font-weight: bold;
     }
 
     .tab:hover {
@@ -197,6 +204,15 @@
         font-size: 20px;
         margin-top: 25px;
         margin-bottom: 12px;
+      }
+
+      .tabs {
+        gap: 6px;
+      }
+
+      .tab {
+        padding: 10px 12px;
+        font-size: 14px;
       }
 
       .building {
@@ -331,11 +347,11 @@
   <div class="section-title">Mitarbeiter & Infrastruktur</div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('buildings')">Gebäude</button>
+    <button class="tab active" onclick="switchTab('buildings')" id="buildingsTab">Gebäude</button>
     <button class="tab" onclick="switchTab('upgrades')" id="upgradesTab" style="display: none;">Gebäude-Upgrades</button>
-    <button class="tab" onclick="switchTab('research')">Forschung</button>
-    <button class="tab" onclick="switchTab('prestige')">Prestige</button>
-    <button class="tab" onclick="switchTab('stats')">Statistiken</button>
+    <button class="tab" onclick="switchTab('research')" id="researchTab">Forschung</button>
+    <button class="tab" onclick="switchTab('prestige')" id="prestigeTab">Prestige</button>
+    <button class="tab" onclick="switchTab('stats')" id="statsTab">Statistiken</button>
   </div>
 
   <div id="tab-buildings" class="tab-content active">
@@ -361,7 +377,7 @@
       <h3>Offline Speichererweiterung</h3>
       <div>Erhöht das Offline-Limit um 25 Minuten</div>
       <div>Gekauft: <span id="offlineUpgradesCount">0</span>x</div>
-      <div>Kosten: <span id="offlineUpgradeCost">50 MB</span></div>
+      <div>Kosten: <span id="offlineUpgradeCost">200 MB</span></div>
       <br>
       <button id="btnOfflineUpgrade" onclick="buyOfflineUpgrade()">Verbessern</button>
     </div>
@@ -369,7 +385,7 @@
     <div class="upgrade">
       <h3>KI Optimierung</h3>
       <div>Verdoppelt die gesamte Produktion - Einmalig</div>
-      <div>Kosten: <span id="aiUpgradeCost">500 MB</span> </div>
+      <div>Kosten: <span id="aiUpgradeCost">2 GB</span> </div>
       <br>
       <button id="btnAIUpgrade" onclick="buyAIUpgrade()">Aktivieren</button>
     </div>
@@ -379,7 +395,7 @@
     <div class="upgrade">
       <h3>Neues Datacenter eröffnen</h3>
       <div>Setzt Fortschritt zurück, erhöht aber dauerhaft die Produktion</div>
-      <div>Benötigt: 1 GB</div>
+      <div>Benötigt: <span id="prestigeRequirement">1 GB</span></div>
       <div class="sub" style="margin-top: 8px;">Aktueller Prestige Level: <span id="prestigeLevel">0</span></div>
       <div class="sub">Bonus: +<span id="prestigeBonus">0</span>% Produktion</div>
       <br>
@@ -402,91 +418,118 @@
     </div>
   </div>
 
+  <div class="upgrade" style="margin-top: 20px;">
+    <h3>ℹ️ Formelhilfe</h3>
+    <div class="sub" style="line-height: 1.8;">
+      <div><strong>Transfer:</strong> Höhere Stufe überträgt <span id="formulaTransferRatio">0%</span> ihrer Leistung an die darunterliegende Stufe.</div>
+      <div><strong>Support:</strong> Zusätzlich wird das Ziel mit einem Faktor verstärkt (abhängig von der Geber-Leistung).</div>
+      <div><strong>Prestige:</strong> Jede Stufe gibt +<span id="formulaPrestigeBonus">0</span>% auf die Gesamtproduktion.</div>
+      <div><strong>Softcap:</strong> Ab <span id="formulaSoftcapStage1">0</span>/s und stärker ab <span id="formulaSoftcapStage2">0</span>/s wird Wachstum gedämpft.</div>
+    </div>
+  </div>
+
   <div class="footer-info">
     Datacenter Idle Alpha Version
   </div>
 
   <script>
     const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+    const BASE_OFFLINE_LIMIT = 1500;
+    const OFFLINE_UPGRADE_BONUS = 1500;
+    const BASE_OFFLINE_UPGRADE_COST = 200000000;
+    const OFFLINE_UPGRADE_COST_GROWTH = 3.2;
+    const BASE_AI_UPGRADE_COST = 2147483648;
+    const BASE_PRESTIGE_REQUIREMENT = 1099511627776;
+    const PRESTIGE_COST_GROWTH = 4;
+    const PRESTIGE_BONUS_PER_LEVEL = 0.25;
+    const UPGRADES_TAB_UNLOCK_AT = 15000000;
+    const BUILDING_COST_GROWTH = 1.18;
+    const SUPPORT_LOG_FACTOR = 0.18;
+    const SUPPORT_TRANSFER_RATIO = 0.25;
+    const SOFTCAP_STAGE1_START = 1073741824; // 1 GB/s
+    const SOFTCAP_STAGE1_POWER = 0.82;
+    const SOFTCAP_STAGE2_START = 1099511627776; // 1 TB/s
+    const SOFTCAP_STAGE2_POWER = 0.65;
+    const SAVE_BALANCE_VERSION = 5;
 
     const BUILDING_UPGRADES = [
       {
         name: 'Schulungsprogramm',
         description: '+50% IT-Mitarbeiter Produktion',
-        cost: 10000000,
-        unlockAt: 5000000,
+        cost: 30000000,
+        unlockAt: 15000000,
         targetBuilding: 'IT Mitarbeiter',
         multiplier: 1.5
       },
       {
         name: 'Ergonomische Arbeitsplätze',
         description: '+50% Desktop PC Produktion',
-        cost: 50000000,
-        unlockAt: 25000000,
+        cost: 150000000,
+        unlockAt: 75000000,
         targetBuilding: 'Desktop PC',
         multiplier: 1.5
       },
       {
         name: 'Server-Optimierung',
         description: '+75% Mini Server & Workstation',
-        cost: 250000000,
-        unlockAt: 125000000,
+        cost: 750000000,
+        unlockAt: 375000000,
         targetBuilding: ['Mini Server', 'Workstation'],
         multiplier: 1.75
       },
       {
         name: 'Cooling System Upgrade',
         description: '+100% Server Rack & Blade Server',
-        cost: 2000000000,
-        unlockAt: 1000000000,
+        cost: 6000000000,
+        unlockAt: 3000000000,
         targetBuilding: ['Server Rack', 'Blade Server'],
         multiplier: 2.0
       },
       {
         name: 'Redundante Systeme',
         description: '+150% Datacenter Halle',
-        cost: 10000000000,
-        unlockAt: 5000000000,
+        cost: 30000000000,
+        unlockAt: 15000000000,
         targetBuilding: 'Datacenter Halle',
         multiplier: 2.5
       },
       {
         name: 'Edge Computing Protocol',
         description: '+100% Edge Computing Node & Micro Datacenter',
-        cost: 25000000000,
-        unlockAt: 10000000000,
+        cost: 75000000000,
+        unlockAt: 30000000000,
         targetBuilding: ['Edge Computing Node', 'Micro Datacenter'],
         multiplier: 2.0
       },
       {
         name: 'Global CDN Network',
         description: '+200% CDN Server Farm',
-        cost: 500000000000,
-        unlockAt: 200000000000,
+        cost: 1500000000000,
+        unlockAt: 600000000000,
         targetBuilding: 'CDN Server Farm',
         multiplier: 3.0
       },
       {
         name: 'Hyperscale Architecture',
         description: '+250% Cloud Region & Hyperscale Campus',
-        cost: 10000000000000,
-        unlockAt: 4000000000000,
+        cost: 30000000000000,
+        unlockAt: 12000000000000,
         targetBuilding: ['Cloud Region', 'Hyperscale Campus'],
         multiplier: 3.5
       },
       {
         name: 'Ocean Cooling',
         description: '+300% Submarine Datacenter',
-        cost: 250000000000000,
-        unlockAt: 100000000000000,
+        cost: 750000000000000,
+        unlockAt: 300000000000000,
         targetBuilding: 'Submarine Datacenter',
         multiplier: 4.0
       },
       {
         name: 'Quantum Entanglement',
         description: '+500% Quantum Computing Cluster',
-        cost: 10000000000000000,
-        unlockAt: 5000000000000000,
+        cost: 30000000000000000,
+        unlockAt: 15000000000000000,
         targetBuilding: 'Quantum Computing Cluster',
         multiplier: 6.0
       }
@@ -598,15 +641,17 @@
       clickPower: 1,
       prestige: 0,
       productionMultiplier: 1,
-      offlineLimit: 1500,
+      offlineLimit: BASE_OFFLINE_LIMIT,
       lastUpdate: Date.now(),
       aiUpgradeBought: false,
-      offlineUpgradeCost: 50000000,
-      aiUpgradeCost: 500000000,
+      offlineUpgradeCost: BASE_OFFLINE_UPGRADE_COST,
+      aiUpgradeCost: BASE_AI_UPGRADE_COST,
       buildings: createBuildings(),
       buyAmount: 1,
       offlineUpgradesBought: 0,
       buildingUpgrades: [],
+      prestigeRequirement: BASE_PRESTIGE_REQUIREMENT,
+      balanceVersion: SAVE_BALANCE_VERSION,
       stats: {
         totalData: 0,
         totalClicks: 0,
@@ -644,26 +689,52 @@
       return multiplier;
     }
 
+    function getSupportMultiplierFromBuilding(building) {
+      const upgradeMultiplier = getBuildingUpgradeMultiplier(building.name);
+      const supportPower = building.owned * building.production * upgradeMultiplier;
+
+      // Kontrollierter Support für längere Progression
+      return 1 + (Math.log2(1 + supportPower) * SUPPORT_LOG_FACTOR);
+    }
+
+    function applyProductionSoftcap(rawProduction) {
+      let cappedProduction = rawProduction;
+
+      if (cappedProduction > SOFTCAP_STAGE1_START) {
+        cappedProduction = SOFTCAP_STAGE1_START * Math.pow(cappedProduction / SOFTCAP_STAGE1_START, SOFTCAP_STAGE1_POWER);
+      }
+
+      if (cappedProduction > SOFTCAP_STAGE2_START) {
+        cappedProduction = SOFTCAP_STAGE2_START * Math.pow(cappedProduction / SOFTCAP_STAGE2_START, SOFTCAP_STAGE2_POWER);
+      }
+
+      return cappedProduction;
+    }
+
     function productionPerSecond() {
-      let total = 0;
+      if (!game.buildings || game.buildings.length === 0) return 0;
 
-      game.buildings.forEach(building => {
-        let buildingProduction = building.owned * building.production;
-
-        // Wende Gebäude-Upgrades an
-        game.buildingUpgrades.forEach(upgradeIndex => {
-          const upgrade = BUILDING_UPGRADES[upgradeIndex];
-          const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding : [upgrade.targetBuilding];
-
-          if (targets.includes(building.name)) {
-            buildingProduction *= upgrade.multiplier;
-          }
-        });
-
-        total += buildingProduction;
+      const effectiveProduction = game.buildings.map(building => {
+        const upgradeMultiplier = getBuildingUpgradeMultiplier(building.name);
+        return building.owned * building.production * upgradeMultiplier;
       });
 
-      return total * game.productionMultiplier * (1 + game.prestige * 0.25);
+      // Große Gebäude füttern nur, wenn Support-Geber und Ziel jeweils mindestens 1x vorhanden sind
+      for (let i = game.buildings.length - 1; i > 0; i--) {
+        const supporterOwned = game.buildings[i].owned;
+        const targetOwned = game.buildings[i - 1].owned;
+
+        if (supporterOwned > 0 && targetOwned > 0) {
+          const supportMultiplier = getSupportMultiplierFromBuilding(game.buildings[i]);
+          const transferredPower = effectiveProduction[i] * SUPPORT_TRANSFER_RATIO;
+          effectiveProduction[i - 1] = (effectiveProduction[i - 1] + transferredPower) * supportMultiplier;
+        }
+      }
+
+      // Finaler Output kommt nur vom IT Mitarbeiter (Index 0)
+      const itOutput = effectiveProduction[0] || 0;
+      const rawOutput = itOutput * game.productionMultiplier * (1 + game.prestige * PRESTIGE_BONUS_PER_LEVEL);
+      return applyProductionSoftcap(rawOutput);
     }
 
     function updateUI() {
@@ -676,17 +747,21 @@
 
       document.getElementById('prestige').innerText = game.prestige;
       document.getElementById('prestigeLevel').innerText = game.prestige;
-      document.getElementById('prestigeBonus').innerText = (game.prestige * 25).toFixed(0);
+      document.getElementById('prestigeBonus').innerText = (game.prestige * (PRESTIGE_BONUS_PER_LEVEL * 100)).toFixed(0);
+      document.getElementById('prestigeRequirement').innerText = formatData(game.prestigeRequirement);
       document.getElementById('offlineUpgradeCost').innerText = formatData(game.offlineUpgradeCost);
       document.getElementById('offlineUpgradesCount').innerText = game.offlineUpgradesBought;
 
-      // DEBUG für KI Upgrade
-      console.log('updateUI: aiUpgradeCost =', game.aiUpgradeCost, 'formatted =', formatData(game.aiUpgradeCost));
       document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
+      document.getElementById('formulaTransferRatio').innerText = `${Math.round(SUPPORT_TRANSFER_RATIO * 100)}%`;
+      document.getElementById('formulaPrestigeBonus').innerText = (PRESTIGE_BONUS_PER_LEVEL * 100).toFixed(0);
+      document.getElementById('formulaSoftcapStage1').innerText = formatData(SOFTCAP_STAGE1_START);
+      document.getElementById('formulaSoftcapStage2').innerText = formatData(SOFTCAP_STAGE2_START);
 
       updateBuyButtons();
       updateUpgradeButtons();
       checkUpgradesTabUnlock();
+      updateTabNotifications();
       updateStats();
     }
 
@@ -712,8 +787,35 @@
     function checkUpgradesTabUnlock() {
       // Zeige Upgrades-Tab ab 5 MB ODER wenn bereits Upgrades gekauft wurden
       const upgradesTab = document.getElementById('upgradesTab');
-      if (game.data >= 5000000 || game.buildingUpgrades.length > 0) {
+      if (game.data >= UPGRADES_TAB_UNLOCK_AT || game.buildingUpgrades.length > 0) {
         upgradesTab.style.display = 'block';
+      }
+    }
+
+    function updateTabNotifications() {
+      const upgradesTab = document.getElementById('upgradesTab');
+      const researchTab = document.getElementById('researchTab');
+
+      if (!upgradesTab || !researchTab) return;
+
+      upgradesTab.classList.remove('has-notification');
+      researchTab.classList.remove('has-notification');
+
+      const upgradesActive = document.getElementById('tab-upgrades').classList.contains('active');
+      const researchActive = document.getElementById('tab-research').classList.contains('active');
+
+      const hasAffordableBuildingUpgrade = BUILDING_UPGRADES.some((upgrade, index) => {
+        return !game.buildingUpgrades.includes(index) && game.data >= upgrade.unlockAt && game.data >= upgrade.cost;
+      });
+
+      const hasAffordableResearchUpgrade = (game.data >= game.offlineUpgradeCost) || (!game.aiUpgradeBought && game.data >= game.aiUpgradeCost);
+
+      if (hasAffordableBuildingUpgrade && !upgradesActive) {
+        upgradesTab.classList.add('has-notification');
+      }
+
+      if (hasAffordableResearchUpgrade && !researchActive) {
+        researchTab.classList.add('has-notification');
       }
     }
 
@@ -731,11 +833,11 @@
 
       // Aktiviere den geklickten Button
       const tabButtons = {
-        'buildings': '.tab[onclick*="buildings"]',
+        'buildings': '#buildingsTab',
         'upgrades': '#upgradesTab',
-        'research': '.tab[onclick*="research"]',
-        'prestige': '.tab[onclick*="prestige"]',
-        'stats': '.tab[onclick*="stats"]'
+        'research': '#researchTab',
+        'prestige': '#prestigeTab',
+        'stats': '#statsTab'
       };
 
       if (tabButtons[tabName]) {
@@ -748,6 +850,8 @@
       if (tabName === 'stats') {
         updateStats();
       }
+
+      updateTabNotifications();
     }
 
     function calculateBulkCost(building, amount) {
@@ -755,7 +859,7 @@
       let currentOwned = building.owned;
 
       for (let i = 0; i < amount; i++) {
-        totalCost += Math.floor(building.baseCost * Math.pow(1.15, currentOwned + i));
+        totalCost += Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + i));
       }
 
       return totalCost;
@@ -766,13 +870,48 @@
       let totalCost = 0;
       let currentOwned = building.owned;
 
-      while (totalCost + Math.floor(building.baseCost * Math.pow(1.15, currentOwned + count)) <= game.data) {
-        totalCost += Math.floor(building.baseCost * Math.pow(1.15, currentOwned + count));
+      while (totalCost + Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + count)) <= game.data) {
+        totalCost += Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + count));
         count++;
         if (count > 10000) break;
       }
 
       return count;
+    }
+
+    function getPurchaseEfficiency(building, amount) {
+      if (amount <= 0) return 0;
+
+      const cost = calculateBulkCost(building, amount);
+      if (cost <= 0) return 0;
+
+      const multiplier = getBuildingUpgradeMultiplier(building.name);
+      const productionGain = amount * building.production * multiplier;
+
+      return productionGain / cost;
+    }
+
+    function getBestAffordableEfficiency(amount) {
+      let best = null;
+
+      game.buildings.forEach((building, index) => {
+        const isUnlocked = game.data >= building.unlockAt || building.owned > 0;
+        if (!isUnlocked) return;
+
+        const buyAmount = amount === -1 ? calculateMaxBuy(building) : amount;
+        if (buyAmount <= 0) return;
+
+        const cost = calculateBulkCost(building, buyAmount);
+        if (cost > game.data) return;
+
+        const efficiency = getPurchaseEfficiency(building, buyAmount);
+
+        if (!best || efficiency > best.efficiency) {
+          best = { index, efficiency, amount: buyAmount, cost };
+        }
+      });
+
+      return best;
     }
 
     function canAffordMultiplier(amount) {
@@ -815,7 +954,7 @@
 
       const prestigeBtn = document.getElementById('btnPrestige');
       if (prestigeBtn) {
-        prestigeBtn.disabled = game.data < 1099511627776;
+        prestigeBtn.disabled = game.data < game.prestigeRequirement;
       }
     }
 
@@ -832,24 +971,53 @@
         div.className = 'building';
 
         const amount = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
-        const cost = amount > 0 ? calculateBulkCost(building, amount) : 0;
+        const fallbackAmount = game.buyAmount === -1 && amount === 0 ? 1 : amount;
+        const cost = fallbackAmount > 0 ? calculateBulkCost(building, fallbackAmount) : 0;
         const canAfford = amount > 0 && game.data >= cost;
+        const costLabel = game.buyAmount === -1 && amount === 0
+          ? `${formatData(cost)} <span class="sub" style="color: #f59e0b;">(nächster Kauf)</span>`
+          : formatData(cost);
 
         const ownedDisplay = game.buyAmount === -1 && amount > 0 
           ? `${building.owned} <span style="color: #4ade80;">+${amount}</span>` 
           : building.owned;
 
         const upgradeMultiplier = getBuildingUpgradeMultiplier(building.name);
-        const totalProduction = building.owned * building.production * upgradeMultiplier;
-        const baseProduction = building.owned * building.production;
+        const ownPower = building.owned * building.production * upgradeMultiplier;
 
         let productionDisplay = '';
         if (building.owned > 0) {
-          if (upgradeMultiplier > 1) {
-            const bonusPercent = ((upgradeMultiplier - 1) * 100).toFixed(0);
-            productionDisplay = `<div class="sub" style="color: #60a5fa;">Produziert: ${formatData(totalProduction)}/s <span style="color: #4ade80;">(+${bonusPercent}% Upgrade)</span></div>`;
+          if (index === 0) {
+            const finalItOutput = productionPerSecond();
+            const rawItOutput = (game.buildings[0].owned * game.buildings[0].production * getBuildingUpgradeMultiplier(game.buildings[0].name)) * game.productionMultiplier * (1 + game.prestige * PRESTIGE_BONUS_PER_LEVEL);
+            const bonusParts = [];
+
+            if (upgradeMultiplier > 1) {
+              const upgradeBonusPercent = ((upgradeMultiplier - 1) * 100).toFixed(0);
+              bonusParts.push(`+${upgradeBonusPercent}% Upgrade`);
+            }
+
+            const prestigeBonusPercent = (game.prestige * (PRESTIGE_BONUS_PER_LEVEL * 100)).toFixed(0);
+            if (game.prestige > 0) {
+              bonusParts.push(`+${prestigeBonusPercent}% Prestige`);
+            }
+
+            if (rawItOutput > SOFTCAP_STAGE1_START) {
+              bonusParts.push('Softcap aktiv');
+            }
+
+            const bonusText = bonusParts.length > 0
+              ? ` <span style="color: #4ade80;">(${bonusParts.join(' | ')})</span>`
+              : '';
+
+            productionDisplay = `<div class="sub" style="color: #60a5fa;">Produziert: ${formatData(finalItOutput)}/s${bonusText}</div>`;
           } else {
-            productionDisplay = `<div class="sub" style="color: #60a5fa;">Produziert: ${formatData(totalProduction)}/s</div>`;
+            const supportMultiplier = getSupportMultiplierFromBuilding(building);
+            const targetName = game.buildings[index - 1]?.name || 'niedrigere Stufe';
+            const isSupportActive = building.owned > 0 && (game.buildings[index - 1]?.owned || 0) > 0;
+            productionDisplay = isSupportActive
+              ? `<div class="sub" style="color: #60a5fa;">Unterstützt ${targetName}: x${supportMultiplier.toFixed(2)} + ${Math.round(SUPPORT_TRANSFER_RATIO * 100)}% Transfer</div>`
+              : `<div class="sub" style="color: #f59e0b;">Unterstützt ${targetName}: inaktiv (beide Stufen benötigt)</div>`;
           }
         }
 
@@ -857,7 +1025,7 @@
           <div>
             <h3>${building.name}</h3>
             <div>Besitzt: ${ownedDisplay}</div>
-            <div>Kosten: ${formatData(cost)}</div>
+            <div>Kosten: ${costLabel}</div>
             <div class="sub">+${formatData(building.production)}/s pro Einheit</div>
             ${productionDisplay}
           </div>
@@ -941,9 +1109,21 @@
       const cost = calculateBulkCost(building, amount);
 
       if (game.data >= cost) {
+        const selectedEfficiency = getPurchaseEfficiency(building, amount);
+        const bestOption = getBestAffordableEfficiency(game.buyAmount);
+
+        if (bestOption && bestOption.index !== index) {
+          const efficiencyGap = bestOption.efficiency / Math.max(selectedEfficiency, 1e-12);
+          if (efficiencyGap >= 1.75) {
+            const betterBuilding = game.buildings[bestOption.index];
+            const confirmed = confirm(`Warnung: ${betterBuilding.name} ist aktuell effizienter zu kaufen.\nTrotzdem ${building.name} kaufen?`);
+            if (!confirmed) return;
+          }
+        }
+
         game.data -= cost;
         building.owned += amount;
-        building.cost = Math.floor(building.baseCost * Math.pow(1.15, building.owned));
+        building.cost = Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, building.owned));
         if (game.stats) game.stats.buildingsBought += amount;
         updateUI();
         renderBuildings();
@@ -967,9 +1147,9 @@
     function buyOfflineUpgrade() {
       if (game.data >= game.offlineUpgradeCost) {
         game.data -= game.offlineUpgradeCost;
-        game.offlineLimit += 1500;
         game.offlineUpgradesBought++;
-        game.offlineUpgradeCost = Math.floor(game.offlineUpgradeCost * 2.5);
+        game.offlineLimit = BASE_OFFLINE_LIMIT + (game.offlineUpgradesBought * OFFLINE_UPGRADE_BONUS);
+        game.offlineUpgradeCost = Math.floor(game.offlineUpgradeCost * OFFLINE_UPGRADE_COST_GROWTH);
         if (game.stats) game.stats.upgradesBought++;
 
         updateUI();
@@ -988,13 +1168,15 @@
     }
 
     function prestige() {
-      if (game.data >= 1099511627776) {
+      if (game.data >= game.prestigeRequirement) {
         game.prestige++;
+        game.prestigeRequirement = Math.floor(game.prestigeRequirement * PRESTIGE_COST_GROWTH);
         if (game.stats) game.stats.prestigeCount++;
 
         game.data = 0;
         game.productionMultiplier = 1;
         game.aiUpgradeBought = false;
+        game.buildingUpgrades = [];
         game.buildings = createBuildings();
 
         updateUI();
@@ -1066,32 +1248,77 @@
         game.buildings = loadedGame.buildings || createBuildings();
       }
 
-      // Stelle sicher dass offlineUpgradesBought existiert (für alte Saves)
-      if (game.offlineUpgradesBought === undefined) {
-        game.offlineUpgradesBought = 0; // Für alte Saves ohne dieses Feld
-      }
-
-      // Migration: Gebäude-Upgrades initialisieren
-      if (game.buildingUpgrades === undefined) {
-        game.buildingUpgrades = [];
-      }
-
-      // Migration: Aktualisiere alte Kosten auf neue Werte - HART RESET
-      // Berechne Kosten basierend auf gekauften Upgrades neu
       let costsMigrated = false;
 
-      // Offline-Kosten NEU berechnen basierend auf Käufen
-      const expectedOfflineCost = 50000000 * Math.pow(2.5, game.offlineUpgradesBought || 0);
-      console.log('DEBUG: offlineUpgradesBought =', game.offlineUpgradesBought, 'expected =', expectedOfflineCost, 'current =', game.offlineUpgradeCost);
-      game.offlineUpgradeCost = expectedOfflineCost;
-      costsMigrated = true;
+      function normalizeBalanceValues() {
+        game.offlineUpgradesBought = Math.max(0, Math.floor(game.offlineUpgradesBought || 0));
+        game.offlineLimit = BASE_OFFLINE_LIMIT + (game.offlineUpgradesBought * OFFLINE_UPGRADE_BONUS);
 
-      // KI Upgrade: Hart auf 500 MB setzen wenn nicht gekauft
-      console.log('DEBUG: aiUpgradeBought =', game.aiUpgradeBought, 'current cost =', game.aiUpgradeCost);
-      if (!game.aiUpgradeBought) {
-        game.aiUpgradeCost = 500000000; // 500 MB - IMMER
-        costsMigrated = true;
+        const expectedPrestigeRequirement = Math.floor(BASE_PRESTIGE_REQUIREMENT * Math.pow(PRESTIGE_COST_GROWTH, game.prestige || 0));
+        if (game.prestigeRequirement !== expectedPrestigeRequirement) {
+          game.prestigeRequirement = expectedPrestigeRequirement;
+          costsMigrated = true;
+        }
+
+        const expectedOfflineCost = Math.floor(BASE_OFFLINE_UPGRADE_COST * Math.pow(OFFLINE_UPGRADE_COST_GROWTH, game.offlineUpgradesBought));
+        if (game.offlineUpgradeCost !== expectedOfflineCost) {
+          game.offlineUpgradeCost = expectedOfflineCost;
+          costsMigrated = true;
+        }
+
+        if (!game.aiUpgradeBought && game.aiUpgradeCost !== BASE_AI_UPGRADE_COST) {
+          game.aiUpgradeCost = BASE_AI_UPGRADE_COST;
+          costsMigrated = true;
+        }
       }
+
+      if (game.balanceVersion === undefined) {
+        game.balanceVersion = 0;
+      }
+
+      // Versionsbasierte Save-Migration (schrittweise)
+      while (game.balanceVersion < SAVE_BALANCE_VERSION) {
+        switch (game.balanceVersion) {
+          case 0:
+            if (game.offlineUpgradesBought === undefined) game.offlineUpgradesBought = 0;
+            if (game.buildingUpgrades === undefined) game.buildingUpgrades = [];
+            if (game.prestigeRequirement === undefined) game.prestigeRequirement = BASE_PRESTIGE_REQUIREMENT;
+            game.balanceVersion = 1;
+            costsMigrated = true;
+            break;
+          case 1:
+            // Kosten aus Kaufständen herleiten
+            normalizeBalanceValues();
+            game.balanceVersion = 2;
+            costsMigrated = true;
+            break;
+          case 2:
+            // Verlangsamte Upgrade-Ökonomie
+            normalizeBalanceValues();
+            game.balanceVersion = 3;
+            costsMigrated = true;
+            break;
+          case 3:
+            // Ketten-/Softcap-Balance
+            normalizeBalanceValues();
+            game.balanceVersion = 4;
+            costsMigrated = true;
+            break;
+          case 4:
+            // Zentrale Balancing-Konstanten + Formelhilfe-Version
+            normalizeBalanceValues();
+            game.balanceVersion = 5;
+            costsMigrated = true;
+            break;
+          default:
+            game.balanceVersion = SAVE_BALANCE_VERSION;
+            costsMigrated = true;
+            break;
+        }
+      }
+
+      // Immer final normalisieren, damit manuelle Wertanpassungen im Code in Saves ankommen
+      normalizeBalanceValues();
 
       // Migration: Statistiken initialisieren oder korrigieren
       if (game.stats === undefined) {
@@ -1125,8 +1352,6 @@
         game.stats.upgradesBought = actualUpgrades;
         game.stats.buildingsBought = actualBuildings;
         game.stats.statsCorrected = true; // Flag setzen damit Korrektur nur einmal läuft
-
-        console.log('Statistiken automatisch korrigiert - Upgrades:', actualUpgrades, 'Gebäude:', actualBuildings);
       }
 
       // Berechne Offline-Produktion BEVOR wir lastUpdate ändern
@@ -1162,9 +1387,6 @@
 
       // NACH der Offline-Berechnung: Speichere Migration-Änderungen
       if (costsMigrated) {
-        console.log('=== Upgrade-Kosten HART zurückgesetzt ===');
-        console.log('Offline:', game.offlineUpgradeCost);
-        console.log('KI:', game.aiUpgradeCost);
         // Speichere sofort nach Migration - lastUpdate bleibt vom Offline-Gain
         localStorage.setItem('datacenterIdleSave', JSON.stringify(game));
       }
@@ -1191,6 +1413,38 @@
     });
 
     window.addEventListener('beforeunload', saveGame);
+
+    // Balance-Test-Helfer für schnelle Kalibrierung in der Konsole
+    window.balanceTargets = [
+      { name: '1 MB', value: 8388608 },
+      { name: '1 GB', value: 8589934592 },
+      { name: '1 TB', value: 8796093022208 },
+      { name: '1 PB', value: 9007199254740992 }
+    ];
+
+    window.estimateTimeToData = function(targetData) {
+      const pps = Math.max(productionPerSecond(), 0);
+      if (pps <= 0) return Infinity;
+      const remaining = Math.max(0, targetData - game.data);
+      return remaining / pps;
+    };
+
+    window.runBalanceCheck = function() {
+      const pps = productionPerSecond();
+      const results = window.balanceTargets.map(target => {
+        const seconds = window.estimateTimeToData(target.value);
+        const minutes = Number.isFinite(seconds) ? (seconds / 60).toFixed(2) : '∞';
+        return `${target.name}: ${minutes} min`;
+      });
+
+      return {
+        currentData: formatData(game.data),
+        perSecond: formatData(pps) + '/s',
+        softcapStage1: formatData(SOFTCAP_STAGE1_START) + '/s',
+        softcapStage2: formatData(SOFTCAP_STAGE2_START) + '/s',
+        targets: results
+      };
+    };
 
     // Debug-Helfer für die Konsole
     window.resetStats = function() {
