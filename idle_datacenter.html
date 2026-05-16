@@ -304,12 +304,47 @@
     .buy-buttons button:disabled:hover {
       transform: none;
     }
+
+    .cloud-save-box {
+      background: #142033;
+      border: 1px solid #2f7cf6;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .cloud-save-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cloud-save-actions button {
+      min-width: unset;
+      width: auto;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
   <h1>Datacenter Idle</h1>
 
   <div class="offline-box" id="offlineInfo"></div>
+
+  <div class="cloud-save-box">
+    <div class="sub" id="cloudUserStatus">Google: nicht angemeldet</div>
+    <div class="cloud-save-actions">
+      <button id="btnGoogleLogin" onclick="signInWithGoogle()">Mit Google verbinden</button>
+      <button id="btnGoogleLogout" onclick="signOutGoogle()" style="display:none;">Abmelden</button>
+      <button id="btnCloudSyncNow" onclick="syncCloudSaveNow()" style="display:none;">Cloud Sync</button>
+    </div>
+    <div class="sub" id="cloudSyncStatus">Cloud-Speicher inaktiv</div>
+  </div>
 
   <div class="topbar">
     <div class="card">
@@ -432,6 +467,10 @@
     Datacenter Idle Alpha Version
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <script>
     const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
     const BASE_OFFLINE_LIMIT = 1500;
@@ -451,6 +490,25 @@
     const SOFTCAP_STAGE2_START = 1099511627776; // 1 TB/s
     const SOFTCAP_STAGE2_POWER = 0.65;
     const SAVE_BALANCE_VERSION = 5;
+
+    // Firebase / Google Cloud Save (bitte mit echten Projektwerten ersetzen)
+    const FIREBASE_CONFIG = {
+      apiKey: 'AIzaSyDurgHG0S6kCc4u6BkoE7prLXzxHbJ3RFA',
+      authDomain: 'idle-datacenter.firebaseapp.com',
+      projectId: 'idle-datacenter',
+      storageBucket: 'idle-datacenter.firebasestorage.app',
+      messagingSenderId: '503758094362',
+      appId: '1:503758094362:web:b3fbb6e62c53efee3fd1a3'
+    };
+    const CLOUD_SAVE_DOC_ID = 'main';
+
+    let firebaseApp = null;
+    let firebaseAuth = null;
+    let firestoreDb = null;
+    let cloudUser = null;
+    let cloudAvailable = false;
+    let cloudSyncInProgress = false;
+    let cloudLoadInProgress = false;
 
     const BUILDING_UPGRADES = [
       {
@@ -663,6 +721,174 @@
         startTime: Date.now()
       }
     };
+
+    function isFirebaseConfigured() {
+      return FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY' &&
+        FIREBASE_CONFIG.projectId !== 'YOUR_PROJECT_ID' &&
+        FIREBASE_CONFIG.appId !== 'YOUR_APP_ID';
+    }
+
+    function setCloudSyncStatus(text, isError = false) {
+      const statusElement = document.getElementById('cloudSyncStatus');
+      if (!statusElement) return;
+      statusElement.innerText = text;
+      statusElement.style.color = isError ? '#fca5a5' : '';
+    }
+
+    function updateCloudUserUI() {
+      const userStatus = document.getElementById('cloudUserStatus');
+      const loginBtn = document.getElementById('btnGoogleLogin');
+      const logoutBtn = document.getElementById('btnGoogleLogout');
+      const syncBtn = document.getElementById('btnCloudSyncNow');
+
+      if (!userStatus || !loginBtn || !logoutBtn || !syncBtn) return;
+
+      const configured = cloudAvailable;
+      const signedIn = !!cloudUser;
+
+      userStatus.innerText = signedIn
+        ? `Google: ${cloudUser.displayName || cloudUser.email || cloudUser.uid}`
+        : (configured ? 'Google: nicht angemeldet' : 'Google: Firebase nicht konfiguriert');
+
+      loginBtn.style.display = signedIn ? 'none' : 'inline-block';
+      logoutBtn.style.display = signedIn ? 'inline-block' : 'none';
+      syncBtn.style.display = signedIn ? 'inline-block' : 'none';
+      loginBtn.disabled = !configured;
+    }
+
+    function getSerializableGameState() {
+      return JSON.parse(JSON.stringify(game));
+    }
+
+    async function saveGameToCloud(showStatus = false) {
+      if (!cloudAvailable || !cloudUser || !firestoreDb || cloudSyncInProgress) return;
+
+      try {
+        cloudSyncInProgress = true;
+        if (showStatus) setCloudSyncStatus('Cloud-Speicher: synchronisiere...');
+
+        await firestoreDb
+          .collection('users')
+          .doc(cloudUser.uid)
+          .collection('saves')
+          .doc(CLOUD_SAVE_DOC_ID)
+          .set({
+            saveData: getSerializableGameState(),
+            clientUpdatedAt: Date.now(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            balanceVersion: SAVE_BALANCE_VERSION
+          });
+
+        if (showStatus) setCloudSyncStatus('Cloud-Speicher: synchronisiert');
+      } catch (error) {
+        setCloudSyncStatus('Cloud-Speicher: Fehler beim Speichern', true);
+      } finally {
+        cloudSyncInProgress = false;
+      }
+    }
+
+    async function loadGameFromCloud() {
+      if (!cloudAvailable || !cloudUser || !firestoreDb || cloudLoadInProgress) return;
+
+      try {
+        cloudLoadInProgress = true;
+        setCloudSyncStatus('Cloud-Speicher: lade Spielstand...');
+
+        const doc = await firestoreDb
+          .collection('users')
+          .doc(cloudUser.uid)
+          .collection('saves')
+          .doc(CLOUD_SAVE_DOC_ID)
+          .get();
+
+        if (!doc.exists || !doc.data() || !doc.data().saveData) {
+          setCloudSyncStatus('Cloud-Speicher: kein Cloud-Spielstand vorhanden');
+          await saveGameToCloud(false);
+          return;
+        }
+
+        const cloudSave = doc.data().saveData;
+        const cloudLastUpdate = cloudSave.lastUpdate || 0;
+        const localLastUpdate = game.lastUpdate || 0;
+
+        if (cloudLastUpdate > localLastUpdate) {
+          loadGame(cloudSave);
+          localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+          renderBuildings();
+          updateUI();
+          setCloudSyncStatus('Cloud-Speicher: neuer Spielstand geladen');
+        } else {
+          setCloudSyncStatus('Cloud-Speicher: lokaler Spielstand ist aktueller');
+          await saveGameToCloud(false);
+        }
+      } catch (error) {
+        setCloudSyncStatus('Cloud-Speicher: Fehler beim Laden', true);
+      } finally {
+        cloudLoadInProgress = false;
+      }
+    }
+
+    async function syncCloudSaveNow() {
+      saveGame();
+      await saveGameToCloud(true);
+    }
+
+    async function signInWithGoogle() {
+      if (!cloudAvailable || !firebaseAuth) {
+        setCloudSyncStatus('Cloud-Speicher: Firebase nicht konfiguriert', true);
+        return;
+      }
+
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await firebaseAuth.signInWithPopup(provider);
+      } catch (error) {
+        setCloudSyncStatus('Google-Anmeldung fehlgeschlagen', true);
+      }
+    }
+
+    async function signOutGoogle() {
+      if (!firebaseAuth) return;
+
+      try {
+        await firebaseAuth.signOut();
+      } catch (error) {
+        setCloudSyncStatus('Google-Abmeldung fehlgeschlagen', true);
+      }
+    }
+
+    function initializeCloudSave() {
+      if (!window.firebase) {
+        setCloudSyncStatus('Cloud-Speicher: Firebase SDK nicht geladen', true);
+        updateCloudUserUI();
+        return;
+      }
+
+      if (!isFirebaseConfigured()) {
+        setCloudSyncStatus('Cloud-Speicher: Firebase-Konfiguration fehlt');
+        updateCloudUserUI();
+        return;
+      }
+
+      firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+      firebaseAuth = firebase.auth();
+      firestoreDb = firebase.firestore();
+      cloudAvailable = true;
+      updateCloudUserUI();
+      setCloudSyncStatus('Cloud-Speicher: bereit');
+
+      firebaseAuth.onAuthStateChanged(async (user) => {
+        cloudUser = user;
+        updateCloudUserUI();
+
+        if (cloudUser) {
+          setCloudSyncStatus('Cloud-Speicher: angemeldet');
+          await loadGameFromCloud();
+        } else {
+          setCloudSyncStatus('Cloud-Speicher: inaktiv (nur lokal)');
+        }
+      });
+    }
 
     function formatData(bits) {
       let value = bits;
@@ -1210,18 +1436,19 @@
         game.stats.playTime += (Date.now() - game.stats.startTime);
         game.stats.startTime = Date.now();
       }
-      localStorage.setItem('datacenterIdleSave', JSON.stringify(game));
+      localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+      saveGameToCloud(false);
     }
 
-    function loadGame() {
-      const save = localStorage.getItem('datacenterIdleSave');
+    function loadGame(loadedGameOverride = null) {
+      const save = loadedGameOverride ? null : localStorage.getItem('datacenterIdleSave');
 
-      if (!save) {
+      if (!loadedGameOverride && !save) {
         document.getElementById('offlineInfo').style.display = 'none';
         return;
       }
 
-      const loadedGame = JSON.parse(save);
+      const loadedGame = loadedGameOverride || JSON.parse(save);
 
       game = {
         ...game,
@@ -1397,6 +1624,7 @@
     const savedBuyAmount = sessionStorage.getItem('buyAmount');
     setBuyAmount(savedBuyAmount ? parseInt(savedBuyAmount) : 1);
     updateUI();
+    initializeCloudSave();
 
     setInterval(gameLoop, 100);
     setInterval(saveGame, 5000);
