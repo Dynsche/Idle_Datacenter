@@ -779,9 +779,10 @@
             balanceVersion: SAVE_BALANCE_VERSION
           });
 
-        if (showStatus) setCloudSyncStatus('Cloud-Speicher: synchronisiert');
+        if (showStatus) setCloudSyncStatus('Cloud-Speicher: synchronisiert ✓');
       } catch (error) {
-        setCloudSyncStatus('Cloud-Speicher: Fehler beim Speichern', true);
+        console.error('Firestore Speicher-Fehler:', error.code, error.message);
+        setCloudSyncStatus('Fehler: ' + (error.code || error.message), true);
       } finally {
         cloudSyncInProgress = false;
       }
@@ -829,7 +830,13 @@
     }
 
     async function syncCloudSaveNow() {
-      saveGame();
+      console.log('Sync gedrückt – cloudAvailable:', cloudAvailable, 'cloudUser:', cloudUser?.uid, 'firestoreDb:', !!firestoreDb);
+      if (!cloudAvailable) { setCloudSyncStatus('Firebase nicht bereit', true); return; }
+      if (!cloudUser) { setCloudSyncStatus('Nicht angemeldet', true); return; }
+      if (!firestoreDb) { setCloudSyncStatus('Firestore nicht bereit', true); return; }
+      game.lastUpdate = Date.now();
+      localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+      cloudSyncInProgress = false;
       await saveGameToCloud(true);
     }
 
@@ -843,7 +850,8 @@
         const provider = new firebase.auth.GoogleAuthProvider();
         await firebaseAuth.signInWithPopup(provider);
       } catch (error) {
-        setCloudSyncStatus('Google-Anmeldung fehlgeschlagen', true);
+        console.error('Google Sign-In Fehler:', error.code, error.message);
+        setCloudSyncStatus('Anmeldung fehlgeschlagen: ' + (error.code || error.message), true);
       }
     }
 
