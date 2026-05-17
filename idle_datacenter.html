@@ -342,10 +342,12 @@
     <div>
       <h3>Manueller Upload</h3>
       <div>Klicke um Daten zu sammeln</div>
-      <div class="sub">+1 Bit pro Klick</div>
+      <div class="sub">+<span id="clickPowerDisplay">1 Bit</span> pro Klick</div>
     </div>
     <button onclick="manualClick()">Daten sammeln</button>
   </div>
+
+  <div id="clickUpgradesContainer"></div>
 
   <div class="section-title">Mitarbeiter & Infrastruktur</div>
 
@@ -520,7 +522,7 @@
     const SOFTCAP_STAGE1_POWER = 0.82;
     const SOFTCAP_STAGE2_START = 1099511627776; // 1 TB/s
     const SOFTCAP_STAGE2_POWER = 0.65;
-    const SAVE_BALANCE_VERSION = 5;
+    const SAVE_BALANCE_VERSION = 6;
 
     // Firebase / Google Cloud Save (bitte mit echten Projektwerten ersetzen)
     const FIREBASE_CONFIG = {
@@ -541,6 +543,44 @@
     let cloudSyncInProgress = false;
     let cloudLoadInProgress = false;
     let cloudLoadCompleted = false;
+
+    const CLICK_UPGRADES = [
+      {
+        name: 'Bessere Maus',
+        description: 'Klicks bringen 8 Bit statt 1 Bit',
+        cost: 500,
+        unlockAt: 0,
+        newClickPower: 8
+      },
+      {
+        name: 'Mechanische Tastatur',
+        description: 'Klicks bringen 64 Bit',
+        cost: 50000,
+        unlockAt: 10000,
+        newClickPower: 64
+      },
+      {
+        name: 'Skript-Automatisierung',
+        description: 'Klicks bringen 1 KB',
+        cost: 5000000,
+        unlockAt: 1000000,
+        newClickPower: 1024
+      },
+      {
+        name: 'Makro-Tool',
+        description: 'Klicks bringen 32 KB',
+        cost: 500000000,
+        unlockAt: 100000000,
+        newClickPower: 32768
+      },
+      {
+        name: 'Bot-Assistent',
+        description: 'Klicks bringen 1 MB',
+        cost: 50000000000,
+        unlockAt: 10000000000,
+        newClickPower: 1048576
+      }
+    ];
 
     const BUILDING_UPGRADES = [
       {
@@ -729,6 +769,7 @@
     let game = {
       data: 0,
       clickPower: 1,
+      clickUpgradesBought: [],
       prestige: 0,
       productionMultiplier: 1,
       offlineLimit: BASE_OFFLINE_LIMIT,
@@ -1042,11 +1083,14 @@
       document.getElementById('formulaSoftcapStage1').innerText = formatData(SOFTCAP_STAGE1_START);
       document.getElementById('formulaSoftcapStage2').innerText = formatData(SOFTCAP_STAGE2_START);
 
+      document.getElementById('clickPowerDisplay').innerText = formatData(game.clickPower);
+
       updateBuyButtons();
       updateUpgradeButtons();
       checkUpgradesTabUnlock();
       updateTabNotifications();
       updateStats();
+      renderClickUpgrades();
     }
 
     function updateStats() {
@@ -1375,6 +1419,43 @@
       renderBuildingUpgrades();
     }
 
+    function buyClickUpgrade(index) {
+      const upgrade = CLICK_UPGRADES[index];
+      if (game.clickUpgradesBought.includes(index)) return;
+      if (game.data < upgrade.cost) return;
+      game.data -= upgrade.cost;
+      game.clickUpgradesBought.push(index);
+      game.clickPower = upgrade.newClickPower;
+      if (game.stats) game.stats.upgradesBought++;
+      renderClickUpgrades();
+      updateUI();
+    }
+
+    function renderClickUpgrades() {
+      const container = document.getElementById('clickUpgradesContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      CLICK_UPGRADES.forEach((upgrade, index) => {
+        const isUnlocked = game.data >= upgrade.unlockAt || game.clickUpgradesBought.includes(index);
+        if (!isUnlocked) return;
+        const isBought = game.clickUpgradesBought.includes(index);
+        const canAfford = game.data >= upgrade.cost;
+
+        const div = document.createElement('div');
+        div.className = 'upgrade';
+        if (isBought) { div.style.opacity = '0.6'; div.style.borderLeftColor = '#4ade80'; }
+
+        div.innerHTML = `
+          <h3>${upgrade.name} ${isBought ? '✓' : ''}</h3>
+          <div>${upgrade.description}</div>
+          <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
+          ${!isBought ? `<br><button onclick="buyClickUpgrade(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>` : ''}
+        `;
+        container.appendChild(div);
+      });
+    }
+
     function manualClick() {
       game.data += game.clickPower;
       if (game.stats) {
@@ -1594,6 +1675,17 @@
             // Zentrale Balancing-Konstanten + Formelhilfe-Version
             normalizeBalanceValues();
             game.balanceVersion = 5;
+            costsMigrated = true;
+            break;
+          case 5:
+            // Click-Upgrades System
+            if (!game.clickUpgradesBought) game.clickUpgradesBought = [];
+            // clickPower aus bereits gekauften Upgrades wiederherstellen
+            if (game.clickUpgradesBought.length > 0) {
+              const lastBought = Math.max(...game.clickUpgradesBought);
+              game.clickPower = CLICK_UPGRADES[lastBought].newClickPower;
+            }
+            game.balanceVersion = 6;
             costsMigrated = true;
             break;
           default:
