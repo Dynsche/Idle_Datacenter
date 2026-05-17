@@ -305,46 +305,14 @@
       transform: none;
     }
 
-    .cloud-save-box {
-      background: #142033;
-      border: 1px solid #2f7cf6;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .cloud-save-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .cloud-save-actions button {
-      min-width: unset;
-      width: auto;
-      padding: 8px 12px;
-      font-size: 13px;
-    }
-  </style>
+    </style>
 </head>
 <body>
   <h1>Datacenter Idle</h1>
 
   <div class="offline-box" id="offlineInfo"></div>
 
-  <div class="cloud-save-box">
-    <div class="sub" id="cloudUserStatus">Google: nicht angemeldet</div>
-    <div class="cloud-save-actions">
-      <button id="btnGoogleLogin" onclick="signInWithGoogle()">Mit Google verbinden</button>
-      <button id="btnGoogleLogout" onclick="signOutGoogle()" style="display:none;">Abmelden</button>
-      <button id="btnCloudSyncNow" onclick="syncCloudSaveNow()" style="display:none;">Cloud Sync</button>
-    </div>
-    <div class="sub" id="cloudSyncStatus">Cloud-Speicher inaktiv</div>
-  </div>
+
 
   <div class="topbar">
     <div class="card">
@@ -387,6 +355,7 @@
     <button class="tab" onclick="switchTab('research')" id="researchTab">Forschung</button>
     <button class="tab" onclick="switchTab('prestige')" id="prestigeTab">Prestige</button>
     <button class="tab" onclick="switchTab('stats')" id="statsTab">Statistiken</button>
+    <button class="tab" onclick="switchTab('account')" id="accountTab">Konto</button>
   </div>
 
   <div id="tab-buildings" class="tab-content active">
@@ -435,6 +404,31 @@
       <div class="sub">Bonus: +<span id="prestigeBonus">0</span>% Produktion</div>
       <br>
       <button id="btnPrestige" onclick="prestige()">Prestige</button>
+    </div>
+  </div>
+
+  <div id="tab-account" class="tab-content">
+    <div class="upgrade">
+      <h3>☁️ Cloud-Speicher</h3>
+      <div style="line-height: 2; margin-top: 10px;">
+        <div><strong>Status:</strong> <span id="cloudUserStatus">Google: nicht angemeldet</span></div>
+        <div><strong>Sync:</strong> <span id="cloudSyncStatus">Cloud-Speicher inaktiv</span></div>
+      </div>
+      <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="btnGoogleLogin" onclick="signInWithGoogle()">Mit Google verbinden</button>
+        <button id="btnGoogleLogout" onclick="signOutGoogle()" style="display:none;">Abmelden</button>
+        <button id="btnCloudSyncNow" onclick="syncCloudSaveNow()" style="display:none;">Cloud Sync</button>
+      </div>
+    </div>
+    <div class="upgrade">
+      <h3>💾 Lokaler Speicher</h3>
+      <div class="sub" style="line-height: 1.8;">
+        <div>Spielstand wird automatisch alle 5 Sekunden lokal gespeichert.</div>
+        <div>Bei aktivem Google-Konto wird der Stand zusätzlich in der Cloud gesichert.</div>
+      </div>
+      <div style="margin-top: 15px;">
+        <button onclick="if(confirm('Lokalen Spielstand wirklich löschen?')) { localStorage.removeItem(\'datacenterIdleSave\'); location.reload(); }" style="background:#7f1d1d;">Lokalen Spielstand löschen</button>
+      </div>
     </div>
   </div>
 
