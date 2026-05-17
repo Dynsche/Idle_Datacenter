@@ -804,28 +804,42 @@
           .get();
 
         if (!doc.exists || !doc.data() || !doc.data().saveData) {
-          setCloudSyncStatus('Cloud-Speicher: kein Cloud-Spielstand vorhanden');
+          setCloudSyncStatus('Cloud-Speicher: kein Cloud-Spielstand vorhanden – lokaler Stand wird hochgeladen');
           await saveGameToCloud(false);
           return;
         }
 
         const cloudSave = doc.data().saveData;
         const cloudLastUpdate = cloudSave.lastUpdate || 0;
-        const localSaveRaw = localStorage.getItem('datacenterIdleSave');
-        const localLastUpdate = localSaveRaw ? (JSON.parse(localSaveRaw).lastUpdate || 0) : 0;
-        const hasLocalSave = !!localSaveRaw;
+        const cloudData = cloudSave.data || 0;
 
-        if (!hasLocalSave || cloudLastUpdate > localLastUpdate) {
+        const localSaveRaw = localStorage.getItem('datacenterIdleSave');
+        const localSave = localSaveRaw ? JSON.parse(localSaveRaw) : null;
+        const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
+        const localData = localSave ? (localSave.data || 0) : 0;
+
+        // Cloud gewinnt wenn:
+        // - kein lokaler Spielstand vorhanden
+        // - Cloud hat mehr Fortschritt (mehr Daten)
+        // - Cloud ist neuer UND lokaler Stand hat keinen echten Fortschritt
+        const localHasProgress = localData > 0;
+        const cloudIsNewer = cloudLastUpdate > localLastUpdate;
+        const cloudHasMoreProgress = cloudData >= localData;
+
+        const useCloud = !localSave || cloudHasMoreProgress || (cloudIsNewer && !localHasProgress);
+
+        if (useCloud) {
           loadGame(cloudSave);
           localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
           renderBuildings();
           updateUI();
-          setCloudSyncStatus('Cloud-Speicher: neuer Spielstand geladen');
+          setCloudSyncStatus('Cloud-Speicher: Spielstand geladen ✓');
         } else {
-          setCloudSyncStatus('Cloud-Speicher: lokaler Spielstand ist aktueller');
+          setCloudSyncStatus('Cloud-Speicher: lokaler Spielstand ist weiter – wird hochgeladen');
           await saveGameToCloud(false);
         }
       } catch (error) {
+        console.error('Cloud Load Fehler:', error.code, error.message);
         setCloudSyncStatus('Cloud-Speicher: Fehler beim Laden', true);
       } finally {
         cloudLoadInProgress = false;
