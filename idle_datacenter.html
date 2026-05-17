@@ -810,7 +810,8 @@
 
         const cloudSave = doc.data().saveData;
         const cloudLastUpdate = cloudSave.lastUpdate || 0;
-        const localLastUpdate = game.lastUpdate || 0;
+        const localSaveRaw = localStorage.getItem('datacenterIdleSave');
+        const localLastUpdate = localSaveRaw ? (JSON.parse(localSaveRaw).lastUpdate || 0) : 0;
 
         if (cloudLastUpdate > localLastUpdate) {
           loadGame(cloudSave);
