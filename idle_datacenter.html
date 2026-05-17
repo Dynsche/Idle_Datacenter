@@ -1115,6 +1115,12 @@
       checkUpgradesTabUnlock();
       updateTabNotifications();
       updateStats();
+
+      // Klick-Upgrades aktualisieren wenn Tab aktiv ist
+      const clickTab = document.getElementById('tab-clickupgrades');
+      if (clickTab && clickTab.classList.contains('active')) {
+        renderClickUpgrades();
+      }
     }
 
     function updateStats() {
@@ -1201,6 +1207,9 @@
 
       if (tabName === 'upgrades') {
         renderBuildingUpgrades();
+      }
+      if (tabName === 'clickupgrades') {
+        renderClickUpgrades();
       }
       if (tabName === 'stats') {
         updateStats();
