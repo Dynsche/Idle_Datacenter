@@ -1439,32 +1439,37 @@
       if (!container) return;
       container.innerHTML = '';
 
-      // Nächstes noch nicht gekauftes Upgrade finden
       const nextIndex = CLICK_UPGRADES.findIndex((u, i) => !game.clickUpgradesBought.includes(i));
 
-      if (nextIndex === -1) {
-        container.innerHTML = '<div class="upgrade"><div class="sub">Alle Klick-Upgrades wurden gekauft ✓</div></div>';
-        return;
-      }
-
-      const upgrade = CLICK_UPGRADES[nextIndex];
-      const isUnlocked = game.data >= upgrade.unlockAt;
-
-      if (!isUnlocked) {
-        container.innerHTML = `<div class="upgrade"><div class="sub">Nächstes Upgrade freischaltbar ab ${formatData(upgrade.unlockAt)}</div></div>`;
-        return;
-      }
-
-      const canAfford = game.data >= upgrade.cost;
       const div = document.createElement('div');
       div.className = 'upgrade';
-      div.innerHTML = `
-        <h3>${upgrade.name}</h3>
-        <div>${upgrade.description}</div>
-        <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
-        <br>
-        <button onclick="buyClickUpgrade(${nextIndex})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
-      `;
+
+      if (nextIndex === -1) {
+        div.innerHTML = `<h3>✓ Alle Klick-Upgrades gekauft</h3><div class="sub">Dein Klick ist maximal optimiert.</div>`;
+      } else {
+        const upgrade = CLICK_UPGRADES[nextIndex];
+        const isUnlocked = game.data >= upgrade.unlockAt;
+
+        if (!isUnlocked) {
+          div.innerHTML = `
+            <h3>${upgrade.name}</h3>
+            <div>${upgrade.description}</div>
+            <div class="sub">Freischaltbar ab: ${formatData(upgrade.unlockAt)}</div>
+            <br>
+            <button disabled>Kaufen</button>
+          `;
+        } else {
+          const canAfford = game.data >= upgrade.cost;
+          div.innerHTML = `
+            <h3>${upgrade.name}</h3>
+            <div>${upgrade.description}</div>
+            <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
+            <br>
+            <button onclick="buyClickUpgrade(${nextIndex})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
+          `;
+        }
+      }
+
       container.appendChild(div);
     }
 
