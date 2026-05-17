@@ -347,18 +347,22 @@
     <button onclick="manualClick()">Daten sammeln</button>
   </div>
 
-  <div id="clickUpgradesContainer"></div>
-
   <div class="section-title">Mitarbeiter & Infrastruktur</div>
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('buildings')" id="buildingsTab">Gebäude</button>
     <button class="tab" onclick="switchTab('upgrades')" id="upgradesTab" style="display: none;">Gebäude-Upgrades</button>
+    <button class="tab" onclick="switchTab('clickupgrades')" id="clickupgradesTab">Klick-Upgrades</button>
     <button class="tab" onclick="switchTab('research')" id="researchTab">Forschung</button>
     <button class="tab" onclick="switchTab('prestige')" id="prestigeTab">Prestige</button>
     <button class="tab" onclick="switchTab('stats')" id="statsTab">Statistiken</button>
     <button class="tab" onclick="switchTab('account')" id="accountTab">Konto</button>
     <button class="tab" onclick="switchTab('help')" id="helpTab">Hilfe</button>
+  </div>
+
+  <div id="tab-clickupgrades" class="tab-content">
+    <div class="sub" style="margin-bottom: 12px;">Verbessere deinen manuellen Klick. Upgrades bauen aufeinander auf – kaufe das nächste wenn du es dir leisten kannst.</div>
+    <div id="clickUpgradesContainer"></div>
   </div>
 
   <div id="tab-buildings" class="tab-content active">
@@ -1436,22 +1440,44 @@
       if (!container) return;
       container.innerHTML = '';
 
-      CLICK_UPGRADES.forEach((upgrade, index) => {
-        const isUnlocked = game.data >= upgrade.unlockAt || game.clickUpgradesBought.includes(index);
-        if (!isUnlocked) return;
-        const isBought = game.clickUpgradesBought.includes(index);
-        const canAfford = game.data >= upgrade.cost;
+      // Letztes gekauftes Upgrade ermitteln
+      const lastBoughtIndex = game.clickUpgradesBought.length > 0
+        ? Math.max(...game.clickUpgradesBought)
+        : -1;
 
+      // Nächstes verfügbares (das erste noch nicht gekaufte)
+      const nextIndex = lastBoughtIndex + 1;
+
+      CLICK_UPGRADES.forEach((upgrade, index) => {
+        const isBought = game.clickUpgradesBought.includes(index);
+
+        // Bereits gekaufte anzeigen (abgeblendet), nächstes anzeigen, Rest ausblenden
+        if (!isBought && index > nextIndex) return;
+        if (!isBought && index === nextIndex) {
+          const isUnlocked = game.data >= upgrade.unlockAt;
+          if (!isUnlocked) return;
+        }
+
+        const canAfford = game.data >= upgrade.cost;
         const div = document.createElement('div');
         div.className = 'upgrade';
-        if (isBought) { div.style.opacity = '0.6'; div.style.borderLeftColor = '#4ade80'; }
 
-        div.innerHTML = `
-          <h3>${upgrade.name} ${isBought ? '✓' : ''}</h3>
-          <div>${upgrade.description}</div>
-          <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
-          ${!isBought ? `<br><button onclick="buyClickUpgrade(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>` : ''}
-        `;
+        if (isBought) {
+          div.style.opacity = '0.5';
+          div.style.borderLeftColor = '#4ade80';
+          div.innerHTML = `
+            <h3>${upgrade.name} ✓</h3>
+            <div class="sub">${upgrade.description}</div>
+          `;
+        } else {
+          div.innerHTML = `
+            <h3>${upgrade.name}</h3>
+            <div>${upgrade.description}</div>
+            <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
+            <br>
+            <button onclick="buyClickUpgrade(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
+          `;
+        }
         container.appendChild(div);
       });
     }
