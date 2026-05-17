@@ -356,6 +356,7 @@
     <button class="tab" onclick="switchTab('prestige')" id="prestigeTab">Prestige</button>
     <button class="tab" onclick="switchTab('stats')" id="statsTab">Statistiken</button>
     <button class="tab" onclick="switchTab('account')" id="accountTab">Konto</button>
+    <button class="tab" onclick="switchTab('help')" id="helpTab">Hilfe</button>
   </div>
 
   <div id="tab-buildings" class="tab-content active">
@@ -430,18 +431,9 @@
         <button onclick="deleteLocalSave()" style="background:#7f1d1d;">Lokalen Spielstand löschen</button>
       </div>
     </div>
-    <div class="upgrade">
-      <h3>ℹ️ Formelhilfe</h3>
-      <div class="sub" style="line-height: 1.8;">
-        <div><strong>Transfer:</strong> Höhere Stufe überträgt <span id="formulaTransferRatio">0%</span> ihrer Leistung an die darunterliegende Stufe.</div>
-        <div><strong>Support:</strong> Zusätzlich wird das Ziel mit einem Faktor verstärkt (abhängig von der Geber-Leistung).</div>
-        <div><strong>Prestige:</strong> Jede Stufe gibt +<span id="formulaPrestigeBonus">0</span>% auf die Gesamtproduktion.</div>
-        <div><strong>Softcap:</strong> Ab <span id="formulaSoftcapStage1">0</span>/s und stärker ab <span id="formulaSoftcapStage2">0</span>/s wird Wachstum gedämpft.</div>
-      </div>
     </div>
-  </div>
 
-  <div id="tab-stats" class="tab-content">
+    <div id="tab-stats"
     <div class="upgrade">
       <h3>📊 Spielstatistiken</h3>
       <div style="line-height: 1.8;">
@@ -456,6 +448,51 @@
     </div>
   </div>
 
+
+  <div id="tab-help" class="tab-content">
+    <div class="upgrade">
+      <h3>🎮 Spielerklärung</h3>
+      <div style="line-height: 1.9; font-size: 14px;">
+        <p><strong>Ziel:</strong> Baue ein riesiges Rechenzentrum auf und produziere so viele Daten wie möglich – von einzelnen Bits bis hin zu Exabytes.</p>
+
+        <div style="margin-top: 12px;"><strong>🖱️ Manuell klicken</strong></div>
+        <div class="sub">Am Anfang sammelst du Daten per Klick auf <em>Daten sammeln</em>. Jeder Klick bringt 1 Bit.</div>
+
+        <div style="margin-top: 12px;"><strong>🏢 Gebäude kaufen</strong></div>
+        <div class="sub">Kaufe Gebäude die automatisch Daten produzieren. Jedes Gebäude produziert pro Sekunde Daten. Höhere Gebäude schalten sich erst ab einer bestimmten Datenmenge frei.</div>
+        <div class="sub" style="margin-top: 4px;">Die Reihenfolge: <em>IT Mitarbeiter → Mini Server → Server Rack → Blade Cluster → Datacenter Halle → Cloud Region → Hyperscale Campus → Quantenrechner</em></div>
+
+        <div style="margin-top: 12px;"><strong>⛓️ Gebäudekette</strong></div>
+        <div class="sub">Höhere Gebäude unterstützen niedrigere – sie übertragen einen Teil ihrer Leistung nach unten und verstärken diese zusätzlich. Je mehr höhere Gebäude du hast, desto mehr profitieren die IT Mitarbeiter.</div>
+
+        <div style="margin-top: 12px;"><strong>📦 Kaufmenge</strong></div>
+        <div class="sub">Wähle x1, x10, x100 oder Max um mehrere Gebäude auf einmal zu kaufen. Max kauft so viele wie du dir leisten kannst.</div>
+
+        <div style="margin-top: 12px;"><strong>🔬 Gebäude-Upgrades</strong></div>
+        <div class="sub">Ab 15 MB schalten sich Upgrades frei die einzelne Gebäude dauerhaft stärker machen. Jedes Upgrade verdoppelt die Produktion des jeweiligen Gebäudes.</div>
+
+        <div style="margin-top: 12px;"><strong>🧪 Forschung</strong></div>
+        <div class="sub"><em>Offline-Speichererweiterung:</em> Verlängert die Zeit für Offline-Produktion um je 25 Minuten pro Kauf.<br>
+        <em>KI Optimierung:</em> Einmaliger Kauf der die gesamte Produktion dauerhaft verdoppelt.</div>
+
+        <div style="margin-top: 12px;"><strong>🏆 Prestige</strong></div>
+        <div class="sub">Wenn du genug Daten gesammelt hast kannst du ein Prestige machen. Dabei wird der Fortschritt zurückgesetzt, aber du erhältst einen dauerhaften Produktionsbonus von +25% pro Stufe. Jede weitere Prestige-Stufe kostet mehr.</div>
+
+        <div style="margin-top: 12px;"><strong>😴 Offline-Produktion</strong></div>
+        <div class="sub">Wenn du das Spiel schließt läuft die Produktion im Hintergrund weiter – bis zum Offline-Limit. Standard sind 25 Minuten, erweiterbar per Forschung.</div>
+      </div>
+    </div>
+
+    <div class="upgrade">
+      <h3>ℹ️ Formelhilfe</h3>
+      <div class="sub" style="line-height: 1.8;">
+        <div><strong>Transfer:</strong> Höhere Stufe überträgt <span id="formulaTransferRatio">0%</span> ihrer Leistung an die darunterliegende Stufe.</div>
+        <div><strong>Support:</strong> Zusätzlich wird das Ziel mit einem Faktor verstärkt (abhängig von der Geber-Leistung).</div>
+        <div><strong>Prestige:</strong> Jede Stufe gibt +<span id="formulaPrestigeBonus">0</span>% auf die Gesamtproduktion.</div>
+        <div><strong>Softcap:</strong> Ab <span id="formulaSoftcapStage1">0</span>/s und stärker ab <span id="formulaSoftcapStage2">0</span>/s wird Wachstum gedämpft.</div>
+      </div>
+    </div>
+  </div>
 
   <div class="footer-info">
     Datacenter Idle Alpha Version
