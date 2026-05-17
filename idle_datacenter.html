@@ -593,7 +593,9 @@
         cost: 30000000,
         unlockAt: 15000000,
         targetBuilding: 'IT Mitarbeiter',
-        multiplier: 1.5
+        multiplier: 1.5,
+        requires: null,
+        minBuildings: { 'IT Mitarbeiter': 10 }
       },
       {
         name: 'Ergonomische Arbeitsplätze',
@@ -601,7 +603,9 @@
         cost: 150000000,
         unlockAt: 75000000,
         targetBuilding: 'Desktop PC',
-        multiplier: 1.5
+        multiplier: 1.5,
+        requires: 0,
+        minBuildings: { 'Desktop PC': 10 }
       },
       {
         name: 'Server-Optimierung',
@@ -609,7 +613,9 @@
         cost: 750000000,
         unlockAt: 375000000,
         targetBuilding: ['Mini Server', 'Workstation'],
-        multiplier: 1.75
+        multiplier: 1.75,
+        requires: 1,
+        minBuildings: { 'Mini Server': 8 }
       },
       {
         name: 'Cooling System Upgrade',
@@ -617,7 +623,9 @@
         cost: 6000000000,
         unlockAt: 3000000000,
         targetBuilding: ['Server Rack', 'Blade Server'],
-        multiplier: 2.0
+        multiplier: 2.0,
+        requires: 2,
+        minBuildings: { 'Server Rack': 5 }
       },
       {
         name: 'Redundante Systeme',
@@ -625,7 +633,9 @@
         cost: 30000000000,
         unlockAt: 15000000000,
         targetBuilding: 'Datacenter Halle',
-        multiplier: 2.5
+        multiplier: 2.5,
+        requires: 3,
+        minBuildings: { 'Datacenter Halle': 5 }
       },
       {
         name: 'Edge Computing Protocol',
@@ -633,7 +643,9 @@
         cost: 75000000000,
         unlockAt: 30000000000,
         targetBuilding: ['Edge Computing Node', 'Micro Datacenter'],
-        multiplier: 2.0
+        multiplier: 2.0,
+        requires: 4,
+        minBuildings: { 'Edge Computing Node': 3 }
       },
       {
         name: 'Global CDN Network',
@@ -641,7 +653,9 @@
         cost: 1500000000000,
         unlockAt: 600000000000,
         targetBuilding: 'CDN Server Farm',
-        multiplier: 3.0
+        multiplier: 3.0,
+        requires: 5,
+        minBuildings: { 'CDN Server Farm': 3 }
       },
       {
         name: 'Hyperscale Architecture',
@@ -649,7 +663,9 @@
         cost: 30000000000000,
         unlockAt: 12000000000000,
         targetBuilding: ['Cloud Region', 'Hyperscale Campus'],
-        multiplier: 3.5
+        multiplier: 3.5,
+        requires: 6,
+        minBuildings: { 'Cloud Region': 2 }
       },
       {
         name: 'Ocean Cooling',
@@ -657,7 +673,9 @@
         cost: 750000000000000,
         unlockAt: 300000000000000,
         targetBuilding: 'Submarine Datacenter',
-        multiplier: 4.0
+        multiplier: 4.0,
+        requires: 7,
+        minBuildings: { 'Submarine Datacenter': 2 }
       },
       {
         name: 'Quantum Entanglement',
@@ -665,7 +683,9 @@
         cost: 30000000000000000,
         unlockAt: 15000000000000000,
         targetBuilding: 'Quantum Computing Cluster',
-        multiplier: 6.0
+        multiplier: 6.0,
+        requires: 8,
+        minBuildings: { 'Quantum Computing Cluster': 1 }
       }
     ];
 
@@ -1367,6 +1387,27 @@
       });
     }
 
+    function getUpgradeBlockedReason(upgrade, index) {
+      // Vorgänger-Upgrade benötigt
+      if (upgrade.requires !== null && upgrade.requires !== undefined) {
+        if (!game.buildingUpgrades.includes(upgrade.requires)) {
+          const prev = BUILDING_UPGRADES[upgrade.requires];
+          return `Benötigt: "${prev.name}" zuerst kaufen`;
+        }
+      }
+      // Gebäude-Voraussetzung
+      if (upgrade.minBuildings) {
+        for (const [buildingName, minCount] of Object.entries(upgrade.minBuildings)) {
+          const building = game.buildings.find(b => b.name === buildingName);
+          const owned = building ? building.owned : 0;
+          if (owned < minCount) {
+            return `Benötigt: ${minCount}x ${buildingName} (du hast ${owned})`;
+          }
+        }
+      }
+      return null;
+    }
+
     function renderBuildingUpgrades() {
       const container = document.getElementById('buildingUpgrades');
       container.innerHTML = '';
@@ -1380,25 +1421,41 @@
         const div = document.createElement('div');
         div.className = 'upgrade';
 
+        const blockedReason = !isBought ? getUpgradeBlockedReason(upgrade, index) : null;
+        const isBlocked = !!blockedReason;
+        const canAfford = game.data >= upgrade.cost;
+        const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding.join(', ') : upgrade.targetBuilding;
+
         if (isBought) {
           div.style.opacity = '0.6';
           div.style.borderLeftColor = '#4ade80';
+          div.innerHTML = `
+            <h3>${upgrade.name}</h3>
+            <div class="sub">${upgrade.description} – Betrifft: ${targets}</div>
+            <div style="color: #4ade80; font-weight: bold; margin-top: 6px;">✓ Gekauft</div>
+          `;
+        } else if (isBlocked) {
+          div.style.opacity = '0.7';
+          div.style.borderLeftColor = '#6b7280';
+          div.innerHTML = `
+            <h3>${upgrade.name}</h3>
+            <div>${upgrade.description}</div>
+            <div class="sub">Betrifft: ${targets}</div>
+            <div class="sub" style="color: #f59e0b; margin-top: 6px;">🔒 ${blockedReason}</div>
+            <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
+            <br>
+            <button disabled>Gesperrt</button>
+          `;
+        } else {
+          div.innerHTML = `
+            <h3>${upgrade.name}</h3>
+            <div>${upgrade.description}</div>
+            <div class="sub">Betrifft: ${targets}</div>
+            <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
+            <br>
+            <button onclick="buyBuildingUpgrade(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
+          `;
         }
-
-        const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding.join(', ') : upgrade.targetBuilding;
-        const statusText = isBought ? '<div style="color: #4ade80; font-weight: bold;">✓ Gekauft</div>' : '';
-
-        div.innerHTML = `
-          <h3>${upgrade.name}</h3>
-          <div>${upgrade.description}</div>
-          <div class="sub">Betrifft: ${targets}</div>
-          ${statusText}
-          <div>Kosten: ${formatData(upgrade.cost)}</div>
-          <br>
-          <button onclick="buyBuildingUpgrade(${index})" ${isBought || game.data < upgrade.cost ? 'disabled' : ''}>
-            ${isBought ? 'Bereits gekauft' : 'Kaufen'}
-          </button>
-        `;
 
         container.appendChild(div);
       });
