@@ -430,6 +430,15 @@
         <button onclick="if(confirm('Lokalen Spielstand wirklich löschen?')) { localStorage.removeItem(\'datacenterIdleSave\'); location.reload(); }" style="background:#7f1d1d;">Lokalen Spielstand löschen</button>
       </div>
     </div>
+    <div class="upgrade">
+      <h3>ℹ️ Formelhilfe</h3>
+      <div class="sub" style="line-height: 1.8;">
+        <div><strong>Transfer:</strong> Höhere Stufe überträgt <span id="formulaTransferRatio">0%</span> ihrer Leistung an die darunterliegende Stufe.</div>
+        <div><strong>Support:</strong> Zusätzlich wird das Ziel mit einem Faktor verstärkt (abhängig von der Geber-Leistung).</div>
+        <div><strong>Prestige:</strong> Jede Stufe gibt +<span id="formulaPrestigeBonus">0</span>% auf die Gesamtproduktion.</div>
+        <div><strong>Softcap:</strong> Ab <span id="formulaSoftcapStage1">0</span>/s und stärker ab <span id="formulaSoftcapStage2">0</span>/s wird Wachstum gedämpft.</div>
+      </div>
+    </div>
   </div>
 
   <div id="tab-stats" class="tab-content">
@@ -447,15 +456,6 @@
     </div>
   </div>
 
-  <div class="upgrade" style="margin-top: 20px;">
-    <h3>ℹ️ Formelhilfe</h3>
-    <div class="sub" style="line-height: 1.8;">
-      <div><strong>Transfer:</strong> Höhere Stufe überträgt <span id="formulaTransferRatio">0%</span> ihrer Leistung an die darunterliegende Stufe.</div>
-      <div><strong>Support:</strong> Zusätzlich wird das Ziel mit einem Faktor verstärkt (abhängig von der Geber-Leistung).</div>
-      <div><strong>Prestige:</strong> Jede Stufe gibt +<span id="formulaPrestigeBonus">0</span>% auf die Gesamtproduktion.</div>
-      <div><strong>Softcap:</strong> Ab <span id="formulaSoftcapStage1">0</span>/s und stärker ab <span id="formulaSoftcapStage2">0</span>/s wird Wachstum gedämpft.</div>
-    </div>
-  </div>
 
   <div class="footer-info">
     Datacenter Idle Alpha Version
