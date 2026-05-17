@@ -509,6 +509,7 @@
     let cloudAvailable = false;
     let cloudSyncInProgress = false;
     let cloudLoadInProgress = false;
+    let cloudLoadCompleted = false;
 
     const BUILDING_UPGRADES = [
       {
@@ -828,6 +829,7 @@
         setCloudSyncStatus('Cloud-Speicher: Fehler beim Laden', true);
       } finally {
         cloudLoadInProgress = false;
+        cloudLoadCompleted = true;
       }
     }
 
@@ -895,6 +897,7 @@
           setCloudSyncStatus('Cloud-Speicher: angemeldet');
           await loadGameFromCloud();
         } else {
+          cloudLoadCompleted = true;
           setCloudSyncStatus('Cloud-Speicher: inaktiv (nur lokal)');
         }
       });
@@ -1441,6 +1444,7 @@
     }
 
     function saveGame() {
+      if (cloudUser && !cloudLoadCompleted) return;
       game.lastUpdate = Date.now();
       if (game.stats) {
         game.stats.playTime += (Date.now() - game.stats.startTime);
