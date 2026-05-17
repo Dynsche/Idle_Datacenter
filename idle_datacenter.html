@@ -595,7 +595,8 @@
         targetBuilding: 'IT Mitarbeiter',
         multiplier: 1.5,
         requires: null,
-        minBuildings: { 'IT Mitarbeiter': 10 }
+        // Wird sofort sichtbar – kein Vorgänger nötig
+        minBuildings: { 'IT Mitarbeiter': 25 }
       },
       {
         name: 'Ergonomische Arbeitsplätze',
@@ -605,7 +606,7 @@
         targetBuilding: 'Desktop PC',
         multiplier: 1.5,
         requires: 0,
-        minBuildings: { 'Desktop PC': 10 }
+        minBuildings: { 'IT Mitarbeiter': 40, 'Desktop PC': 20 }
       },
       {
         name: 'Server-Optimierung',
@@ -615,7 +616,7 @@
         targetBuilding: ['Mini Server', 'Workstation'],
         multiplier: 1.75,
         requires: 1,
-        minBuildings: { 'Mini Server': 8 }
+        minBuildings: { 'Desktop PC': 35, 'Mini Server': 25 }
       },
       {
         name: 'Cooling System Upgrade',
@@ -625,7 +626,7 @@
         targetBuilding: ['Server Rack', 'Blade Server'],
         multiplier: 2.0,
         requires: 2,
-        minBuildings: { 'Server Rack': 5 }
+        minBuildings: { 'Mini Server': 40, 'Workstation': 30, 'Server Rack': 20 }
       },
       {
         name: 'Redundante Systeme',
@@ -635,7 +636,7 @@
         targetBuilding: 'Datacenter Halle',
         multiplier: 2.5,
         requires: 3,
-        minBuildings: { 'Datacenter Halle': 5 }
+        minBuildings: { 'Server Rack': 35, 'Blade Server': 25, 'Datacenter Halle': 15 }
       },
       {
         name: 'Edge Computing Protocol',
@@ -645,7 +646,7 @@
         targetBuilding: ['Edge Computing Node', 'Micro Datacenter'],
         multiplier: 2.0,
         requires: 4,
-        minBuildings: { 'Edge Computing Node': 3 }
+        minBuildings: { 'Datacenter Halle': 25, 'Micro Datacenter': 20, 'Edge Computing Node': 15 }
       },
       {
         name: 'Global CDN Network',
@@ -655,7 +656,7 @@
         targetBuilding: 'CDN Server Farm',
         multiplier: 3.0,
         requires: 5,
-        minBuildings: { 'CDN Server Farm': 3 }
+        minBuildings: { 'Edge Computing Node': 30, 'CDN Server Farm': 20 }
       },
       {
         name: 'Hyperscale Architecture',
@@ -665,7 +666,7 @@
         targetBuilding: ['Cloud Region', 'Hyperscale Campus'],
         multiplier: 3.5,
         requires: 6,
-        minBuildings: { 'Cloud Region': 2 }
+        minBuildings: { 'CDN Server Farm': 30, 'Cloud Region': 15, 'Hyperscale Campus': 10 }
       },
       {
         name: 'Ocean Cooling',
@@ -675,7 +676,7 @@
         targetBuilding: 'Submarine Datacenter',
         multiplier: 4.0,
         requires: 7,
-        minBuildings: { 'Submarine Datacenter': 2 }
+        minBuildings: { 'Hyperscale Campus': 20, 'Submarine Datacenter': 12 }
       },
       {
         name: 'Quantum Entanglement',
@@ -685,7 +686,7 @@
         targetBuilding: 'Quantum Computing Cluster',
         multiplier: 6.0,
         requires: 8,
-        minBuildings: { 'Quantum Computing Cluster': 1 }
+        minBuildings: { 'Submarine Datacenter': 20, 'Satellite Network': 15, 'Quantum Computing Cluster': 8 }
       }
     ];
 
@@ -1416,7 +1417,13 @@
         const isUnlocked = game.data >= upgrade.unlockAt;
         const isBought = game.buildingUpgrades.includes(index);
 
-        if (!isUnlocked && !isBought) return;
+        // Sichtbarkeit: Vorgänger muss gekauft sein (oder kein Vorgänger vorhanden)
+        // Außerdem muss die Daten-Schwelle erreicht sein oder das Upgrade ist bereits gekauft
+        const prevBought = upgrade.requires === null || upgrade.requires === undefined
+          ? true
+          : game.buildingUpgrades.includes(upgrade.requires);
+
+        if (!isBought && (!prevBought || !isUnlocked)) return;
 
         const div = document.createElement('div');
         div.className = 'upgrade';
