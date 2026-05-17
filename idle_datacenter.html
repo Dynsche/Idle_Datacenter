@@ -427,7 +427,7 @@
         <div>Bei aktivem Google-Konto wird der Stand zusätzlich in der Cloud gesichert.</div>
       </div>
       <div style="margin-top: 15px;">
-        <button onclick="if(confirm('Lokalen Spielstand wirklich löschen?')) { localStorage.removeItem(\'datacenterIdleSave\'); location.reload(); }" style="background:#7f1d1d;">Lokalen Spielstand löschen</button>
+        <button onclick="deleteLocalSave()" style="background:#7f1d1d;">Lokalen Spielstand löschen</button>
       </div>
     </div>
     <div class="upgrade">
@@ -1706,6 +1706,13 @@
         console.log('Stats zurückgesetzt auf tatsächliche Werte:', game.stats);
       }
     };
+
+    function deleteLocalSave() {
+      if (confirm('Lokalen Spielstand wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) {
+        localStorage.removeItem('datacenterIdleSave');
+        location.reload();
+      }
+    }
 
     window.debugGame = function() {
       console.log('=== Game Debug Info ===');
