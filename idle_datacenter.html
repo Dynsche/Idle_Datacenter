@@ -31,10 +31,17 @@
     }
 
     .card {
-      background: #182433;
+      background: linear-gradient(135deg, #182433 0%, #0f1720 100%);
       border-radius: 16px;
       padding: 18px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(47, 124, 246, 0.15);
     }
 
     .mission-card {
@@ -267,24 +274,29 @@
       cursor: pointer;
       font-size: 16px;
       border-bottom: 3px solid transparent;
-      transition: all 0.2s;
+      transition: all 0.3s ease;
       min-width: auto;
+      font-weight: 500;
+      box-shadow: none;
     }
 
     .tab.has-notification::after {
       content: ' •';
       color: #4ade80;
       font-weight: bold;
+      animation: pulse 1.5s ease-in-out infinite;
     }
 
     .tab:hover {
-      color: white;
+      color: #2f7cf6;
       transform: none;
+      border-bottom-color: rgba(47, 124, 246, 0.3);
     }
 
     .tab.active {
       color: white;
       border-bottom-color: #2f7cf6;
+      background: rgba(47, 124, 246, 0.1);
       font-weight: bold;
     }
 
@@ -297,7 +309,7 @@
     }
 
     .building {
-      background: #182433;
+      background: linear-gradient(135deg, #182433 0%, #0f1720 100%);
       border-radius: 14px;
       padding: 18px;
       margin-bottom: 15px;
@@ -305,6 +317,14 @@
       justify-content: space-between;
       align-items: center;
       gap: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .building:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 25px rgba(47, 124, 246, 0.2);
     }
 
     .building h3 {
@@ -313,7 +333,7 @@
 
     button {
       border: none;
-      background: #2f7cf6;
+      background: linear-gradient(135deg, #2f7cf6 0%, #1e5fb8 100%);
       color: white;
       padding: 12px 18px;
       border-radius: 10px;
@@ -321,16 +341,20 @@
       font-size: 15px;
       min-width: 130px;
       transition: 0.2s;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(47, 124, 246, 0.3);
     }
 
     button:hover {
-      transform: scale(1.03);
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(47, 124, 246, 0.4);
     }
 
     button:disabled {
       background: #3a3a3a;
       cursor: not-allowed;
       opacity: 0.5;
+      box-shadow: none;
     }
 
     button:disabled:hover {
@@ -338,12 +362,19 @@
     }
 
     .upgrade {
-      background: #243447;
+      background: linear-gradient(135deg, #243447 0%, #1a2938 100%);
       border-left: 5px solid #2f7cf6;
       padding: 20px;
       border-radius: 12px;
       margin-bottom: 15px;
       min-height: 120px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .upgrade:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(47, 124, 246, 0.2);
     }
 
     .upgrade h3 {
@@ -563,14 +594,16 @@
     }
 
     .buy-buttons button.active {
-      background: #1e5bb8;
+      background: linear-gradient(135deg, #1e5fb8 0%, #0f3a7d 100%);
       font-weight: bold;
+      border: 1px solid rgba(47, 124, 246, 0.5);
     }
 
     .buy-buttons button:disabled {
       background: #3a3a3a;
       cursor: not-allowed;
       opacity: 0.5;
+      box-shadow: none;
     }
 
     .buy-buttons button:disabled:hover {
