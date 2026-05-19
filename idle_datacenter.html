@@ -2595,6 +2595,10 @@
   </script>
 
   <!-- Firebase Compat SDK -->
+  <script>
+    // Suppress Firebase warning about already defined global
+    window.__FIREBASE_DEFAULTS__ = window.__FIREBASE_DEFAULTS__ || {};
+  </script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
