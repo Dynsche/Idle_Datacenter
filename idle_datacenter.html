@@ -596,9 +596,12 @@
         <div>Spielstand wird automatisch alle 5 Sekunden lokal gespeichert.</div>
         <div>Bei aktivem Google-Konto wird der Stand zusätzlich in der Cloud gesichert.</div>
       </div>
-      <div style="margin-top: 15px;">
-        <button onclick="deleteLocalSave()" style="background:#7f1d1d;">Lokalen Spielstand löschen</button>
+      <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button onclick="exportSave()">📥 Spielstand exportieren</button>
+        <button onclick="importSavePrompt()">📤 Spielstand importieren</button>
+        <button onclick="deleteLocalSave()" style="background:#7f1d1d;">🗑️ Lokal löschen</button>
       </div>
+      <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importSaveFromFile()" />
     </div>
     </div>
 
@@ -2673,6 +2676,52 @@
         console.log('Stats zurückgesetzt auf tatsächliche Werte:', game.stats);
       }
     };
+
+    function exportSave() {
+      const saveData = getSerializableGameState();
+      const json = JSON.stringify(saveData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `datacenter-idle-save-${new Date().getTime()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      console.log('Spielstand exportiert');
+    }
+
+    function importSavePrompt() {
+      document.getElementById('importFileInput').click();
+    }
+
+    function importSaveFromFile() {
+      const fileInput = document.getElementById('importFileInput');
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target.result);
+
+          // Validiere, dass es gültiges Spielstand-Daten sind
+          if (!importedData.buildings || !importedData.data === undefined) {
+            alert('Ungültiger Spielstand: Datei ist nicht kompatibel');
+            return;
+          }
+
+          if (confirm('Lokalen Spielstand mit importierter Datei ersetzen?')) {
+            Object.assign(game, importedData);
+            localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+            location.reload();
+          }
+        } catch (error) {
+          alert('Fehler beim Lesen der Datei: ' + error.message);
+        }
+      };
+      reader.readAsText(file);
+      fileInput.value = ''; // Reset für nächste Auswahl
+    }
 
     function deleteLocalSave() {
       if (confirm('Lokalen Spielstand wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) {
