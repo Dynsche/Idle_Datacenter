@@ -784,26 +784,11 @@
     Datacenter Idle Alpha Version
   </div>
 
-  <!-- Cloud-Konflikt-Dialog -->
+  <!-- Cloud-Konflikt-Dialog - DEAKTIVIERT -->
   <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:10px;pointer-events:auto;">
     <div style="background:#1a1f2e;border:2px solid #3a4a5a;border-radius:12px;padding:20px;max-width:100%;width:100%;max-width:550px;color:#e0e0e0;box-sizing:border-box;max-height:90vh;overflow-y:auto;pointer-events:auto;">
-      <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">⚠️ Spielstand Konflikt</div>
-      <div style="font-size:13px;line-height:1.6;margin-bottom:16px;">
-        <div style="margin-bottom:10px;">Du hast auf mehreren Geräten Fortschritt gemacht.</div>
-        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:10px 0;min-height:70px;display:flex;flex-direction:column;justify-content:center;border:1px solid #3a5a6a;">
-          <div style="font-weight:bold;margin-bottom:8px;font-size:13px;">📱 Cloud-Spielstand:</div>
-          <div id="conflictCloudInfo" style="font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;min-height:30px;">Loading...</div>
-        </div>
-        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:10px 0;min-height:70px;display:flex;flex-direction:column;justify-content:center;border:1px solid #3a5a6a;">
-          <div style="font-weight:bold;margin-bottom:8px;font-size:13px;">💻 Lokaler Spielstand:</div>
-          <div id="conflictLocalInfo" style="font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;min-height:30px;">Loading...</div>
-        </div>
-        <div style="margin-top:10px;font-size:12px;opacity:0.8;">Welchen Spielstand möchtest du behalten?</div>
-      </div>
-      <div style="display:flex;gap:10px;flex-direction:column;pointer-events:auto;">
-        <button id="conflictKeepCloud" style="width:100%;padding:14px;background:#10b981;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;font-size:15px;transition:background 0.2s;pointer-events:auto;">☁️ Cloud behalten</button>
-        <button id="conflictKeepLocal" style="width:100%;padding:14px;background:#3b82f6;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;font-size:15px;transition:background 0.2s;pointer-events:auto;">💻 Lokal behalten</button>
-      </div>
+      <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">✓ Spielstand synchronisiert</div>
+      <div style="font-size:13px;line-height:1.6;">Die neuesten Daten wurden automatisch geladen.</div>
     </div>
   </div>
 
@@ -1473,34 +1458,10 @@
         const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
         const localData = localSave ? (localSave.data || 0) : 0;
 
-        // Nur Konflikt-Dialog wenn Änderungen von UNTERSCHIEDLICHEN Geräten kommen
-        const isFromDifferentDevice = cloudDeviceId !== currentDeviceId && cloudDeviceId !== 'unknown';
-        const timeDifference = Math.abs(cloudLastUpdate - localLastUpdate);
-        const isConflict = localSave && isFromDifferentDevice && timeDifference < 300000 && cloudData !== localData && localData > 0 && cloudData > 0;
-
-        if (isConflict) {
-          // Zeige Konflikt-Dialog
-          console.log('Konflikt erkannt - Dialog wird angezeigt:', { cloudDeviceId, currentDeviceId, isFromDifferentDevice });
-          showCloudConflictDialog(cloudSave, localSave, cloudData, cloudLastUpdate, localData, localLastUpdate);
-          return;
-        }
-
-        // Wenn Cloud keine Device-ID hat (alter Save), aktualisiere sie jetzt
-        if (cloudDeviceId === 'unknown') {
-          console.log('Cloud-Save hat keine Device-ID, aktualisiere jetzt');
-          game.lastDeviceId = currentDeviceId;
-          await saveGameToCloud(false);
-        }
-
-        // Cloud gewinnt wenn:
-        // - kein lokaler Spielstand vorhanden
-        // - Cloud hat mehr Fortschritt (mehr Daten)
-        // - Cloud ist neuer UND lokaler Stand hat keinen echten Fortschritt
-        const localHasProgress = localData > 0;
+        // Einfache Logik: Nimm automatisch den besseren Stand
         const cloudIsNewer = cloudLastUpdate > localLastUpdate;
-        const cloudHasMoreProgress = cloudData >= localData;
-
-        const useCloud = !localSave || cloudHasMoreProgress || (cloudIsNewer && !localHasProgress);
+        const cloudHasMoreData = cloudData > localData;
+        const useCloud = !localSave || (cloudIsNewer && cloudHasMoreData);
 
         if (useCloud) {
           try {
