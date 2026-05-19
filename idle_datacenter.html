@@ -1052,7 +1052,8 @@
             balanceVersion: SAVE_BALANCE_VERSION
           });
 
-        if (showStatus) setCloudSyncStatus('Cloud-Speicher: synchronisiert ✓');
+        // Aktualisiere Status immer, nicht nur wenn showStatus true ist
+        setCloudSyncStatus('Cloud-Speicher: synchronisiert ✓');
       } catch (error) {
         console.error('Firestore Speicher-Fehler:', error.code, error.message);
         setCloudSyncStatus('Fehler: ' + (error.code || error.message), true);
@@ -1122,7 +1123,7 @@
           }
         } else {
           setCloudSyncStatus('Cloud-Speicher: lokaler Spielstand ist weiter – wird hochgeladen');
-          await saveGameToCloud(false);
+          await saveGameToCloud(true);
         }
       } catch (error) {
         console.error('Cloud Load Fehler:', error.code, error.message);
