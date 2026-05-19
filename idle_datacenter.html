@@ -2436,7 +2436,7 @@
         const amount = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
         const fallbackAmount = game.buyAmount === -1 && amount === 0 ? 1 : amount;
         const cost = fallbackAmount > 0 ? calculateBulkCost(building, fallbackAmount) : 0;
-        const canAfford = amount > 0 && game.data >= cost;
+        const canAfford = fallbackAmount > 0 && game.data >= cost;
         const costLabel = game.buyAmount === -1 && amount === 0
           ? `${formatData(cost)} <span class="sub" style="color: #f59e0b;">(nächster Kauf)</span>`
           : formatData(cost);
