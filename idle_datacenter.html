@@ -784,6 +784,29 @@
     Datacenter Idle Alpha Version
   </div>
 
+  <!-- Cloud-Konflikt-Dialog -->
+  <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#1a1f2e;border:1px solid #3a4a5a;border-radius:12px;padding:24px;max-width:500px;color:#e0e0e0;">
+      <div style="font-size:20px;font-weight:bold;margin-bottom:16px;">⚠️ Spielstand Konflikt</div>
+      <div style="font-size:14px;line-height:1.6;margin-bottom:20px;">
+        <div style="margin-bottom:12px;">Du hast auf mehreren Geräten Fortschritt gemacht.</div>
+        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:12px 0;">
+          <div style="font-weight:bold;">📱 Cloud-Spielstand:</div>
+          <div id="conflictCloudInfo" style="margin-top:4px;font-size:13px;"></div>
+        </div>
+        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:12px 0;">
+          <div style="font-weight:bold;">💻 Lokaler Spielstand:</div>
+          <div id="conflictLocalInfo" style="margin-top:4px;font-size:13px;"></div>
+        </div>
+        <div style="margin-top:12px;font-size:13px;opacity:0.8;">Welchen Spielstand möchtest du behalten?</div>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button id="conflictKeepCloud" style="flex:1;padding:12px;background:#10b981;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;">☁️ Cloud behalten</button>
+        <button id="conflictKeepLocal" style="flex:1;padding:12px;background:#3b82f6;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;">💻 Lokal behalten</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
     const BASE_OFFLINE_LIMIT = 1500000;
@@ -1294,6 +1317,57 @@
       return JSON.parse(JSON.stringify(game));
     }
 
+    function showCloudConflictDialog(cloudSave, localSave, cloudData, cloudLastUpdate, localData, localLastUpdate) {
+      const dialog = document.getElementById('cloudConflictDialog');
+      if (!dialog) return;
+
+      const cloudTime = new Date(cloudLastUpdate).toLocaleString('de-DE');
+      const localTime = new Date(localLastUpdate).toLocaleString('de-DE');
+
+      document.getElementById('conflictCloudInfo').innerHTML = `
+        <div>Daten: ${formatData(cloudData)}</div>
+        <div>Zeitstempel: ${cloudTime}</div>
+      `;
+
+      document.getElementById('conflictLocalInfo').innerHTML = `
+        <div>Daten: ${formatData(localData)}</div>
+        <div>Zeitstempel: ${localTime}</div>
+      `;
+
+      // Entferne alte Listener
+      const newCloudBtn = document.getElementById('conflictKeepCloud').cloneNode(true);
+      const newLocalBtn = document.getElementById('conflictKeepLocal').cloneNode(true);
+      document.getElementById('conflictKeepCloud').replaceWith(newCloudBtn);
+      document.getElementById('conflictKeepLocal').replaceWith(newLocalBtn);
+
+      newCloudBtn.onclick = async () => {
+        try {
+          loadGame(cloudSave);
+          localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+          renderBuildings();
+          updateUI();
+          setCloudSyncStatus('Cloud-Speicher: Cloud-Spielstand geladen ✓');
+        } catch (e) {
+          console.error('Fehler beim Laden des Cloud-Spielstands:', e);
+          setCloudSyncStatus('Fehler beim Laden', true);
+        }
+        dialog.style.display = 'none';
+      };
+
+      newLocalBtn.onclick = async () => {
+        try {
+          await saveGameToCloud(true);
+          setCloudSyncStatus('Cloud-Speicher: Lokaler Spielstand hochgeladen ✓');
+        } catch (e) {
+          console.error('Fehler beim Hochladen des lokalen Spielstands:', e);
+          setCloudSyncStatus('Fehler beim Hochladen', true);
+        }
+        dialog.style.display = 'none';
+      };
+
+      dialog.style.display = 'flex';
+    }
+
     async function saveGameToCloud(showStatus = false) {
       if (!cloudAvailable || !cloudUser || !firestoreDb || cloudSyncInProgress) return;
 
@@ -1351,6 +1425,16 @@
         const localSave = localSaveRaw ? JSON.parse(localSaveRaw) : null;
         const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
         const localData = localSave ? (localSave.data || 0) : 0;
+
+        // Prüfe auf Konflikt: Wenn beide Änderungen weniger als 5 Minuten auseinander liegen und unterschiedliche Daten haben
+        const timeDifference = Math.abs(cloudLastUpdate - localLastUpdate);
+        const isConflict = localSave && timeDifference < 300000 && cloudData !== localData && localData > 0 && cloudData > 0;
+
+        if (isConflict) {
+          // Zeige Konflikt-Dialog
+          showCloudConflictDialog(cloudSave, localSave, cloudData, cloudLastUpdate, localData, localLastUpdate);
+          return;
+        }
 
         // Cloud gewinnt wenn:
         // - kein lokaler Spielstand vorhanden
