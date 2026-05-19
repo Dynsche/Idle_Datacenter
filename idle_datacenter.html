@@ -3201,7 +3201,28 @@
     }
 
     let lastBuildingsRenderTime = 0;
-    const BUILDINGS_RENDER_INTERVAL = 500; // Render max alle 500ms
+    let lastAffordabilityState = null;
+    const BUILDINGS_RENDER_INTERVAL = 500; // Max alle 500ms
+
+    function hasAffordabilityChanged() {
+      // Prüfe ob sich die Kaufbarkeit von Gebäuden geändert hat
+      const currentState = game.buildings.map(b => {
+        const isUnlocked = game.data >= b.unlockAt || b.owned > 0;
+        if (!isUnlocked) return null;
+
+        const amount = game.buyAmount === -1 ? calculateMaxBuy(b) : game.buyAmount;
+        const fallbackAmount = game.buyAmount === -1 && amount === 0 ? 1 : amount;
+        const cost = fallbackAmount > 0 ? calculateBulkCost(b, fallbackAmount) : 0;
+        const canAfford = fallbackAmount > 0 && game.data >= cost;
+        return canAfford;
+      }).join(',');
+
+      if (currentState !== lastAffordabilityState) {
+        lastAffordabilityState = currentState;
+        return true;
+      }
+      return false;
+    }
 
     function gameLoop() {
       // Berechne Produktion für diesen Frame
@@ -3218,15 +3239,17 @@
       checkAchievements();
       maybeRenderMissions();
 
-      // Aktualisiere Gebäude-Buttons regelmäßig damit sie aktiv/inaktiv werden
-      // wenn die Datenmenge sich ändert
+      // Aktualisiere Gebäude-Buttons nur wenn sich Affordability geändert hat
+      // und nur max alle 500ms
       if (now - lastBuildingsRenderTime > BUILDINGS_RENDER_INTERVAL) {
-        try {
-          renderBuildings();
-          lastBuildingsRenderTime = now;
-        } catch (e) {
-          // Stille falls der Tab nicht sichtbar ist
+        if (hasAffordabilityChanged()) {
+          try {
+            renderBuildings();
+          } catch (e) {
+            // Stille falls der Tab nicht sichtbar ist
+          }
         }
+        lastBuildingsRenderTime = now;
       }
     }
 
