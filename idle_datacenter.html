@@ -1101,11 +1101,25 @@
         const useCloud = !localSave || cloudHasMoreProgress || (cloudIsNewer && !localHasProgress);
 
         if (useCloud) {
-          loadGame(cloudSave);
-          localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
-          renderBuildings();
-          updateUI();
-          setCloudSyncStatus('Cloud-Speicher: Spielstand geladen ✓');
+          try {
+            loadGame(cloudSave);
+            localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+            // Nur rendern wenn die Gebäude-Container sichtbar sind
+            try {
+              renderBuildings();
+            } catch (renderError) {
+              console.warn('renderBuildings fehlgeschlagen (Tab vermutlich nicht sichtbar):', renderError.message);
+            }
+            try {
+              updateUI();
+            } catch (updateError) {
+              console.warn('updateUI fehlgeschlagen:', updateError.message);
+            }
+            setCloudSyncStatus('Cloud-Speicher: Spielstand geladen ✓');
+          } catch (loadError) {
+            console.error('Cloud Load Fehler beim Laden des Spielstands:', loadError);
+            setCloudSyncStatus('Cloud-Speicher: Fehler beim Laden', true);
+          }
         } else {
           setCloudSyncStatus('Cloud-Speicher: lokaler Spielstand ist weiter – wird hochgeladen');
           await saveGameToCloud(false);
@@ -1797,6 +1811,10 @@
 
     function renderBuildings() {
       const container = document.getElementById('buildings');
+      if (!container) {
+        console.log('Gebäude-Container nicht gefunden (Tab vermutlich nicht sichtbar)');
+        return;
+      }
       container.innerHTML = '';
 
       game.buildings.forEach((building, index) => {
