@@ -641,12 +641,38 @@
       <div style="line-height: 1.8;">
         <div><strong>Gesamt produzierte Daten:</strong> <span id="statTotalData">0 Bit</span></div>
         <div><strong>Gesamte Klicks:</strong> <span id="statTotalClicks">0</span></div>
-        <div><strong>Gebäude gekauft:</strong> <span id="statBuildingsBought">0</span></div>
-        <div><strong>Upgrades gekauft:</strong> <span id="statUpgradesBought">0</span></div>
-        <div><strong>Ränge durchlaufen:</strong> <span id="statPrestigeCount">0</span></div>
-        <div><strong>Gesamte Spielzeit:</strong> <span id="statPlaytime">0h 0m</span></div>
-        <div><strong>Offline-Zeit genutzt:</strong> <span id="statOfflineTime">0h 0m</span></div>
+        <div><strong>Klicks pro Stunde:</strong> <span id="statClicksPerHour">0</span></div>
+        <div><strong>Daten pro Stunde:</strong> <span id="statDataPerHour">0 Bit</span></div>
       </div>
+    </div>
+
+    <div class="upgrade">
+      <h3>🏢 Gebäude & Upgrades</h3>
+      <div style="line-height: 1.8;">
+        <div><strong>Gebäude gekauft (Gesamt):</strong> <span id="statBuildingsBought">0</span></div>
+        <div><strong>Aktuelle Gebäude:</strong> <span id="statCurrentBuildings">0</span></div>
+        <div><strong>Upgrades gekauft:</strong> <span id="statUpgradesBought">0</span></div>
+        <div><strong>Aktive Upgrades:</strong> <span id="statActiveUpgrades">0</span></div>
+      </div>
+    </div>
+
+    <div class="upgrade">
+      <h3>⏱️ Zeit & Fortschritt</h3>
+      <div style="line-height: 1.8;">
+        <div><strong>Gesamte Spielzeit:</strong> <span id="statPlaytime">0h 0m</span></div>
+        <div><strong>Offline-Zeit akkumuliert:</strong> <span id="statOfflineTime">0h 0m</span></div>
+        <div><strong>Offline-Zeit genutzt:</strong> <span id="statOfflineTimeUsed">0h 0m</span></div>
+        <div><strong>Ränge durchlaufen:</strong> <span id="statPrestigeCount">0</span></div>
+        <div><strong>Rang Bonus:</strong> <span id="statPrestigeBonus">+0.0%</span></div>
+      </div>
+    </div>
+
+    <div class="upgrade">
+      <h3>🏆 Erfolge & Leistung</h3>
+      <div style="line-height: 1.8;">
+        <div><strong>Erfolge freigeschaltet:</strong> <span id="statAchievements">0/10</span></div>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -1898,6 +1924,35 @@
       const offlineHours = Math.floor(game.stats.offlineTime / 3600);
       const offlineMinutes = Math.floor((game.stats.offlineTime % 3600) / 60);
       if ((el = document.getElementById('statOfflineTime'))) el.innerText = `${offlineHours}h ${offlineMinutes}m`;
+
+      // Neue erweiterte Statistiken
+      const offlineUsedHours = Math.floor((game.stats.offlineTimeUsed || 0) / 3600);
+      const offlineUsedMinutes = Math.floor(((game.stats.offlineTimeUsed || 0) % 3600) / 60);
+      if ((el = document.getElementById('statOfflineTimeUsed'))) el.innerText = `${offlineUsedHours}h ${offlineUsedMinutes}m`;
+
+      // Durchschnitt Klicks pro Stunde
+      const clicksPerHour = totalPlayTime > 0 ? Math.round((game.stats.totalClicks / totalPlayTime) * 3600000) : 0;
+      if ((el = document.getElementById('statClicksPerHour'))) el.innerText = clicksPerHour.toLocaleString();
+
+      // Durchschnitt Daten pro Stunde
+      const dataPerHour = totalPlayTime > 0 ? Math.round((game.stats.totalData / totalPlayTime) * 3600000) : 0;
+      if ((el = document.getElementById('statDataPerHour'))) el.innerText = formatData(dataPerHour);
+
+      // Aktuelle Gebäude
+      const totalBuildings = game.buildings.reduce((sum, b) => sum + b.owned, 0);
+      if ((el = document.getElementById('statCurrentBuildings'))) el.innerText = totalBuildings.toLocaleString();
+
+      // Aktive Upgrades
+      const activeUpgrades = game.buildingUpgrades.length + (game.aiUpgradeBought ? 1 : 0) + game.offlineUpgradesBought;
+      if ((el = document.getElementById('statActiveUpgrades'))) el.innerText = activeUpgrades.toLocaleString();
+
+      // Aktive Achievements
+      const unlockedAchievements = Object.keys(game.achievements || {}).filter(key => game.achievements[key] === true).length;
+      if ((el = document.getElementById('statAchievements'))) el.innerText = `${unlockedAchievements}/${ACHIEVEMENTS.length}`;
+
+      // Aktueller Rank/Prestige Bonus
+      const prestigeBonus = (game.prestige * PRESTIGE_BONUS_PER_LEVEL * 100).toFixed(1);
+      if ((el = document.getElementById('statPrestigeBonus'))) el.innerText = `+${prestigeBonus}%`;
     }
 
     function checkUpgradesTabUnlock() {
