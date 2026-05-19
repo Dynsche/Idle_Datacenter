@@ -47,6 +47,8 @@
     #missionsContainer {
       margin-bottom: 12px;
       gap: 10px;
+      display: flex;
+      flex-direction: column;
     }
 
     #missionsContainer .card {
@@ -57,12 +59,29 @@
     #missionsContainer .mission-row {
       align-items: flex-start;
       gap: 6px;
+      display: flex;
+      flex-direction: column;
     }
 
     #missionsContainer button {
       min-width: 82px;
       padding: 7px 9px;
       font-size: 12px;
+      width: 100%;
+    }
+
+    /* Desktop: button next to content */
+    @media (min-width: 768px) {
+      #missionsContainer .mission-row {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+
+      #missionsContainer button {
+        width: auto;
+        min-width: 92px;
+        flex-shrink: 0;
+      }
     }
 
     .mission-card:hover {
@@ -1538,8 +1557,8 @@
               <div style="font-size:15px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${mission.title} <span class="sub">(Lv ${mission.level || 1})</span></div>
               <div class="sub" style="font-size:12px;line-height:1.25;margin-top:2px;">${getMissionProgressText(mission, currentValue)} • Ziel: ${getMissionTargetText(mission)}</div>
               <div class="sub" style="font-size:12px;line-height:1.25;">Belohnung: ${rewardText}</div>
+              <button onclick="claimMission('${mission.id}')" ${!isDone ? 'disabled' : ''} style="margin-top:8px;">${isDone ? 'Abholen' : 'In Arbeit'}</button>
             </div>
-            <button onclick="claimMission('${mission.id}')" ${!isDone ? 'disabled' : ''} style="min-width:92px;padding:8px 10px;font-size:12px;">${isDone ? 'Abholen' : 'In Arbeit'}</button>
           </div>
           <div class="mission-track">
             <div class="mission-fill ${isDone ? 'done' : ''}" style="width:${(progressRatio * 100).toFixed(1)}%;"></div>
