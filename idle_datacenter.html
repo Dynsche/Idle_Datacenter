@@ -1492,8 +1492,10 @@
           useCloud = false; // Lokal ist gleich oder neuer → behalte Lokal
         }
 
-        // Zeige Sync-Benachrichtigung
-        showSyncNotification();
+        // Zeige Sync-Benachrichtigung nur wenn tatsächlich etwas synchronisiert wurde
+        if (useCloud) {
+          showSyncNotification();
+        }
 
         if (useCloud) {
           try {
