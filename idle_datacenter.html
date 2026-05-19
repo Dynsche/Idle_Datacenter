@@ -3011,12 +3011,6 @@
       updateUI();
       checkAchievements();
       maybeRenderMissions();
-
-      // Rendern Gebäude jeden 10. Frame für Performance
-      frameCounter++;
-      if (frameCounter % 10 === 0) {
-        renderBuildings();
-      }
     }
 
     setInterval(gameLoop, 100);
@@ -3034,6 +3028,19 @@
     });
 
     window.addEventListener('beforeunload', saveGame);
+
+    // Gebäude nur rendern wenn man darüber fährt
+    let buildingsHovering = false;
+    const buildingsContainer = document.getElementById('buildings');
+    if (buildingsContainer) {
+      buildingsContainer.addEventListener('mouseenter', () => {
+        buildingsHovering = true;
+        renderBuildings();
+      });
+      buildingsContainer.addEventListener('mouseleave', () => {
+        buildingsHovering = false;
+      });
+    }
 
     // Balance-Test-Helfer für schnelle Kalibrierung in der Konsole
     window.balanceTargets = [
