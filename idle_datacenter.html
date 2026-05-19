@@ -3200,6 +3200,9 @@
       }, 300);
     }
 
+    let lastBuildingsRenderTime = 0;
+    const BUILDINGS_RENDER_INTERVAL = 500; // Render max alle 500ms
+
     function gameLoop() {
       // Berechne Produktion für diesen Frame
       const now = Date.now();
@@ -3214,6 +3217,17 @@
       updateUI();
       checkAchievements();
       maybeRenderMissions();
+
+      // Aktualisiere Gebäude-Buttons regelmäßig damit sie aktiv/inaktiv werden
+      // wenn die Datenmenge sich ändert
+      if (now - lastBuildingsRenderTime > BUILDINGS_RENDER_INTERVAL) {
+        try {
+          renderBuildings();
+          lastBuildingsRenderTime = now;
+        } catch (e) {
+          // Stille falls der Tab nicht sichtbar ist
+        }
+      }
     }
 
     setInterval(gameLoop, 100);
