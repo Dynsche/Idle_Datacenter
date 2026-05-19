@@ -1555,13 +1555,16 @@
     async function signInWithGoogle() {
       if (!cloudAvailable || !firebaseAuth) {
         setCloudSyncStatus('Cloud-Speicher: Firebase nicht konfiguriert', true);
+        console.error('Firebase nicht verfügbar für Sign-In');
         return;
       }
 
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        console.log('Google Sign-In versucht...');
-        // Verwende Redirect statt Popup für bessere Kompatibilität
+        console.log('Google Sign-In versucht (Redirect-Modus)...');
+        setCloudSyncStatus('Cloud-Speicher: Weitergeleitet zu Google...');
+
+        // Verwende Redirect statt Popup für bessere Kompatibilität (besonders auf Handy)
         await firebaseAuth.signInWithRedirect(provider);
       } catch (error) {
         console.error('Google Sign-In Fehler:', error.code, error.message);
@@ -1601,8 +1604,19 @@
 
       // Verarbeite Redirect-Ergebnis (falls von Google Sign-In Redirect zurückgekehrt)
       firebaseAuth.getRedirectResult()
+        .then((result) => {
+          console.log('getRedirectResult vollendet. Credential:', result.credential ? 'ja' : 'nein', 'User:', result.user ? result.user.email : 'keine');
+          if (result.user) {
+            console.log('Google Redirect erfolgreich, User:', result.user.email);
+            setCloudSyncStatus('Cloud-Speicher: Google erfolgreich verbunden!');
+          }
+        })
         .catch((error) => {
-          console.error('Redirect Result Fehler:', error.code, error.message);
+          console.log('getRedirectResult Fehler:', error.code, error.message);
+          // Ignoriere "popup-closed-by-user" Fehler
+          if (error.code !== 'auth/popup-closed-by-user') {
+            console.error('Redirect Result Fehler:', error.code, error.message);
+          }
         });
 
       firebaseAuth.onAuthStateChanged(async (user) => {
@@ -1610,6 +1624,7 @@
         updateCloudUserUI();
 
         if (cloudUser) {
+          console.log('User angemeldet:', cloudUser.email);
           setCloudSyncStatus('Cloud-Speicher: angemeldet');
           await loadGameFromCloud();
         } else {
