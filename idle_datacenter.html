@@ -1681,6 +1681,11 @@
       if (tabName === 'stats') {
         updateStats();
       }
+      if (tabName === 'account') {
+        // Update Cloud UI when switching to account tab
+        updateCloudUserUI();
+        updateStats();
+      }
 
       updateTabNotifications();
     }
@@ -2442,25 +2447,29 @@
         const gained = offlineSeconds * productionPerSecond();
 
         game.data += gained;
-        if (game.stats) {
-          game.stats.totalData += gained;
-          game.stats.offlineTime += offlineSeconds;
+          if (game.stats) {
+            game.stats.totalData += gained;
+            game.stats.offlineTime += offlineSeconds;
+          }
+
+          const offlineInfoBox = document.getElementById('offlineInfo');
+          if (offlineInfoBox) {
+            offlineInfoBox.style.display = 'block';
+            offlineInfoBox.innerHTML = `
+              <strong>Offline Produktion Aktiv</strong><br>
+              Offline Zeit: ${Math.floor(offlineSeconds / 3600)}h ${Math.floor((offlineSeconds % 3600) / 60)}m ${offlineSeconds % 60}s<br>
+              Verdiente Daten: ${formatData(gained)}
+            `;
+
+            // Verstecke die Box nach 60 Sekunden
+            setTimeout(() => {
+              if (offlineInfoBox) offlineInfoBox.style.display = 'none';
+            }, 60000);
+          }
+        } else {
+          const offlineInfoBoxAlt = document.getElementById('offlineInfo');
+          if (offlineInfoBoxAlt) offlineInfoBoxAlt.style.display = 'none';
         }
-
-        document.getElementById('offlineInfo').style.display = 'block';
-        document.getElementById('offlineInfo').innerHTML = `
-          <strong>Offline Produktion Aktiv</strong><br>
-          Offline Zeit: ${Math.floor(offlineSeconds / 3600)}h ${Math.floor((offlineSeconds % 3600) / 60)}m ${offlineSeconds % 60}s<br>
-          Verdiente Daten: ${formatData(gained)}
-        `;
-
-        // Verstecke die Box nach 60 Sekunden
-        setTimeout(() => {
-          document.getElementById('offlineInfo').style.display = 'none';
-        }, 60000);
-      } else {
-        document.getElementById('offlineInfo').style.display = 'none';
-      }
 
       // NACH der Offline-Berechnung: Speichere Migration-Änderungen
       if (costsMigrated) {
