@@ -784,7 +784,7 @@
     Datacenter Idle Alpha Version
   </div>
 
-  <!-- Cloud-Konflikt-Dialog - DEAKTIVIERT -->
+  <!-- Cloud-Konflikt-Dialog - Auto-Close nach 2s -->
   <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:10px;pointer-events:auto;">
     <div style="background:#1a1f2e;border:2px solid #3a4a5a;border-radius:12px;padding:20px;max-width:100%;width:100%;max-width:550px;color:#e0e0e0;box-sizing:border-box;max-height:90vh;overflow-y:auto;pointer-events:auto;">
       <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">✓ Spielstand synchronisiert</div>
@@ -1313,6 +1313,16 @@
       return JSON.parse(JSON.stringify(game));
     }
 
+    function showSyncNotification() {
+      const dialog = document.getElementById('cloudConflictDialog');
+      if (!dialog) return;
+
+      dialog.style.display = 'flex';
+      setTimeout(() => {
+        dialog.style.display = 'none';
+      }, 2000);
+    }
+
     function showCloudConflictDialog(cloudSave, localSave, cloudData, cloudLastUpdate, localData, localLastUpdate) {
       const dialog = document.getElementById('cloudConflictDialog');
       const cloudInfoEl = document.getElementById('conflictCloudInfo');
@@ -1458,10 +1468,26 @@
         const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
         const localData = localSave ? (localSave.data || 0) : 0;
 
-        // Einfache Logik: Nimm automatisch den besseren Stand
+        // Verbesserte Logik zur Bestimmung des aktuellsten Stands:
+        // 1. Wenn Cloud neuer ist UND mehr Daten = Cloud gewinnt
+        // 2. Wenn Timestamps gleich aber Cloud mehr Daten = Cloud gewinnt
+        // 3. Wenn Timestamps gleich und Daten gleich = Lokal behalten (kein Update nötig)
+        // 4. Wenn Lokal neuer = Lokal behalten und hochladen
         const cloudIsNewer = cloudLastUpdate > localLastUpdate;
         const cloudHasMoreData = cloudData > localData;
-        const useCloud = !localSave || (cloudIsNewer && cloudHasMoreData);
+        const datesEqual = Math.abs(cloudLastUpdate - localLastUpdate) < 1000; // Toleranz 1 Sekunde
+
+        let useCloud = false;
+        if (cloudIsNewer && cloudHasMoreData) {
+          useCloud = true; // Cloud ist eindeutig besser
+        } else if (datesEqual && cloudHasMoreData) {
+          useCloud = true; // Gleiche Zeit aber Cloud hat mehr Daten
+        } else if (!localSave) {
+          useCloud = true; // Keine lokale Sicherung, nehme Cloud
+        }
+
+        // Zeige Sync-Benachrichtigung
+        showSyncNotification();
 
         if (useCloud) {
           try {
