@@ -125,6 +125,43 @@
       }
     }
 
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -150px);
+      }
+    }
+
     /* Desktop: button next to content */
     @media (min-width: 768px) {
       #missionsContainer .mission-row {
@@ -169,6 +206,32 @@
 
     .mission-fill.done {
       background: #22c55e;
+    }
+
+    .pulse-animation {
+      animation: pulse 0.6s ease-in-out;
+    }
+
+    .bounce-animation {
+      animation: bounce 0.8s ease-in-out;
+    }
+
+    .fadeInScale-animation {
+      animation: fadeInScale 0.4s ease-out;
+    }
+
+    .building:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .building {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+      transition: transform 0.05s ease;
     }
 
     .resource {
@@ -1659,6 +1722,9 @@
         game.missions.completedCount++;
       }
 
+      // Animations-Effekt für Mission Completion
+      showFloatingText('🎉 Mission abgeschlossen!', 'purchase');
+
       if (game.missions.completedCount >= MISSION_TEMPLATES.length) {
         markMissionsDirty();
         updateUI();
@@ -2460,6 +2526,11 @@
         game.stats.totalClicks++;
         game.stats.totalData += totalClick;
       }
+
+      // Animiere Klick-Effekt
+      showFloatingText('+' + formatData(totalClick), 'click');
+      showClickPulse();
+
       updateUI();
     }
 
@@ -2602,6 +2673,44 @@
       }
       localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
       saveGameToCloud(false);
+    }
+
+    function showFloatingText(text, type = 'generic') {
+      const floatingText = document.createElement('div');
+      floatingText.style.cssText = `
+        position: fixed;
+        font-weight: bold;
+        font-size: 24px;
+        pointer-events: none;
+        z-index: 5000;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        animation: floatUp 1.5s ease-out forwards;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      `;
+
+      if (type === 'click') {
+        floatingText.style.color = '#fbbf24';
+        floatingText.textContent = text;
+      } else if (type === 'purchase') {
+        floatingText.style.color = '#22c55e';
+        floatingText.textContent = text;
+      } else {
+        floatingText.style.color = '#60a5fa';
+        floatingText.textContent = text;
+      }
+
+      document.body.appendChild(floatingText);
+      setTimeout(() => floatingText.remove(), 1500);
+    }
+
+    function showClickPulse() {
+      const dataElement = document.getElementById('data');
+      if (dataElement) {
+        dataElement.classList.add('pulse-animation');
+        setTimeout(() => dataElement.classList.remove('pulse-animation'), 600);
+      }
     }
 
     function showOfflineNotification(offlineSeconds, gained) {
