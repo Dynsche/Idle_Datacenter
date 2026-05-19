@@ -1474,14 +1474,22 @@
         const localData = localSave ? (localSave.data || 0) : 0;
 
         // Nur Konflikt-Dialog wenn Änderungen von UNTERSCHIEDLICHEN Geräten kommen
-        const isFromDifferentDevice = cloudDeviceId !== currentDeviceId;
+        const isFromDifferentDevice = cloudDeviceId !== currentDeviceId && cloudDeviceId !== 'unknown';
         const timeDifference = Math.abs(cloudLastUpdate - localLastUpdate);
         const isConflict = localSave && isFromDifferentDevice && timeDifference < 300000 && cloudData !== localData && localData > 0 && cloudData > 0;
 
         if (isConflict) {
           // Zeige Konflikt-Dialog
+          console.log('Konflikt erkannt - Dialog wird angezeigt:', { cloudDeviceId, currentDeviceId, isFromDifferentDevice });
           showCloudConflictDialog(cloudSave, localSave, cloudData, cloudLastUpdate, localData, localLastUpdate);
           return;
+        }
+
+        // Wenn Cloud keine Device-ID hat (alter Save), aktualisiere sie jetzt
+        if (cloudDeviceId === 'unknown') {
+          console.log('Cloud-Save hat keine Device-ID, aktualisiere jetzt');
+          game.lastDeviceId = currentDeviceId;
+          await saveGameToCloud(false);
         }
 
         // Cloud gewinnt wenn:
