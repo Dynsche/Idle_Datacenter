@@ -988,9 +988,16 @@
 
     function setCloudSyncStatus(text, isError = false) {
       const statusElement = document.getElementById('cloudSyncStatus');
-      if (!statusElement) return;
-      statusElement.innerText = text;
-      statusElement.style.color = isError ? '#fca5a5' : '';
+      if (!statusElement) {
+        console.log('Cloud Sync Status Element nicht gefunden:', text);
+        return;
+      }
+      try {
+        statusElement.innerText = text;
+        statusElement.style.color = isError ? '#fca5a5' : '';
+      } catch (e) {
+        console.error('Fehler beim setCloudSyncStatus:', e);
+      }
     }
 
     function updateCloudUserUI() {
@@ -999,19 +1006,27 @@
       const logoutBtn = document.getElementById('btnGoogleLogout');
       const syncBtn = document.getElementById('btnCloudSyncNow');
 
-      if (!userStatus || !loginBtn || !logoutBtn || !syncBtn) return;
+      // Silently fail if elements don't exist (e.g., tab not yet visible)
+      if (!userStatus || !loginBtn || !logoutBtn || !syncBtn) {
+        console.log('Cloud UI-Elemente nicht gefunden (Tab vermutlich noch nicht sichtbar)');
+        return;
+      }
 
-      const configured = cloudAvailable;
-      const signedIn = !!cloudUser;
+      try {
+        const configured = cloudAvailable;
+        const signedIn = !!cloudUser;
 
-      userStatus.innerText = signedIn
-        ? `Google: ${cloudUser.displayName || cloudUser.email || cloudUser.uid}`
-        : (configured ? 'Google: nicht angemeldet' : 'Google: Firebase nicht konfiguriert');
+        userStatus.innerText = signedIn
+          ? `Google: ${cloudUser.displayName || cloudUser.email || cloudUser.uid}`
+          : (configured ? 'Google: nicht angemeldet' : 'Google: Firebase nicht konfiguriert');
 
-      loginBtn.style.display = signedIn ? 'none' : 'inline-block';
-      logoutBtn.style.display = signedIn ? 'inline-block' : 'none';
-      syncBtn.style.display = signedIn ? 'inline-block' : 'none';
-      loginBtn.disabled = !configured;
+        loginBtn.style.display = signedIn ? 'none' : 'inline-block';
+        logoutBtn.style.display = signedIn ? 'inline-block' : 'none';
+        syncBtn.style.display = signedIn ? 'inline-block' : 'none';
+        loginBtn.disabled = !configured;
+      } catch (e) {
+        console.error('Fehler beim Update Cloud UI:', e);
+      }
     }
 
     function getSerializableGameState() {
