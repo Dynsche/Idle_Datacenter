@@ -786,17 +786,17 @@
 
   <!-- Cloud-Konflikt-Dialog -->
   <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;padding:10px;">
-    <div style="background:#1a1f2e;border:1px solid #3a4a5a;border-radius:12px;padding:16px;max-width:100%;width:100%;max-width:500px;color:#e0e0e0;box-sizing:border-box;max-height:90vh;overflow-y:auto;">
+    <div style="background:#1a1f2e;border:1px solid #3a4a5a;border-radius:12px;padding:16px;max-width:100%;width:100%;max-width:550px;color:#e0e0e0;box-sizing:border-box;max-height:90vh;overflow-y:auto;">
       <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">⚠️ Spielstand Konflikt</div>
       <div style="font-size:13px;line-height:1.6;margin-bottom:16px;">
         <div style="margin-bottom:10px;">Du hast auf mehreren Geräten Fortschritt gemacht.</div>
-        <div style="background:#2a3a4a;padding:10px;border-radius:6px;margin:10px 0;word-break:break-word;">
-          <div style="font-weight:bold;margin-bottom:4px;">📱 Cloud:</div>
-          <div id="conflictCloudInfo" style="font-size:12px;line-height:1.4;"></div>
+        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:10px 0;min-height:60px;display:flex;flex-direction:column;justify-content:center;">
+          <div style="font-weight:bold;margin-bottom:6px;font-size:13px;">📱 Cloud-Spielstand:</div>
+          <div id="conflictCloudInfo" style="font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
         </div>
-        <div style="background:#2a3a4a;padding:10px;border-radius:6px;margin:10px 0;word-break:break-word;">
-          <div style="font-weight:bold;margin-bottom:4px;">💻 Lokal:</div>
-          <div id="conflictLocalInfo" style="font-size:12px;line-height:1.4;"></div>
+        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:10px 0;min-height:60px;display:flex;flex-direction:column;justify-content:center;">
+          <div style="font-weight:bold;margin-bottom:6px;font-size:13px;">💻 Lokaler Spielstand:</div>
+          <div id="conflictLocalInfo" style="font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;"></div>
         </div>
         <div style="margin-top:10px;font-size:12px;opacity:0.8;">Welchen behalten?</div>
       </div>
@@ -1232,6 +1232,16 @@
       }));
     }
 
+    // Device-ID für Cloud-Konflikt-Erkennung
+    function getOrCreateDeviceId() {
+      let deviceId = localStorage.getItem('datacenterDeviceId');
+      if (!deviceId) {
+        deviceId = 'device-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('datacenterDeviceId', deviceId);
+      }
+      return deviceId;
+    }
+
     let game = {
       data: 0,
       clickPower: 1,
@@ -1240,6 +1250,7 @@
       productionMultiplier: 1,
       offlineLimit: BASE_OFFLINE_LIMIT,
       lastUpdate: Date.now(),
+      lastDeviceId: getOrCreateDeviceId(),
       aiUpgradeBought: false,
       offlineUpgradeCost: BASE_OFFLINE_UPGRADE_COST,
       aiUpgradeCost: BASE_AI_UPGRADE_COST,
@@ -1322,30 +1333,32 @@
       if (!dialog) return;
 
       const formatTime = (timestamp) => {
-        if (timestamp <= 0) return 'Unbekannt';
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMinutes = Math.floor(diffMs / 60000);
+        if (!timestamp || timestamp <= 0) return 'Unbekannt';
+        try {
+          const date = new Date(timestamp);
+          const now = new Date();
+          const diffMs = now - date;
+          const diffMinutes = Math.floor(diffMs / 60000);
 
-        if (diffMinutes < 1) return 'gerade eben';
-        if (diffMinutes < 60) return `vor ${diffMinutes}m`;
+          if (diffMinutes < 1) return 'gerade eben';
+          if (diffMinutes < 60) return `vor ${diffMinutes}m`;
 
-        const hours = Math.floor(diffMinutes / 60);
-        if (hours < 24) return `vor ${hours}h`;
+          const hours = Math.floor(diffMinutes / 60);
+          if (hours < 24) return `vor ${hours}h`;
 
-        return date.toLocaleDateString('de-DE');
+          return date.toLocaleDateString('de-DE');
+        } catch (e) {
+          return 'Fehler';
+        }
       };
 
-      document.getElementById('conflictCloudInfo').innerHTML = `
-        <div>Daten: <strong>${cloudData > 0 ? formatData(cloudData) : '0 Bytes'}</strong></div>
-        <div>Zeit: <strong>${formatTime(cloudLastUpdate)}</strong></div>
-      `;
+      const cloudDataStr = cloudData && cloudData > 0 ? formatData(cloudData) : '0 Bytes';
+      const localDataStr = localData && localData > 0 ? formatData(localData) : '0 Bytes';
+      const cloudTimeStr = formatTime(cloudLastUpdate);
+      const localTimeStr = formatTime(localLastUpdate);
 
-      document.getElementById('conflictLocalInfo').innerHTML = `
-        <div>Daten: <strong>${localData > 0 ? formatData(localData) : '0 Bytes'}</strong></div>
-        <div>Zeit: <strong>${formatTime(localLastUpdate)}</strong></div>
-      `;
+      document.getElementById('conflictCloudInfo').innerHTML = `Daten: ${cloudDataStr}\nZeit: ${cloudTimeStr}`;
+      document.getElementById('conflictLocalInfo').innerHTML = `Daten: ${localDataStr}\nZeit: ${localTimeStr}`;
 
       // Entferne alte Listener
       const newCloudBtn = document.getElementById('conflictKeepCloud').cloneNode(true);
@@ -1433,15 +1446,18 @@
         const cloudSave = doc.data().saveData;
         const cloudLastUpdate = cloudSave.lastUpdate || 0;
         const cloudData = cloudSave.data || 0;
+        const cloudDeviceId = cloudSave.lastDeviceId || 'unknown';
+        const currentDeviceId = getOrCreateDeviceId();
 
         const localSaveRaw = localStorage.getItem('datacenterIdleSave');
         const localSave = localSaveRaw ? JSON.parse(localSaveRaw) : null;
         const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
         const localData = localSave ? (localSave.data || 0) : 0;
 
-        // Prüfe auf Konflikt: Wenn beide Änderungen weniger als 5 Minuten auseinander liegen und unterschiedliche Daten haben
+        // Nur Konflikt-Dialog wenn Änderungen von UNTERSCHIEDLICHEN Geräten kommen
+        const isFromDifferentDevice = cloudDeviceId !== currentDeviceId;
         const timeDifference = Math.abs(cloudLastUpdate - localLastUpdate);
-        const isConflict = localSave && timeDifference < 300000 && cloudData !== localData && localData > 0 && cloudData > 0;
+        const isConflict = localSave && isFromDifferentDevice && timeDifference < 300000 && cloudData !== localData && localData > 0 && cloudData > 0;
 
         if (isConflict) {
           // Zeige Konflikt-Dialog
