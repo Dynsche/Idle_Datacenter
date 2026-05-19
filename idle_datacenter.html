@@ -1579,24 +1579,25 @@
     }
 
     function updateUI() {
-      document.getElementById('data').innerText = formatData(game.data);
-      document.getElementById('perSecond').innerText = formatData(productionPerSecond()) + '/s';
+      let el;
+      if ((el = document.getElementById('data'))) el.innerText = formatData(game.data);
+      if ((el = document.getElementById('perSecond'))) el.innerText = formatData(productionPerSecond()) + '/s';
 
       const hours = Math.floor(game.offlineLimit / 3600);
       const minutes = Math.floor((game.offlineLimit % 3600) / 60);
-      document.getElementById('offlineHours').innerText = `${hours}h ${minutes}m`;
+      if ((el = document.getElementById('offlineHours'))) el.innerText = `${hours}h ${minutes}m`;
 
-      document.getElementById('prestige').innerText = game.prestige;
-      document.getElementById('offlineUpgradeCost').innerText = formatData(game.offlineUpgradeCost);
-      document.getElementById('offlineUpgradesCount').innerText = game.offlineUpgradesBought;
+      if ((el = document.getElementById('prestige'))) el.innerText = game.prestige;
+      if ((el = document.getElementById('offlineUpgradeCost'))) el.innerText = formatData(game.offlineUpgradeCost);
+      if ((el = document.getElementById('offlineUpgradesCount'))) el.innerText = game.offlineUpgradesBought;
 
-      document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
-      document.getElementById('formulaTransferRatio').innerText = `${Math.round(SUPPORT_TRANSFER_RATIO * 100)}%`;
-      document.getElementById('formulaRangBonus').innerText = (PRESTIGE_BONUS_PER_LEVEL * 100).toFixed(0);
-      document.getElementById('formulaSoftcapStage1').innerText = formatData(SOFTCAP_STAGE1_START);
-      document.getElementById('formulaSoftcapStage2').innerText = formatData(SOFTCAP_STAGE2_START);
+      if ((el = document.getElementById('aiUpgradeCost'))) el.innerText = formatData(game.aiUpgradeCost);
+      if ((el = document.getElementById('formulaTransferRatio'))) el.innerText = `${Math.round(SUPPORT_TRANSFER_RATIO * 100)}%`;
+      if ((el = document.getElementById('formulaRangBonus'))) el.innerText = (PRESTIGE_BONUS_PER_LEVEL * 100).toFixed(0);
+      if ((el = document.getElementById('formulaSoftcapStage1'))) el.innerText = formatData(SOFTCAP_STAGE1_START);
+      if ((el = document.getElementById('formulaSoftcapStage2'))) el.innerText = formatData(SOFTCAP_STAGE2_START);
 
-      document.getElementById('clickPowerDisplay').innerText = formatData(game.clickPower);
+      if ((el = document.getElementById('clickPowerDisplay'))) el.innerText = formatData(game.clickPower);
 
       updateBuyButtons();
       updateUpgradeButtons();
@@ -1617,20 +1618,21 @@
     function updateStats() {
       if (!game.stats) return;
 
-      document.getElementById('statTotalData').innerText = formatData(game.stats.totalData);
-      document.getElementById('statTotalClicks').innerText = game.stats.totalClicks.toLocaleString();
-      document.getElementById('statBuildingsBought').innerText = game.stats.buildingsBought.toLocaleString();
-      document.getElementById('statUpgradesBought').innerText = game.stats.upgradesBought.toLocaleString();
-      document.getElementById('statPrestigeCount').innerText = game.stats.prestigeCount;
+      let el;
+      if ((el = document.getElementById('statTotalData'))) el.innerText = formatData(game.stats.totalData);
+      if ((el = document.getElementById('statTotalClicks'))) el.innerText = game.stats.totalClicks.toLocaleString();
+      if ((el = document.getElementById('statBuildingsBought'))) el.innerText = game.stats.buildingsBought.toLocaleString();
+      if ((el = document.getElementById('statUpgradesBought'))) el.innerText = game.stats.upgradesBought.toLocaleString();
+      if ((el = document.getElementById('statPrestigeCount'))) el.innerText = game.stats.prestigeCount;
 
       const totalPlayTime = game.stats.playTime + (Date.now() - game.stats.startTime);
       const playHours = Math.floor(totalPlayTime / 3600000);
       const playMinutes = Math.floor((totalPlayTime % 3600000) / 60000);
-      document.getElementById('statPlaytime').innerText = `${playHours}h ${playMinutes}m`;
+      if ((el = document.getElementById('statPlaytime'))) el.innerText = `${playHours}h ${playMinutes}m`;
 
       const offlineHours = Math.floor(game.stats.offlineTime / 3600);
       const offlineMinutes = Math.floor((game.stats.offlineTime % 3600) / 60);
-      document.getElementById('statOfflineTime').innerText = `${offlineHours}h ${offlineMinutes}m`;
+      if ((el = document.getElementById('statOfflineTime'))) el.innerText = `${offlineHours}h ${offlineMinutes}m`;
     }
 
     function checkUpgradesTabUnlock() {
@@ -1644,7 +1646,8 @@
       if (!upgradesTab) return;
 
       upgradesTab.classList.remove('has-notification');
-      const upgradesActive = document.getElementById('tab-upgrades').classList.contains('active');
+      let el = document.getElementById('tab-upgrades');
+      const upgradesActive = el ? el.classList.contains('active') : false;
 
       const hasAffordableBuildingUpgrade = BUILDING_UPGRADES.some((upgrade, index) => {
         return !game.buildingUpgrades.includes(index) && game.data >= upgrade.unlockAt && game.data >= upgrade.cost;
@@ -1672,7 +1675,8 @@
       });
 
       // Zeige gewählten Tab
-      document.getElementById('tab-' + tabName).classList.add('active');
+      let el = document.getElementById('tab-' + tabName);
+      if (el) el.classList.add('active');
 
       // Aktiviere den geklickten Button
       const tabButtons = {
@@ -2160,11 +2164,13 @@
       sessionStorage.setItem('buyAmount', amount);
 
       ['buy1', 'buy10', 'buy100', 'buyMax'].forEach(id => {
-        document.getElementById(id).classList.remove('active');
+        let el = document.getElementById(id);
+        if (el) el.classList.remove('active');
       });
 
       const activeId = amount === 1 ? 'buy1' : amount === 10 ? 'buy10' : amount === 100 ? 'buy100' : 'buyMax';
-      document.getElementById(activeId).classList.add('active');
+      let el = document.getElementById(activeId);
+      if (el) el.classList.add('active');
 
       renderBuildings();
     }
