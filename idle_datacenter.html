@@ -1123,9 +1123,9 @@
 
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        console.log('Google Sign-In versucht...', provider);
-        await firebaseAuth.signInWithPopup(provider);
-        console.log('Google Sign-In erfolgreich');
+        console.log('Google Sign-In versucht...');
+        // Verwende Redirect statt Popup für bessere Kompatibilität
+        await firebaseAuth.signInWithRedirect(provider);
       } catch (error) {
         console.error('Google Sign-In Fehler:', error.code, error.message);
         setCloudSyncStatus('Anmeldung fehlgeschlagen: ' + (error.code || error.message), true);
@@ -1161,6 +1161,12 @@
       cloudAvailable = true;
       updateCloudUserUI();
       setCloudSyncStatus('Cloud-Speicher: bereit');
+
+      // Verarbeite Redirect-Ergebnis (falls von Google Sign-In Redirect zurückgekehrt)
+      firebaseAuth.getRedirectResult()
+        .catch((error) => {
+          console.error('Redirect Result Fehler:', error.code, error.message);
+        });
 
       firebaseAuth.onAuthStateChanged(async (user) => {
         cloudUser = user;
