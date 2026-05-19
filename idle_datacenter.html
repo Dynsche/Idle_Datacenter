@@ -520,18 +520,7 @@
 
     <div class="upgrade">
       <h3>Forschungs-Upgrades</h3>
-      <div>Offline Speichererweiterung</div>
-      <div class="sub">Erhöht das Offline-Limit um 25 Minuten</div>
-      <div>Gekauft: <span id="offlineUpgradesCount">0</span>x</div>
-      <div>Kosten: <span id="offlineUpgradeCost">200 MB</span></div>
-      <br>
-      <button id="btnOfflineUpgrade" onclick="buyOfflineUpgrade()">Verbessern</button>
-      <hr style="border-color:#334155; margin:14px 0;">
-      <div>KI Optimierung</div>
-      <div class="sub">Verdoppelt die gesamte Produktion - Einmalig</div>
-      <div>Kosten: <span id="aiUpgradeCost">2 GB</span></div>
-      <br>
-      <button id="btnAIUpgrade" onclick="buyAIUpgrade()">Aktivieren</button>
+      <div id="researchUpgradesContainer"></div>
     </div>
   </div>
 
@@ -1582,6 +1571,7 @@
       const upgradesTab = document.getElementById('tab-upgrades');
       if (upgradesTab && upgradesTab.classList.contains('active')) {
         maybeRenderClickUpgrades();
+        renderResearchUpgrades();
       }
 
       maybeRenderMissions();
@@ -1662,6 +1652,7 @@
 
       if (tabName === 'upgrades') {
         renderBuildingUpgrades();
+        renderResearchUpgrades();
         maybeRenderClickUpgrades(true);
       }
       if (tabName === 'stats') {
@@ -1962,6 +1953,54 @@
 
       updateUI();
       renderBuildingUpgrades();
+    }
+
+    function renderResearchUpgrades() {
+      const container = document.getElementById('researchUpgradesContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      // Offline Speichererweiterung
+      const offlineDiv = document.createElement('div');
+      const offlineCanAfford = game.data >= game.offlineUpgradeCost;
+      offlineDiv.innerHTML = `
+        <div>Offline Speichererweiterung</div>
+        <div class="sub">Erhöht das Offline-Limit um 25 Minuten</div>
+        <div>Gekauft: <span id="offlineUpgradesCount">${game.offlineUpgradesBought}</span>x</div>
+        <div>Kosten: <span id="offlineUpgradeCost">${formatData(game.offlineUpgradeCost)}</span></div>
+        <br>
+        <button onclick="buyOfflineUpgrade()" ${!offlineCanAfford ? 'disabled' : ''}>Verbessern</button>
+      `;
+      container.appendChild(offlineDiv);
+
+      // Trennlinie
+      const hr = document.createElement('hr');
+      hr.style.borderColor = '#334155';
+      hr.style.margin = '14px 0';
+      container.appendChild(hr);
+
+      // KI Optimierung (nur wenn noch nicht gekauft)
+      if (!game.aiUpgradeBought) {
+        const aiDiv = document.createElement('div');
+        const aiCanAfford = game.data >= game.aiUpgradeCost;
+        aiDiv.innerHTML = `
+          <div>KI Optimierung</div>
+          <div class="sub">Verdoppelt die gesamte Produktion - Einmalig</div>
+          <div>Kosten: <span id="aiUpgradeCost">${formatData(game.aiUpgradeCost)}</span></div>
+          <br>
+          <button onclick="buyAIUpgrade()" ${!aiCanAfford ? 'disabled' : ''}>Aktivieren</button>
+        `;
+        container.appendChild(aiDiv);
+      } else {
+        // Wenn bereits gekauft, zeige Status
+        const aiDiv = document.createElement('div');
+        aiDiv.innerHTML = `
+          <div>KI Optimierung</div>
+          <div class="sub">Verdoppelt die gesamte Produktion - Einmalig</div>
+          <div style="color: #4ade80; font-weight: bold; margin-top: 6px;">✓ Aktiviert</div>
+        `;
+        container.appendChild(aiDiv);
+      }
     }
 
     function getClickUpgradeRenderSignature() {
@@ -2326,9 +2365,14 @@
       // Immer final normalisieren, damit manuelle Wertanpassungen im Code in Saves ankommen
       normalizeBalanceValues();
 
-      // Missionsdaten sicherstellen
-      if (!game.missions) game.missions = createMissionState();
-      ensureActiveMissions();
+      // Validiere buildingUpgrades - entferne ungültige Indizes
+      if (Array.isArray(game.buildingUpgrades)) {
+        game.buildingUpgrades = game.buildingUpgrades.filter(index => 
+          typeof index === 'number' && index >= 0 && index < BUILDING_UPGRADES.length
+        );
+      } else {
+        game.buildingUpgrades = [];
+      }
 
       // Migration: Statistiken initialisieren oder korrigieren
       if (game.stats === undefined) {
