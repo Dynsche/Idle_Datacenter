@@ -1930,6 +1930,10 @@
 
     function renderBuildingUpgrades() {
       const container = document.getElementById('buildingUpgrades');
+      if (!container) {
+        console.log('Building Upgrades Container nicht gefunden');
+        return;
+      }
       container.innerHTML = '';
 
       BUILDING_UPGRADES.forEach((upgrade, index) => {
@@ -2274,7 +2278,8 @@
       const save = loadedGameOverride ? null : localStorage.getItem('datacenterIdleSave');
 
       if (!loadedGameOverride && !save) {
-        document.getElementById('offlineInfo').style.display = 'none';
+        let el = document.getElementById('offlineInfo');
+        if (el) el.style.display = 'none';
         return;
       }
 
