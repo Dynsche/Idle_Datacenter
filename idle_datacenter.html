@@ -2549,6 +2549,51 @@
       saveGameToCloud(false);
     }
 
+    function showOfflineNotification(offlineSeconds, gained) {
+      // Berechne Zeit-Darstellung
+      const hours = Math.floor(offlineSeconds / 3600);
+      const minutes = Math.floor((offlineSeconds % 3600) / 60);
+      const seconds = offlineSeconds % 60;
+
+      let timeStr = '';
+      if (hours > 0) timeStr += `${hours}h `;
+      if (minutes > 0) timeStr += `${minutes}m `;
+      if (seconds > 0 || timeStr === '') timeStr += `${seconds}s`;
+
+      // Erstelle schöne Benachrichtigung
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 60px;
+        left: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 20px 24px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        z-index: 9999;
+        max-width: 360px;
+        font-weight: 500;
+        animation: slideIn 0.4s ease-out;
+      `;
+
+      notification.innerHTML = `
+        <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">⏱️ Offline Produktion</div>
+        <div style="font-size: 14px; opacity: 0.95;">
+          <div>Offline Zeit: <strong>${timeStr}</strong></div>
+          <div style="margin-top: 4px;">Verdient: <strong>${formatData(gained)}</strong></div>
+        </div>
+      `;
+
+      document.body.appendChild(notification);
+
+      // Auto-remove nach 8 Sekunden
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.4s ease-in';
+        setTimeout(() => notification.remove(), 400);
+      }, 8000);
+    }
+
     function loadGame(loadedGameOverride = null) {
       const save = loadedGameOverride ? null : localStorage.getItem('datacenterIdleSave');
 
@@ -2757,20 +2802,7 @@
             game.stats.offlineTime += offlineSeconds;
           }
 
-          const offlineInfoBox = document.getElementById('offlineInfo');
-          if (offlineInfoBox) {
-            offlineInfoBox.style.display = 'block';
-            offlineInfoBox.innerHTML = `
-              <strong>Offline Produktion Aktiv</strong><br>
-              Offline Zeit: ${Math.floor(offlineSeconds / 3600)}h ${Math.floor((offlineSeconds % 3600) / 60)}m ${offlineSeconds % 60}s<br>
-              Verdiente Daten: ${formatData(gained)}
-            `;
-
-            // Verstecke die Box nach 60 Sekunden
-            setTimeout(() => {
-              if (offlineInfoBox) offlineInfoBox.style.display = 'none';
-            }, 60000);
-          }
+          showOfflineNotification(offlineSeconds, gained);
         } else {
           const offlineInfoBoxAlt = document.getElementById('offlineInfo');
           if (offlineInfoBoxAlt) offlineInfoBoxAlt.style.display = 'none';
