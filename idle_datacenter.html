@@ -639,11 +639,11 @@
     const BASE_OFFLINE_LIMIT = 1500000;
     const OFFLINE_UPGRADE_BONUS = 1500000;
     const BASE_OFFLINE_UPGRADE_COST = 200000000;
-    const OFFLINE_UPGRADE_COST_GROWTH = 3.2;
+    const OFFLINE_UPGRADE_COST_GROWTH = 2.5;
     const BASE_AI_UPGRADE_COST = 2147483648;
     const BASE_PRESTIGE_REQUIREMENT = 1099511627776;
     const PRESTIGE_COST_GROWTH = 4;
-    const PRESTIGE_BONUS_PER_LEVEL = 0.25;
+    const PRESTIGE_BONUS_PER_LEVEL = 0.35;
     const UPGRADES_TAB_UNLOCK_AT = 15000000;
     const BUILDING_COST_GROWTH = 1.18;
     const SUPPORT_LOG_FACTOR = 0.18;
@@ -745,11 +745,11 @@
       { id: 'm-totaldata-64gb', level: 4, title: 'Dauerbetrieb', type: 'reach', targetKey: 'totalData', amount: 68719476736, reward: { type: 'data', amount: 700000000 } },
 
       // Level 5
-      { id: 'm-own-halle-10', level: 5, title: 'Datacenter-Campus', type: 'own', targetKey: 'building', targetId: 'Datacenter Halle', amount: 10, reward: { type: 'data', amount: 1200000000 } },
-      { id: 'm-reach-data-256gb', level: 5, title: 'Datenspeicher V', type: 'reach', targetKey: 'data', amount: 274877906944, reward: { type: 'data', amount: 2200000000 } },
-      { id: 'm-reach-pps-16mb', level: 5, title: 'Leitungscheck V', type: 'reach', targetKey: 'perSecond', amount: 16777216, reward: { type: 'data', amount: 4000000000 } },
-      { id: 'm-own-cdn-8', level: 5, title: 'CDN Ausbau', type: 'own', targetKey: 'building', targetId: 'CDN Server Farm', amount: 8, reward: { type: 'data', amount: 7000000000 } },
-      { id: 'm-reach-data-1tb', level: 5, title: 'Prestige-Bereit', type: 'reach', targetKey: 'data', amount: 1099511627776, reward: { type: 'data', amount: 15000000000 } }
+      { id: 'm-own-halle-10', level: 5, title: 'Datacenter-Campus', type: 'own', targetKey: 'building', targetId: 'Datacenter Halle', amount: 10, reward: { type: 'data', amount: 2400000000 } },
+      { id: 'm-reach-data-256gb', level: 5, title: 'Datenspeicher V', type: 'reach', targetKey: 'data', amount: 274877906944, reward: { type: 'data', amount: 4400000000 } },
+      { id: 'm-reach-pps-16mb', level: 5, title: 'Leitungscheck V', type: 'reach', targetKey: 'perSecond', amount: 16777216, reward: { type: 'data', amount: 8000000000 } },
+      { id: 'm-own-cdn-8', level: 5, title: 'CDN Ausbau', type: 'own', targetKey: 'building', targetId: 'CDN Server Farm', amount: 8, reward: { type: 'data', amount: 14000000000 } },
+      { id: 'm-reach-data-1tb', level: 5, title: 'Prestige-Bereit', type: 'reach', targetKey: 'data', amount: 1099511627776, reward: { type: 'data', amount: 30000000000 } }
     ];
 
     function createMissionState() {
