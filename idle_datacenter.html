@@ -2518,12 +2518,8 @@
     setBuyAmount(savedBuyAmount ? parseInt(savedBuyAmount) : 1);
     updateUI();
 
-    // Initialisiere Cloud-Speicher (wird auch am Ende via Script-Tag aufgerufen)
-    if (window.firebase) {
-      console.log('Firebase verfügbar in Startup, initialisiere Cloud-Speicher...');
-      setTimeout(() => initializeCloudSave(), 100);
-    }
-    initializeCloudSave();
+    // Cloud-Speicher wird später initialisiert wenn Firebase-Scripts geladen sind
+    // (siehe unten in den Firebase Script-Tags)
 
     setInterval(gameLoop, 100);
     setInterval(saveGame, 5000);
@@ -2606,13 +2602,23 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script>
-    // Initialize Firebase after scripts load
-    if (window.firebase) {
-      console.log('Firebase SDK geladen, initialisiere Cloud-Speicher...');
-      initializeCloudSave();
-    } else {
-      console.error('Firebase SDK konnte nicht geladen werden!');
+    // Initialize Firebase after all scripts have loaded
+    function initializeFirebaseWhenReady() {
+      if (window.firebase && window.firebase.firestore) {
+        console.log('Firebase SDK vollständig geladen, initialisiere Cloud-Speicher...');
+        try {
+          initializeCloudSave();
+        } catch (e) {
+          console.error('Fehler beim Initialisieren von Cloud-Speicher:', e);
+        }
+      } else {
+        console.warn('Firebase SDK noch nicht vollständig geladen, versuche später...');
+        setTimeout(initializeFirebaseWhenReady, 100);
+      }
     }
+
+    // Start trying to initialize after a short delay to ensure all scripts are loaded
+    setTimeout(initializeFirebaseWhenReady, 500);
   </script>
 </body>
 </html>
