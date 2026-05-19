@@ -103,6 +103,28 @@
       100% { opacity: 0; }
     }
 
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+    }
+
     /* Desktop: button next to content */
     @media (min-width: 768px) {
       #missionsContainer .mission-row {
@@ -539,6 +561,7 @@
   <div class="tabs">
     <button class="tab active" onclick="switchTab('buildings')" id="buildingsTab">Gebäude</button>
     <button class="tab" onclick="switchTab('upgrades')" id="upgradesTab">Upgrades</button>
+    <button class="tab" onclick="switchTab('achievements')" id="achievementsTab">🏆 Erfolge</button>
     <button class="tab" onclick="switchTab('stats')" id="statsTab">Statistiken</button>
     <button class="tab" onclick="switchTab('account')" id="accountTab">Konto</button>
     <button class="tab" onclick="switchTab('help')" id="helpTab">Hilfe</button>
@@ -574,6 +597,13 @@
     <div class="upgrade">
       <h3>Forschungs-Upgrades</h3>
       <div id="researchUpgradesContainer"></div>
+    </div>
+  </div>
+
+  <div id="tab-achievements" class="tab-content">
+    <div class="upgrade">
+      <h3 style="margin-bottom: 12px;">🏆 Erfolge</h3>
+      <div id="achievementsContainer" style="max-height: 600px; overflow-y: auto;"></div>
     </div>
   </div>
 
@@ -796,6 +826,19 @@
         currentLevel: 1
       };
     }
+
+    const ACHIEVEMENTS = [
+      { id: 'first-click', title: '🖱️ Erster Klick', description: 'Klicke einmal auf Daten sammeln', check: (g) => (g.stats?.totalClicks || 0) >= 1 },
+      { id: 'clicker', title: '⚡ Klick-Meister', description: 'Sammle 1.000 Klicks', check: (g) => (g.stats?.totalClicks || 0) >= 1000 },
+      { id: 'data-collector', title: '📊 Datensammler', description: 'Sammle 1 GB Daten', check: (g) => (g.stats?.totalData || 0) >= 1073741824 },
+      { id: 'first-prestige', title: '🎊 Erster Durchlauf', description: 'Starte deinen ersten Level-Durchlauf', check: (g) => g.prestige >= 1 },
+      { id: 'prestige-5', title: '👑 Fünffach König', description: 'Erreiche Level 5 (5 Durchläufe)', check: (g) => g.prestige >= 5 },
+      { id: 'building-collector', title: '🏢 Gebäude-Tycoon', description: 'Besitze mindestens 50 Gebäude', check: (g) => (g.buildings || []).reduce((sum, b) => sum + b.owned, 0) >= 50 },
+      { id: 'upgrade-master', title: '🔧 Upgrade-Meister', description: 'Kaufe 20 Upgrades', check: (g) => (g.stats?.upgradesBought || 0) >= 20 },
+      { id: 'offline-producer', title: '😴 Offline-Produzent', description: 'Nutze 1 Stunde Offline-Produktion', check: (g) => (g.stats?.offlineTimeUsed || 0) >= 3600 },
+      { id: 'mission-master', title: '🎯 Missionen-Meister', description: 'Schließe 25 Missionen ab', check: (g) => (g.missions?.completedCount || 0) >= 25 },
+      { id: 'data-tycoon', title: '💰 Daten-Tycoon', description: 'Erreiche 1 TB Gesamtproduktion', check: (g) => (g.stats?.totalData || 0) >= 1099511627776 }
+    ];
 
     const BUILDING_UPGRADES = [
       {
@@ -1107,9 +1150,11 @@
         prestigeCount: 0,
         playTime: 0,
         offlineTime: 0,
+        offlineTimeUsed: 0,
         startTime: Date.now()
       },
-      missions: createMissionState()
+      missions: createMissionState(),
+      achievements: {}
     };
 
     function isFirebaseConfigured() {
@@ -1621,6 +1666,82 @@
       return `${formatData(currentValue)} / ${formatData(targetAmount)}`;
     }
 
+    function checkAchievements() {
+      if (!game.achievements) game.achievements = {};
+
+      ACHIEVEMENTS.forEach(achievement => {
+        const isUnlocked = game.achievements[achievement.id] === true;
+        const isNowUnlocked = achievement.check(game);
+
+        if (!isUnlocked && isNowUnlocked) {
+          game.achievements[achievement.id] = true;
+          showAchievementNotification(achievement);
+        }
+      });
+    }
+
+    function showAchievementNotification(achievement) {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-weight: bold;
+        max-width: 300px;
+        animation: slideIn 0.3s ease-out;
+      `;
+      notification.innerHTML = `<div style="font-size:20px;margin-bottom:4px;">${achievement.title}</div><div style="font-size:12px;opacity:0.9;">${achievement.description}</div>`;
+
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    function renderAchievements() {
+      const container = document.getElementById('achievementsContainer');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      let unlockedCount = 0;
+      ACHIEVEMENTS.forEach(achievement => {
+        const isUnlocked = game.achievements && game.achievements[achievement.id] === true;
+        if (isUnlocked) unlockedCount++;
+
+        const card = document.createElement('div');
+        card.style.cssText = `
+          padding: 12px;
+          margin: 8px 0;
+          border-radius: 6px;
+          background: ${isUnlocked ? '#e8f5e9' : '#f5f5f5'};
+          border-left: 4px solid ${isUnlocked ? '#4caf50' : '#ccc'};
+          opacity: ${isUnlocked ? 1 : 0.6};
+        `;
+
+        card.innerHTML = `
+          <div style="font-weight:bold;font-size:16px;">${achievement.title}</div>
+          <div style="font-size:13px;margin-top:4px;color:#666;">${achievement.description}</div>
+          ${isUnlocked ? '<div style="font-size:11px;color:#4caf50;margin-top:4px;">✓ Freigeschaltet</div>' : ''}
+        `;
+
+        container.appendChild(card);
+      });
+
+      const header = document.querySelector('#achievementsContainer')?.previousElementSibling;
+      if (header) {
+        header.innerText = `🏆 Erfolge (${unlockedCount}/${ACHIEVEMENTS.length})`;
+      }
+    }
+
     function renderMissions() {
       const container = document.getElementById('missionsContainer');
       if (!container) return;
@@ -1749,6 +1870,11 @@
       if (upgradesTab && upgradesTab.classList.contains('active')) {
         maybeRenderClickUpgrades();
         renderResearchUpgrades();
+      }
+
+      const achievementsTab = document.getElementById('tab-achievements');
+      if (achievementsTab && achievementsTab.classList.contains('active')) {
+        renderAchievements();
       }
 
       maybeRenderMissions();
@@ -2627,6 +2753,7 @@
         game.data += gained;
           if (game.stats) {
             game.stats.totalData += gained;
+            game.stats.offlineTimeUsed = (game.stats.offlineTimeUsed || 0) + offlineSeconds;
             game.stats.offlineTime += offlineSeconds;
           }
 
@@ -2696,6 +2823,12 @@
       } catch (e) {
         console.error('Fehler beim Speichern:', e);
       }
+    }
+
+    function gameLoop() {
+      updateUI();
+      checkAchievements();
+      maybeRenderMissions();
     }
 
     setInterval(gameLoop, 100);
