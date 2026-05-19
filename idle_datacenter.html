@@ -391,14 +391,6 @@
       font-size: 13px;
     }
 
-    .offline-box {
-      background: #2b2b12;
-      border: 1px solid #9d8b29;
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-
     .footer-info {
       margin-top: 30px;
       opacity: 0.7;
@@ -587,10 +579,6 @@
 </head>
 <body>
   <h1>Datacenter Idle</h1>
-
-  <div class="offline-box" id="offlineInfo"></div>
-
-
 
   <div class="section-title">Missionen</div>
   <div class="topbar" id="missionsContainer"></div>
@@ -2753,8 +2741,6 @@
       const save = loadedGameOverride ? null : localStorage.getItem('datacenterIdleSave');
 
       if (!loadedGameOverride && !save) {
-        let el = document.getElementById('offlineInfo');
-        if (el) el.style.display = 'none';
         return;
       }
 
