@@ -1426,9 +1426,13 @@
 
       const rewardAmount = mission ? getScaledMissionRewardAmount(mission) : (reward.amount || 0);
 
+      // Zusätzlicher Prestige Bonus auf Mission Rewards (+1% pro Rang)
+      const prestigeMissionBonus = Math.pow(1.01, game.prestige || 0);
+      const totalReward = Math.floor(rewardAmount * prestigeMissionBonus);
+
       if (reward.type === 'data') {
-        game.data += rewardAmount;
-        if (game.stats) game.stats.totalData += rewardAmount;
+        game.data += totalReward;
+        if (game.stats) game.stats.totalData += totalReward;
         return;
       }
 
@@ -1764,8 +1768,11 @@
       let totalCost = 0;
       let currentOwned = building.owned;
 
+      // Prestige gibt Rabatt auf Gebäude
+      const prestigeDiscount = Math.pow(0.97, game.prestige); // 3% Rabatt pro Rang
+
       for (let i = 0; i < amount; i++) {
-        totalCost += Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + i));
+        totalCost += Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + i) * prestigeDiscount);
       }
 
       return totalCost;
@@ -1776,8 +1783,11 @@
       let totalCost = 0;
       let currentOwned = building.owned;
 
-      while (totalCost + Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + count)) <= game.data) {
-        totalCost += Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + count));
+      // Prestige gibt Rabatt auf Gebäude
+      const prestigeDiscount = Math.pow(0.97, game.prestige); // 3% Rabatt pro Rang
+
+      while (totalCost + Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + count) * prestigeDiscount) <= game.data) {
+        totalCost += Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, currentOwned + count) * prestigeDiscount);
         count++;
         if (count > 10000) break;
       }
@@ -2177,10 +2187,14 @@
     }
 
     function manualClick() {
-      game.data += game.clickPower;
+      // Prestige gibt Bonus auf Clicks (+2% pro Rang)
+      const prestigeClickBonus = Math.pow(1.02, game.prestige);
+      const totalClick = game.clickPower * prestigeClickBonus;
+
+      game.data += totalClick;
       if (game.stats) {
         game.stats.totalClicks++;
-        game.stats.totalData += game.clickPower;
+        game.stats.totalData += totalClick;
       }
       updateUI();
     }
