@@ -1321,17 +1321,17 @@
       const dialog = document.getElementById('cloudConflictDialog');
       if (!dialog) return;
 
-      const cloudTime = new Date(cloudLastUpdate).toLocaleString('de-DE');
-      const localTime = new Date(localLastUpdate).toLocaleString('de-DE');
+      const cloudTime = cloudLastUpdate > 0 ? new Date(cloudLastUpdate).toLocaleString('de-DE') : 'Unbekannt';
+      const localTime = localLastUpdate > 0 ? new Date(localLastUpdate).toLocaleString('de-DE') : 'Unbekannt';
 
       document.getElementById('conflictCloudInfo').innerHTML = `
-        <div>Daten: ${formatData(cloudData)}</div>
-        <div>Zeitstempel: ${cloudTime}</div>
+        <div>Daten: <strong>${cloudData > 0 ? formatData(cloudData) : '0 Bytes'}</strong></div>
+        <div>Zeitstempel: <strong>${cloudTime}</strong></div>
       `;
 
       document.getElementById('conflictLocalInfo').innerHTML = `
-        <div>Daten: ${formatData(localData)}</div>
-        <div>Zeitstempel: ${localTime}</div>
+        <div>Daten: <strong>${localData > 0 ? formatData(localData) : '0 Bytes'}</strong></div>
+        <div>Zeitstempel: <strong>${localTime}</strong></div>
       `;
 
       // Entferne alte Listener
