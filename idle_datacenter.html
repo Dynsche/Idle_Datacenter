@@ -785,24 +785,24 @@
   </div>
 
   <!-- Cloud-Konflikt-Dialog -->
-  <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;">
-    <div style="background:#1a1f2e;border:1px solid #3a4a5a;border-radius:12px;padding:24px;max-width:500px;color:#e0e0e0;">
-      <div style="font-size:20px;font-weight:bold;margin-bottom:16px;">⚠️ Spielstand Konflikt</div>
-      <div style="font-size:14px;line-height:1.6;margin-bottom:20px;">
-        <div style="margin-bottom:12px;">Du hast auf mehreren Geräten Fortschritt gemacht.</div>
-        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:12px 0;">
-          <div style="font-weight:bold;">📱 Cloud-Spielstand:</div>
-          <div id="conflictCloudInfo" style="margin-top:4px;font-size:13px;"></div>
+  <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;padding:10px;">
+    <div style="background:#1a1f2e;border:1px solid #3a4a5a;border-radius:12px;padding:16px;max-width:100%;width:100%;max-width:500px;color:#e0e0e0;box-sizing:border-box;max-height:90vh;overflow-y:auto;">
+      <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">⚠️ Spielstand Konflikt</div>
+      <div style="font-size:13px;line-height:1.6;margin-bottom:16px;">
+        <div style="margin-bottom:10px;">Du hast auf mehreren Geräten Fortschritt gemacht.</div>
+        <div style="background:#2a3a4a;padding:10px;border-radius:6px;margin:10px 0;word-break:break-word;">
+          <div style="font-weight:bold;margin-bottom:4px;">📱 Cloud:</div>
+          <div id="conflictCloudInfo" style="font-size:12px;line-height:1.4;"></div>
         </div>
-        <div style="background:#2a3a4a;padding:12px;border-radius:6px;margin:12px 0;">
-          <div style="font-weight:bold;">💻 Lokaler Spielstand:</div>
-          <div id="conflictLocalInfo" style="margin-top:4px;font-size:13px;"></div>
+        <div style="background:#2a3a4a;padding:10px;border-radius:6px;margin:10px 0;word-break:break-word;">
+          <div style="font-weight:bold;margin-bottom:4px;">💻 Lokal:</div>
+          <div id="conflictLocalInfo" style="font-size:12px;line-height:1.4;"></div>
         </div>
-        <div style="margin-top:12px;font-size:13px;opacity:0.8;">Welchen Spielstand möchtest du behalten?</div>
+        <div style="margin-top:10px;font-size:12px;opacity:0.8;">Welchen behalten?</div>
       </div>
-      <div style="display:flex;gap:12px;">
-        <button id="conflictKeepCloud" style="flex:1;padding:12px;background:#10b981;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;">☁️ Cloud behalten</button>
-        <button id="conflictKeepLocal" style="flex:1;padding:12px;background:#3b82f6;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;">💻 Lokal behalten</button>
+      <div style="display:flex;gap:8px;flex-direction:column;">
+        <button id="conflictKeepCloud" style="width:100%;padding:12px;background:#10b981;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;font-size:14px;">☁️ Cloud behalten</button>
+        <button id="conflictKeepLocal" style="width:100%;padding:12px;background:#3b82f6;border:none;border-radius:6px;color:white;cursor:pointer;font-weight:bold;font-size:14px;">💻 Lokal behalten</button>
       </div>
     </div>
   </div>
@@ -1321,17 +1321,30 @@
       const dialog = document.getElementById('cloudConflictDialog');
       if (!dialog) return;
 
-      const cloudTime = cloudLastUpdate > 0 ? new Date(cloudLastUpdate).toLocaleString('de-DE') : 'Unbekannt';
-      const localTime = localLastUpdate > 0 ? new Date(localLastUpdate).toLocaleString('de-DE') : 'Unbekannt';
+      const formatTime = (timestamp) => {
+        if (timestamp <= 0) return 'Unbekannt';
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMinutes = Math.floor(diffMs / 60000);
+
+        if (diffMinutes < 1) return 'gerade eben';
+        if (diffMinutes < 60) return `vor ${diffMinutes}m`;
+
+        const hours = Math.floor(diffMinutes / 60);
+        if (hours < 24) return `vor ${hours}h`;
+
+        return date.toLocaleDateString('de-DE');
+      };
 
       document.getElementById('conflictCloudInfo').innerHTML = `
         <div>Daten: <strong>${cloudData > 0 ? formatData(cloudData) : '0 Bytes'}</strong></div>
-        <div>Zeitstempel: <strong>${cloudTime}</strong></div>
+        <div>Zeit: <strong>${formatTime(cloudLastUpdate)}</strong></div>
       `;
 
       document.getElementById('conflictLocalInfo').innerHTML = `
         <div>Daten: <strong>${localData > 0 ? formatData(localData) : '0 Bytes'}</strong></div>
-        <div>Zeitstempel: <strong>${localTime}</strong></div>
+        <div>Zeit: <strong>${formatTime(localLastUpdate)}</strong></div>
       `;
 
       // Entferne alte Listener
