@@ -780,6 +780,12 @@
     </div>
   </div>
 
+  <!-- Debug-Panel für Mobile -->
+  <div id="debugPanel" style="display:none;position:fixed;bottom:10px;right:10px;width:250px;background:#1a1f2e;border:2px solid #ff6b6b;border-radius:8px;padding:10px;font-size:11px;color:#fca5a5;max-height:200px;overflow-y:auto;z-index:10000;font-family:monospace;">
+    <div style="font-weight:bold;margin-bottom:5px;color:#ff9999;">🐛 Debug-Logs</div>
+    <div id="debugLogs" style="line-height:1.3;"></div>
+  </div>
+
   <div class="footer-info">
     Datacenter Idle Alpha Version
   </div>
@@ -793,6 +799,33 @@
   </div>
 
   <script>
+    // Debug-Log System für Mobile
+    const debugLogs = [];
+    function addDebugLog(msg) {
+      const timestamp = new Date().toLocaleTimeString();
+      const logMsg = `[${timestamp}] ${msg}`;
+      debugLogs.push(logMsg);
+      if (debugLogs.length > 15) debugLogs.shift(); // Maximal 15 Zeilen
+
+      const debugPanel = document.getElementById('debugLogs');
+      if (debugPanel) {
+        debugPanel.innerHTML = debugLogs.map(log => `<div>${log}</div>`).join('');
+      }
+      console.log(msg);
+    }
+
+    function showDebugPanel() {
+      const panel = document.getElementById('debugPanel');
+      if (panel) panel.style.display = 'block';
+    }
+
+    // Überschreibe console.error und console.log für Google Sign-In Fehler
+    const originalError = console.error;
+    console.error = function(...args) {
+      addDebugLog('❌ ' + args.join(' '));
+      originalError.apply(console, args);
+    };
+
     const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
     const BASE_OFFLINE_LIMIT = 1500000;
     const OFFLINE_UPGRADE_BONUS = 1500000;
@@ -1554,19 +1587,24 @@
 
     async function signInWithGoogle() {
       if (!cloudAvailable || !firebaseAuth) {
+        addDebugLog('❌ Firebase nicht verfügbar');
         setCloudSyncStatus('Cloud-Speicher: Firebase nicht konfiguriert', true);
         console.error('Firebase nicht verfügbar für Sign-In');
         return;
       }
 
       try {
+        addDebugLog('▶️ Google Sign-In gestartet...');
         const provider = new firebase.auth.GoogleAuthProvider();
         console.log('Google Sign-In versucht (Redirect-Modus)...');
         setCloudSyncStatus('Cloud-Speicher: Weitergeleitet zu Google...');
+        addDebugLog('⏳ Warte auf Google Redirect...');
 
         // Verwende Redirect statt Popup für bessere Kompatibilität (besonders auf Handy)
         await firebaseAuth.signInWithRedirect(provider);
+        addDebugLog('✅ Redirect initiiert');
       } catch (error) {
+        addDebugLog('❌ ' + error.code + ': ' + error.message);
         console.error('Google Sign-In Fehler:', error.code, error.message);
         setCloudSyncStatus('Anmeldung fehlgeschlagen: ' + (error.code || error.message), true);
       }
@@ -1601,18 +1639,23 @@
       cloudAvailable = true;
       updateCloudUserUI();
       setCloudSyncStatus('Cloud-Speicher: bereit');
+      addDebugLog('✅ Firebase initialisiert');
 
       // Verarbeite Redirect-Ergebnis (falls von Google Sign-In Redirect zurückgekehrt)
+      addDebugLog('🔄 Prüfe Google Redirect...');
       firebaseAuth.getRedirectResult()
         .then((result) => {
           console.log('getRedirectResult vollendet. Credential:', result.credential ? 'ja' : 'nein', 'User:', result.user ? result.user.email : 'keine');
           if (result.user) {
+            addDebugLog('✅ Google Login erfolgreich: ' + result.user.email);
             console.log('Google Redirect erfolgreich, User:', result.user.email);
             setCloudSyncStatus('Cloud-Speicher: Google erfolgreich verbunden!');
+            showDebugPanel();
           }
         })
         .catch((error) => {
           console.log('getRedirectResult Fehler:', error.code, error.message);
+          addDebugLog('⚠️ Redirect: ' + (error.code || 'unbekannt'));
           // Ignoriere "popup-closed-by-user" Fehler
           if (error.code !== 'auth/popup-closed-by-user') {
             console.error('Redirect Result Fehler:', error.code, error.message);
