@@ -1600,8 +1600,10 @@
       if ((el = document.getElementById('data'))) el.innerText = formatData(game.data);
       if ((el = document.getElementById('perSecond'))) el.innerText = formatData(productionPerSecond()) + '/s';
 
-      const hours = Math.floor(game.offlineLimit / 3600);
-      const minutes = Math.floor((game.offlineLimit % 3600) / 60);
+      // offlineLimit is in milliseconds, convert to minutes/seconds
+      const totalSeconds = Math.floor(game.offlineLimit / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
       if ((el = document.getElementById('offlineHours'))) el.innerText = `${hours}h ${minutes}m`;
 
       if ((el = document.getElementById('prestige'))) el.innerText = game.prestige;
