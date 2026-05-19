@@ -2677,25 +2677,8 @@
       }
     }
 
-    let frameCounter = 0;
-    let lastTickTime = Date.now();
-
-    function gameLoop() {
-      const now = Date.now();
-      const deltaTime = (now - lastTickTime) / 1000; // in Sekunden
-      lastTickTime = now;
-
-      const produced = productionPerSecond() * deltaTime;
-      game.data += produced;
-      if (game.stats) game.stats.totalData += produced;
-
-      updateUI();
-
-      frameCounter++;
-      if (frameCounter % 10 === 0) {
-        renderBuildings();
-      }
-    }
+     let frameCounter = 0;
+     let lastTickTime = Date.now();
 
     function saveGame() {
       if (cloudUser && !cloudLoadCompleted) return;
@@ -2705,6 +2688,7 @@
         game.stats.startTime = Date.now();
       }
       localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+      showAutosaveIndicator();
       saveGameToCloud(false);
     }
 
@@ -3044,20 +3028,26 @@
       }, 300);
     }
 
-    function saveGame() {
-      game.lastUpdate = Date.now();
-      try {
-        localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
-        showAutosaveIndicator();
-      } catch (e) {
-        console.error('Fehler beim Speichern:', e);
-      }
-    }
-
     function gameLoop() {
+      // Berechne Produktion für diesen Frame
+      const now = Date.now();
+      const deltaTime = (now - lastTickTime) / 1000; // in Sekunden
+      lastTickTime = now;
+
+      const produced = productionPerSecond() * deltaTime;
+      game.data += produced;
+      if (game.stats) game.stats.totalData += produced;
+
+      // Update UI und Achievements
       updateUI();
       checkAchievements();
       maybeRenderMissions();
+
+      // Rendern Gebäude jeden 10. Frame für Performance
+      frameCounter++;
+      if (frameCounter % 10 === 0) {
+        renderBuildings();
+      }
     }
 
     setInterval(gameLoop, 100);
