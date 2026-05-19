@@ -1596,13 +1596,26 @@
       try {
         addDebugLog('▶️ Google Sign-In gestartet...');
         const provider = new firebase.auth.GoogleAuthProvider();
-        console.log('Google Sign-In versucht (Redirect-Modus)...');
-        setCloudSyncStatus('Cloud-Speicher: Weitergeleitet zu Google...');
-        addDebugLog('⏳ Warte auf Google Redirect...');
 
-        // Verwende Redirect statt Popup für bessere Kompatibilität (besonders auf Handy)
-        await firebaseAuth.signInWithRedirect(provider);
-        addDebugLog('✅ Redirect initiiert');
+        // Versuche zuerst Popup (funktioniert besser auf Handy)
+        try {
+          console.log('Versuche Popup-Login...');
+          addDebugLog('📱 Versuche Popup-Fenster...');
+          const result = await firebaseAuth.signInWithPopup(provider);
+          addDebugLog('✅ Popup Login erfolgreich!');
+          setCloudSyncStatus('Cloud-Speicher: Google erfolgreich verbunden!');
+        } catch (popupError) {
+          // Wenn Popup fehlschlägt, fallback zu Redirect
+          if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/operation-not-supported-in-this-environment') {
+            addDebugLog('⏳ Popup blockiert, nutze Redirect...');
+            console.log('Fallback zu Redirect-Login...');
+            setCloudSyncStatus('Cloud-Speicher: Weitergeleitet zu Google...');
+            await firebaseAuth.signInWithRedirect(provider);
+            addDebugLog('✅ Redirect initiiert');
+          } else {
+            throw popupError;
+          }
+        }
       } catch (error) {
         addDebugLog('❌ ' + error.code + ': ' + error.message);
         console.error('Google Sign-In Fehler:', error.code, error.message);
