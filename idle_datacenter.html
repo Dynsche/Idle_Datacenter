@@ -1423,7 +1423,7 @@
           .set({
             saveData: getSerializableGameState(),
             clientUpdatedAt: Date.now(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(), // Server-Zeit = Quelle der Wahrheit
             balanceVersion: SAVE_BALANCE_VERSION
           });
 
@@ -1458,32 +1458,38 @@
         }
 
         const cloudSave = doc.data().saveData;
-        const cloudLastUpdate = cloudSave.lastUpdate || 0;
         const cloudData = cloudSave.data || 0;
         const cloudDeviceId = cloudSave.lastDeviceId || 'unknown';
         const currentDeviceId = getOrCreateDeviceId();
+
+        // Nutze Server-Timestamp als Quelle der Wahrheit (zuverlässig geräteübergreifend)
+        const cloudServerTimestamp = doc.data().updatedAt ? doc.data().updatedAt.toMillis() : 0;
+        const cloudClientTimestamp = doc.data().clientUpdatedAt || 0;
 
         const localSaveRaw = localStorage.getItem('datacenterIdleSave');
         const localSave = localSaveRaw ? JSON.parse(localSaveRaw) : null;
         const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
         const localData = localSave ? (localSave.data || 0) : 0;
 
-        // Verbesserte Logik zur Bestimmung des aktuellsten Stands:
-        // 1. Wenn Cloud neuer ist UND mehr Daten = Cloud gewinnt
-        // 2. Wenn Timestamps gleich aber Cloud mehr Daten = Cloud gewinnt
-        // 3. Wenn Timestamps gleich und Daten gleich = Lokal behalten (kein Update nötig)
-        // 4. Wenn Lokal neuer = Lokal behalten und hochladen
-        const cloudIsNewer = cloudLastUpdate > localLastUpdate;
+        // Robuste Logik zur Bestimmung des aktuellsten Stands:
+        // Primär: Nutze Firestore Server-Timestamp (geräteübergreifend zuverlässig)
+        // Sekundär: Vergleiche Datenfortschritt (data-Wert) als Tie-Breaker
+
+        const cloudIsNewer = cloudServerTimestamp > localLastUpdate;
         const cloudHasMoreData = cloudData > localData;
-        const datesEqual = Math.abs(cloudLastUpdate - localLastUpdate) < 1000; // Toleranz 1 Sekunde
+        const timestampEqual = Math.abs(cloudServerTimestamp - localLastUpdate) < 2000; // 2s Toleranz
 
         let useCloud = false;
         if (cloudIsNewer && cloudHasMoreData) {
-          useCloud = true; // Cloud ist eindeutig besser
-        } else if (datesEqual && cloudHasMoreData) {
-          useCloud = true; // Gleiche Zeit aber Cloud hat mehr Daten
+          useCloud = true; // Cloud ist eindeutig älter und besser → nehme Cloud
+        } else if (cloudIsNewer && !localSave) {
+          useCloud = true; // Cloud neuer und keine lokale Sicherung → nehme Cloud
+        } else if (timestampEqual && cloudHasMoreData) {
+          useCloud = true; // Gleiche Zeit aber Cloud hat mehr Fortschritt → nehme Cloud
         } else if (!localSave) {
-          useCloud = true; // Keine lokale Sicherung, nehme Cloud
+          useCloud = true; // Keine lokale Sicherung vorhanden → nehme Cloud
+        } else {
+          useCloud = false; // Lokal ist gleich oder neuer → behalte Lokal
         }
 
         // Zeige Sync-Benachrichtigung
