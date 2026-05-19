@@ -77,33 +77,6 @@
       width: 100%;
     }
 
-    #autosaveIndicator {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #182433;
-      border: 1px solid #334155;
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      z-index: 1000;
-      animation: fadeInOut 3s ease-in-out;
-    }
-
-    #autosaveIndicator.saving {
-      color: #fbbf24;
-      border-color: #fbbf24;
-    }
-
-    #autosaveIndicator.saved {
-      color: #4ade80;
-      border-color: #4ade80;
-    }
-
     @keyframes fadeInOut {
       0% { opacity: 1; }
       70% { opacity: 1; }
@@ -709,6 +682,7 @@
       <div style="line-height: 2; margin-top: 10px;">
         <div><strong>Status:</strong> <span id="cloudUserStatus">Google: nicht angemeldet</span></div>
         <div><strong>Sync:</strong> <span id="cloudSyncStatus">Cloud-Speicher inaktiv</span></div>
+        <div><strong>Speicher:</strong> <span id="saveStatusIndicator" style="color: #4ade80;">✓ Aktuell</span></div>
       </div>
       <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
         <button id="btnGoogleLogin" onclick="signInWithGoogle()">Mit Google verbinden</button>
@@ -3011,20 +2985,15 @@
     // (siehe unten in den Firebase Script-Tags)
 
     function showAutosaveIndicator() {
-      const indicator = document.getElementById('autosaveIndicator');
-      if (!indicator) return;
+      const statusEl = document.getElementById('saveStatusIndicator');
+      if (!statusEl) return;
 
-      indicator.textContent = '💾 Speichert...';
-      indicator.className = 'saving';
-      indicator.style.display = 'flex';
+      statusEl.textContent = '💾 Speichert...';
+      statusEl.style.color = '#fbbf24';
 
       setTimeout(() => {
-        indicator.textContent = '✓ Gespeichert';
-        indicator.className = 'saved';
-
-        setTimeout(() => {
-          indicator.style.display = 'none';
-        }, 2000);
+        statusEl.textContent = '✓ Aktuell';
+        statusEl.style.color = '#4ade80';
       }, 300);
     }
 
@@ -3199,9 +3168,6 @@
     // Start trying to initialize after a short delay to ensure all scripts are loaded
     setTimeout(initializeFirebaseWhenReady, 500);
   </script>
-
-  <!-- Autosave Indicator -->
-  <div id="autosaveIndicator" style="display: none;"></div>
 
 </body>
 </html>
