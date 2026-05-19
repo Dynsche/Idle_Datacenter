@@ -1495,24 +1495,24 @@
         // Zeige Sync-Benachrichtigung nur wenn tatsächlich etwas synchronisiert wurde
         if (useCloud) {
           showSyncNotification();
-        }
-
-        if (useCloud) {
           try {
             loadGame(cloudSave);
-            localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
-            // Nur rendern wenn die Gebäude-Container sichtbar sind
-            try {
-              renderBuildings();
-            } catch (renderError) {
-              console.warn('renderBuildings fehlgeschlagen (Tab vermutlich nicht sichtbar):', renderError.message);
-            }
-            try {
-              updateUI();
-            } catch (updateError) {
-              console.warn('updateUI fehlgeschlagen:', updateError.message);
-            }
-            setCloudSyncStatus('Cloud-Speicher: Spielstand geladen ✓');
+            // Warte kurz damit loadGame komplett abgeschlossen ist
+            setTimeout(() => {
+              localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+              // Nur rendern wenn die Gebäude-Container sichtbar sind
+              try {
+                renderBuildings();
+              } catch (renderError) {
+                console.warn('renderBuildings fehlgeschlagen (Tab vermutlich nicht sichtbar):', renderError.message);
+              }
+              try {
+                updateUI();
+              } catch (updateError) {
+                console.warn('updateUI fehlgeschlagen:', updateError.message);
+              }
+              setCloudSyncStatus('Cloud-Speicher: Spielstand geladen ✓');
+            }, 100);
           } catch (loadError) {
             console.error('Cloud Load Fehler beim Laden des Spielstands:', loadError);
             setCloudSyncStatus('Cloud-Speicher: Fehler beim Laden', true);
