@@ -1354,17 +1354,26 @@
 
           return date.toLocaleDateString('de-DE');
         } catch (e) {
+          console.error('Zeit-Format Fehler:', e);
           return 'Fehler beim Parsen';
         }
       };
 
-      const cloudDataStr = (cloudData && cloudData > 0) ? formatData(cloudData) : '0 Bytes';
-      const localDataStr = (localData && localData > 0) ? formatData(localData) : '0 Bytes';
-      const cloudTimeStr = formatTime(cloudLastUpdate);
-      const localTimeStr = formatTime(localLastUpdate);
+      try {
+        const cloudDataStr = (cloudData && cloudData > 0) ? formatData(cloudData) : '0 Bytes';
+        const localDataStr = (localData && localData > 0) ? formatData(localData) : '0 Bytes';
+        const cloudTimeStr = formatTime(cloudLastUpdate);
+        const localTimeStr = formatTime(localLastUpdate);
 
-      cloudInfoEl.textContent = `Daten: ${cloudDataStr}\nZeit: ${cloudTimeStr}`;
-      localInfoEl.textContent = `Daten: ${localDataStr}\nZeit: ${localTimeStr}`;
+        cloudInfoEl.innerHTML = `<div>Daten: <strong>${cloudDataStr}</strong></div><div>Zeit: <strong>${cloudTimeStr}</strong></div>`;
+        localInfoEl.innerHTML = `<div>Daten: <strong>${localDataStr}</strong></div><div>Zeit: <strong>${localTimeStr}</strong></div>`;
+
+        console.log('Dialog aktualisiert:', { cloudDataStr, cloudTimeStr, localDataStr, localTimeStr });
+      } catch (e) {
+        console.error('Fehler beim Aktualisieren des Konflikt-Dialogs:', e);
+        cloudInfoEl.innerHTML = `<div style="color:#ff6b6b;">Fehler: ${e.message}</div>`;
+        localInfoEl.innerHTML = `<div style="color:#ff6b6b;">Fehler: ${e.message}</div>`;
+      }
 
       // Entferne alte Listener
       const newCloudBtn = document.getElementById('conflictKeepCloud').cloneNode(true);
