@@ -785,7 +785,7 @@
   </div>
 
   <!-- Cloud-Konflikt-Dialog - Auto-Close nach 2s -->
-  <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:10px;pointer-events:auto;">
+  <div id="cloudConflictDialog" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;padding:10px;pointer-events:auto;">
     <div style="background:#1a1f2e;border:2px solid #3a4a5a;border-radius:12px;padding:20px;max-width:100%;width:100%;max-width:550px;color:#e0e0e0;box-sizing:border-box;max-height:90vh;overflow-y:auto;pointer-events:auto;">
       <div style="font-size:18px;font-weight:bold;margin-bottom:12px;">✓ Spielstand synchronisiert</div>
       <div style="font-size:13px;line-height:1.6;">Die neuesten Daten wurden automatisch geladen.</div>
@@ -1315,10 +1315,21 @@
 
     function showSyncNotification() {
       const dialog = document.getElementById('cloudConflictDialog');
-      if (!dialog) return;
+      if (!dialog) {
+        console.warn('cloudConflictDialog Element nicht gefunden');
+        return;
+      }
 
+      // Stoppe jeden existierenden Timer
+      if (dialog.closeTimer) {
+        clearTimeout(dialog.closeTimer);
+      }
+
+      // Zeige Dialog als Flex-Layout
       dialog.style.display = 'flex';
-      setTimeout(() => {
+
+      // Auto-Close nach 2 Sekunden
+      dialog.closeTimer = setTimeout(() => {
         dialog.style.display = 'none';
       }, 2000);
     }
