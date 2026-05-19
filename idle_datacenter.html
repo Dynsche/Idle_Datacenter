@@ -36,6 +36,66 @@
       box-shadow: 0 0 15px rgba(0,0,0,0.25);
     }
 
+    .mission-card {
+      padding: 10px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      border: 1px solid transparent;
+      min-height: 0;
+    }
+
+    #missionsContainer {
+      margin-bottom: 12px;
+      gap: 10px;
+    }
+
+    #missionsContainer .card {
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    #missionsContainer .mission-row {
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    #missionsContainer button {
+      min-width: 82px;
+      padding: 7px 9px;
+      font-size: 12px;
+    }
+
+    .mission-card:hover {
+      transform: translateY(-1px);
+      border-color: #2f7cf6;
+      box-shadow: 0 0 18px rgba(47,124,246,0.18);
+    }
+
+    .mission-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mission-track {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      overflow: hidden;
+      height: 6px;
+      margin-top: 6px;
+    }
+
+    .mission-fill {
+      height: 6px;
+      transition: width 0.25s ease;
+      background: #3b82f6;
+    }
+
+    .mission-fill.done {
+      background: #22c55e;
+    }
+
     .resource {
       font-size: 32px;
       font-weight: bold;
@@ -158,6 +218,37 @@
       line-height: 1.6;
     }
 
+    /* Kompakter Upgrade-Reiter */
+    #tab-upgrades .upgrade {
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      min-height: 0;
+    }
+
+    #tab-upgrades .upgrade h3 {
+      font-size: 17px;
+      margin: 0 0 6px 0;
+    }
+
+    #tab-upgrades .upgrade > div {
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+
+    #tab-upgrades #clickUpgradesContainer .upgrade,
+    #tab-upgrades #buildingUpgrades .upgrade {
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      min-height: 0;
+      border-left-width: 4px;
+    }
+
+    #tab-upgrades button {
+      padding: 8px 12px;
+      min-width: 100px;
+      font-size: 13px;
+    }
+
     .offline-box {
       background: #2b2b12;
       border: 1px solid #9d8b29;
@@ -190,6 +281,22 @@
 
       .card {
         padding: 12px;
+      }
+
+      #missionsContainer {
+        gap: 8px;
+      }
+
+      #missionsContainer .card,
+      #missionsContainer .mission-card {
+        padding: 8px;
+        border-radius: 10px;
+      }
+
+      #missionsContainer button {
+        min-width: 76px;
+        padding: 6px 8px;
+        font-size: 11px;
       }
 
       .resource {
@@ -250,6 +357,33 @@
 
       .upgrade {
         padding: 12px;
+      }
+
+      #tab-upgrades .upgrade {
+        padding: 10px 10px;
+        margin-bottom: 8px;
+      }
+
+      #tab-upgrades .upgrade h3 {
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+
+      #tab-upgrades .upgrade > div {
+        margin-bottom: 3px;
+        line-height: 1.25;
+      }
+
+      #tab-upgrades #clickUpgradesContainer .upgrade,
+      #tab-upgrades #buildingUpgrades .upgrade {
+        padding: 8px 9px;
+        margin-bottom: 6px;
+      }
+
+      #tab-upgrades button {
+        padding: 7px 10px;
+        min-width: 84px;
+        font-size: 12px;
       }
 
       .offline-box {
@@ -314,6 +448,11 @@
 
 
 
+  <div class="section-title">Missionen</div>
+  <div class="topbar" id="missionsContainer"></div>
+
+  <div class="section-title">Datenübersicht</div>
+  <div class="sub" style="margin-bottom: 10px;">Hier siehst du deinen aktuellen Datenstand, Produktion und Rang.</div>
   <div class="topbar">
     <div class="card">
       <div class="sub">Gespeicherte Daten</div>
@@ -331,7 +470,7 @@
     </div>
 
     <div class="card">
-      <div class="sub">Prestige Level</div>
+      <div class="sub">Level Rang</div>
       <div class="resource"><span id="prestige">0</span></div>
     </div>
   </div>
@@ -351,18 +490,10 @@
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('buildings')" id="buildingsTab">Gebäude</button>
-    <button class="tab" onclick="switchTab('upgrades')" id="upgradesTab" style="display: none;">Gebäude-Upgrades</button>
-    <button class="tab" onclick="switchTab('clickupgrades')" id="clickupgradesTab">Klick-Upgrades</button>
-    <button class="tab" onclick="switchTab('research')" id="researchTab">Forschung</button>
-    <button class="tab" onclick="switchTab('prestige')" id="prestigeTab">Prestige</button>
+    <button class="tab" onclick="switchTab('upgrades')" id="upgradesTab">Upgrades</button>
     <button class="tab" onclick="switchTab('stats')" id="statsTab">Statistiken</button>
     <button class="tab" onclick="switchTab('account')" id="accountTab">Konto</button>
     <button class="tab" onclick="switchTab('help')" id="helpTab">Hilfe</button>
-  </div>
-
-  <div id="tab-clickupgrades" class="tab-content">
-    <div class="sub" style="margin-bottom: 12px;">Verbessere deinen manuellen Klick. Upgrades bauen aufeinander auf – kaufe das nächste wenn du es dir leisten kannst.</div>
-    <div id="clickUpgradesContainer"></div>
   </div>
 
   <div id="tab-buildings" class="tab-content active">
@@ -380,37 +511,32 @@
   </div>
 
   <div id="tab-upgrades" class="tab-content">
-    <div id="buildingUpgrades"></div>
-  </div>
+    <div class="sub" style="margin-bottom: 12px;">Alle Upgrades zentral: Klick, Gebäude und Forschung.</div>
 
-  <div id="tab-research" class="tab-content">
     <div class="upgrade">
-      <h3>Offline Speichererweiterung</h3>
-      <div>Erhöht das Offline-Limit um 25 Minuten</div>
+      <h3>Klick-Upgrades</h3>
+      <div id="clickUpgradesContainer"></div>
+    </div>
+
+    <div class="upgrade">
+      <h3>Gebäude-Upgrades</h3>
+      <div id="buildingUpgrades"></div>
+    </div>
+
+    <div class="upgrade">
+      <h3>Forschungs-Upgrades</h3>
+      <div>Offline Speichererweiterung</div>
+      <div class="sub">Erhöht das Offline-Limit um 25 Minuten</div>
       <div>Gekauft: <span id="offlineUpgradesCount">0</span>x</div>
       <div>Kosten: <span id="offlineUpgradeCost">200 MB</span></div>
       <br>
       <button id="btnOfflineUpgrade" onclick="buyOfflineUpgrade()">Verbessern</button>
-    </div>
-
-    <div class="upgrade">
-      <h3>KI Optimierung</h3>
-      <div>Verdoppelt die gesamte Produktion - Einmalig</div>
-      <div>Kosten: <span id="aiUpgradeCost">2 GB</span> </div>
+      <hr style="border-color:#334155; margin:14px 0;">
+      <div>KI Optimierung</div>
+      <div class="sub">Verdoppelt die gesamte Produktion - Einmalig</div>
+      <div>Kosten: <span id="aiUpgradeCost">2 GB</span></div>
       <br>
       <button id="btnAIUpgrade" onclick="buyAIUpgrade()">Aktivieren</button>
-    </div>
-  </div>
-
-  <div id="tab-prestige" class="tab-content">
-    <div class="upgrade">
-      <h3>Neues Datacenter eröffnen</h3>
-      <div>Setzt Fortschritt zurück, erhöht aber dauerhaft die Produktion</div>
-      <div>Benötigt: <span id="prestigeRequirement">1 GB</span></div>
-      <div class="sub" style="margin-top: 8px;">Aktueller Prestige Level: <span id="prestigeLevel">0</span></div>
-      <div class="sub">Bonus: +<span id="prestigeBonus">0</span>% Produktion</div>
-      <br>
-      <button id="btnPrestige" onclick="prestige()">Prestige</button>
     </div>
   </div>
 
@@ -447,7 +573,7 @@
         <div><strong>Gesamte Klicks:</strong> <span id="statTotalClicks">0</span></div>
         <div><strong>Gebäude gekauft:</strong> <span id="statBuildingsBought">0</span></div>
         <div><strong>Upgrades gekauft:</strong> <span id="statUpgradesBought">0</span></div>
-        <div><strong>Prestige durchgeführt:</strong> <span id="statPrestigeCount">0</span></div>
+        <div><strong>Ränge durchlaufen:</strong> <span id="statPrestigeCount">0</span></div>
         <div><strong>Gesamte Spielzeit:</strong> <span id="statPlaytime">0h 0m</span></div>
         <div><strong>Offline-Zeit genutzt:</strong> <span id="statOfflineTime">0h 0m</span></div>
       </div>
@@ -494,7 +620,7 @@
       <div class="sub" style="line-height: 1.8;">
         <div><strong>Transfer:</strong> Höhere Stufe überträgt <span id="formulaTransferRatio">0%</span> ihrer Leistung an die darunterliegende Stufe.</div>
         <div><strong>Support:</strong> Zusätzlich wird das Ziel mit einem Faktor verstärkt (abhängig von der Geber-Leistung).</div>
-        <div><strong>Prestige:</strong> Jede Stufe gibt +<span id="formulaPrestigeBonus">0</span>% auf die Gesamtproduktion.</div>
+        <div><strong>Rang:</strong> Jede Stufe gibt +<span id="formulaRangBonus">0</span>% auf die Gesamtproduktion.</div>
         <div><strong>Softcap:</strong> Ab <span id="formulaSoftcapStage1">0</span>/s und stärker ab <span id="formulaSoftcapStage2">0</span>/s wird Wachstum gedämpft.</div>
       </div>
     </div>
@@ -526,7 +652,7 @@
     const SOFTCAP_STAGE1_POWER = 0.82;
     const SOFTCAP_STAGE2_START = 1099511627776; // 1 TB/s
     const SOFTCAP_STAGE2_POWER = 0.65;
-    const SAVE_BALANCE_VERSION = 6;
+    const SAVE_BALANCE_VERSION = 10;
 
     // Firebase / Google Cloud Save (bitte mit echten Projektwerten ersetzen)
     const FIREBASE_CONFIG = {
@@ -585,6 +711,55 @@
         newClickPower: 1048576
       }
     ];
+
+    const MAX_ACTIVE_MISSIONS = 3;
+    const MISSIONS_PER_LEVEL = 5;
+    const MAX_MISSION_LEVEL = 5;
+    const MISSION_TEMPLATES = [
+      // Level 1
+      { id: 'm-own-it-25', level: 1, title: 'Personal aufbauen I', type: 'own', targetKey: 'building', targetId: 'IT Mitarbeiter', amount: 25, reward: { type: 'data', amount: 5000 } },
+      { id: 'm-reach-data-64kb', level: 1, title: 'Datenspeicher I', type: 'reach', targetKey: 'data', amount: 65536, reward: { type: 'data', amount: 12000 } },
+      { id: 'm-reach-pps-256', level: 1, title: 'Leitungscheck I', type: 'reach', targetKey: 'perSecond', amount: 256, reward: { type: 'data', amount: 20000 } },
+      { id: 'm-own-desktop-20', level: 1, title: 'Arbeitsplätze erweitern', type: 'own', targetKey: 'building', targetId: 'Desktop PC', amount: 20, reward: { type: 'data', amount: 50000 } },
+      { id: 'm-clicks-250', level: 1, title: 'Manueller Einsatz', type: 'reach', targetKey: 'clicks', amount: 180, reward: { type: 'data', amount: 80000 } },
+
+      // Level 2
+      { id: 'm-reach-data-2mb', level: 2, title: 'Datenspeicher II', type: 'reach', targetKey: 'data', amount: 2097152, reward: { type: 'data', amount: 250000 } },
+      { id: 'm-own-miniserver-15', level: 2, title: 'Server ausbauen', type: 'own', targetKey: 'building', targetId: 'Mini Server', amount: 15, reward: { type: 'data', amount: 500000 } },
+      { id: 'm-reach-pps-8kb', level: 2, title: 'Leitungscheck II', type: 'reach', targetKey: 'perSecond', amount: 8192, reward: { type: 'data', amount: 900000 } },
+      { id: 'm-totaldata-16mb', level: 2, title: 'Langzeitproduktion', type: 'reach', targetKey: 'totalData', amount: 16777216, reward: { type: 'data', amount: 1800000 } },
+      { id: 'm-own-workstation-20', level: 2, title: 'Workstations bereitstellen', type: 'own', targetKey: 'building', targetId: 'Workstation', amount: 20, reward: { type: 'data', amount: 3000000 } },
+
+      // Level 3
+      { id: 'm-own-serverrack-12', level: 3, title: 'Rack-Struktur', type: 'own', targetKey: 'building', targetId: 'Server Rack', amount: 12, reward: { type: 'data', amount: 3500000 } },
+      { id: 'm-reach-data-256mb', level: 3, title: 'Datenspeicher III', type: 'reach', targetKey: 'data', amount: 268435456, reward: { type: 'data', amount: 6000000 } },
+      { id: 'm-reach-pps-128kb', level: 3, title: 'Leitungscheck III', type: 'reach', targetKey: 'perSecond', amount: 131072, reward: { type: 'data', amount: 12000000 } },
+      { id: 'm-own-blade-10', level: 3, title: 'Blade-Ausbau', type: 'own', targetKey: 'building', targetId: 'Blade Server', amount: 10, reward: { type: 'data', amount: 20000000 } },
+      { id: 'm-clicks-2500', level: 3, title: 'Power-User', type: 'reach', targetKey: 'clicks', amount: 1200, reward: { type: 'data', amount: 35000000 } },
+
+      // Level 4
+      { id: 'm-own-micro-12', level: 4, title: 'Micro Datacenter Netz', type: 'own', targetKey: 'building', targetId: 'Micro Datacenter', amount: 12, reward: { type: 'data', amount: 70000000 } },
+      { id: 'm-reach-data-8gb', level: 4, title: 'Datenspeicher IV', type: 'reach', targetKey: 'data', amount: 8589934592, reward: { type: 'data', amount: 120000000 } },
+      { id: 'm-reach-pps-2mb', level: 4, title: 'Leitungscheck IV', type: 'reach', targetKey: 'perSecond', amount: 2097152, reward: { type: 'data', amount: 220000000 } },
+      { id: 'm-own-edge-10', level: 4, title: 'Edge-Rollout', type: 'own', targetKey: 'building', targetId: 'Edge Computing Node', amount: 10, reward: { type: 'data', amount: 400000000 } },
+      { id: 'm-totaldata-64gb', level: 4, title: 'Dauerbetrieb', type: 'reach', targetKey: 'totalData', amount: 68719476736, reward: { type: 'data', amount: 700000000 } },
+
+      // Level 5
+      { id: 'm-own-halle-10', level: 5, title: 'Datacenter-Campus', type: 'own', targetKey: 'building', targetId: 'Datacenter Halle', amount: 10, reward: { type: 'data', amount: 1200000000 } },
+      { id: 'm-reach-data-256gb', level: 5, title: 'Datenspeicher V', type: 'reach', targetKey: 'data', amount: 274877906944, reward: { type: 'data', amount: 2200000000 } },
+      { id: 'm-reach-pps-16mb', level: 5, title: 'Leitungscheck V', type: 'reach', targetKey: 'perSecond', amount: 16777216, reward: { type: 'data', amount: 4000000000 } },
+      { id: 'm-own-cdn-8', level: 5, title: 'CDN Ausbau', type: 'own', targetKey: 'building', targetId: 'CDN Server Farm', amount: 8, reward: { type: 'data', amount: 7000000000 } },
+      { id: 'm-reach-data-1tb', level: 5, title: 'Prestige-Bereit', type: 'reach', targetKey: 'data', amount: 1099511627776, reward: { type: 'data', amount: 15000000000 } }
+    ];
+
+    function createMissionState() {
+      return {
+        activeIds: [],
+        claimedIds: [],
+        completedCount: 0,
+        currentLevel: 1
+      };
+    }
 
     const BUILDING_UPGRADES = [
       {
@@ -817,7 +992,8 @@
         playTime: 0,
         offlineTime: 0,
         startTime: Date.now()
-      }
+      },
+      missions: createMissionState()
     };
 
     function isFirebaseConfigured() {
@@ -1061,6 +1237,300 @@
       return cappedProduction;
     }
 
+    function getMissionTemplateById(id) {
+      return MISSION_TEMPLATES.find(m => m.id === id) || null;
+    }
+
+    function getMissionCurrentValue(mission) {
+      if (!mission) return 0;
+
+      if (mission.targetKey === 'building') {
+        const building = game.buildings.find(b => b.name === mission.targetId);
+        return building ? building.owned : 0;
+      }
+
+      if (mission.targetKey === 'data') {
+        return game.data || 0;
+      }
+
+      if (mission.targetKey === 'perSecond') {
+        return productionPerSecond();
+      }
+
+      if (mission.targetKey === 'clicks') {
+        return game.stats ? (game.stats.totalClicks || 0) : 0;
+      }
+
+      if (mission.targetKey === 'totalData') {
+        return game.stats ? (game.stats.totalData || 0) : (game.data || 0);
+      }
+
+      if (mission.targetKey === 'resource') {
+        // Vorbereitung für Punkt 5: generischer Hook für kommende Ressourcen
+        if (!game.resources || !mission.targetId) return 0;
+        return game.resources[mission.targetId] || 0;
+      }
+
+      return 0;
+    }
+
+    function isMissionCompletedById(missionId) {
+      const mission = getMissionTemplateById(missionId);
+      if (!mission) return false;
+      return getMissionCurrentValue(mission) >= getScaledMissionAmount(mission);
+    }
+
+    function getMissionLevel() {
+      return Math.max(1, Math.min(MAX_MISSION_LEVEL, game.missions?.currentLevel || 1));
+    }
+
+    function areAllMissionsOfLevelClaimed(level) {
+      const levelMissions = MISSION_TEMPLATES.filter(m => (m.level || 1) === level);
+      if (levelMissions.length === 0) return false;
+      const claimed = game.missions?.claimedIds || [];
+      return levelMissions.every(m => claimed.includes(m.id));
+    }
+
+    function updateMissionLevelProgression() {
+      if (!game.missions) return;
+      while (game.missions.currentLevel < MAX_MISSION_LEVEL && areAllMissionsOfLevelClaimed(game.missions.currentLevel)) {
+        game.missions.currentLevel++;
+      }
+    }
+
+    function getAvailableMissionPool() {
+      const active = game.missions?.activeIds || [];
+      const claimed = game.missions?.claimedIds || [];
+      const level = getMissionLevel();
+
+      return MISSION_TEMPLATES
+        .filter(m => (m.level || 1) === level && !active.includes(m.id) && !claimed.includes(m.id))
+        .sort((a, b) => a.amount - b.amount);
+    }
+
+    function ensureActiveMissions() {
+      if (!game.missions) game.missions = createMissionState();
+      if (!Array.isArray(game.missions.activeIds)) game.missions.activeIds = [];
+      if (!Array.isArray(game.missions.claimedIds)) game.missions.claimedIds = [];
+      if (typeof game.missions.completedCount !== 'number') game.missions.completedCount = 0;
+      if (typeof game.missions.currentLevel !== 'number') game.missions.currentLevel = 1;
+
+      const validMissionIds = new Set(MISSION_TEMPLATES.map(m => m.id));
+      game.missions.activeIds = game.missions.activeIds.filter(id => validMissionIds.has(id));
+      game.missions.claimedIds = game.missions.claimedIds.filter(id => validMissionIds.has(id));
+
+      updateMissionLevelProgression();
+
+      while (game.missions.activeIds.length < MAX_ACTIVE_MISSIONS) {
+        const pool = getAvailableMissionPool();
+        if (pool.length === 0) break;
+        game.missions.activeIds.push(pool[0].id);
+      }
+    }
+
+    function getLevelScalingFactor() {
+      return 1 + (game.prestige * 0.35);
+    }
+
+    function getScaledMissionAmount(mission) {
+      const base = mission.amount || 0;
+
+      if (mission.targetKey === 'clicks') {
+        // Klick-Missionen bewusst sanfter skalieren als Auto-Produktionsziele
+        const clickScale = Math.pow(1 + ((game.prestige || 0) * 0.12), Math.max(0, (game.prestige || 0) - 1));
+        return Math.max(1, Math.floor(base * clickScale));
+      }
+
+      const scaled = base * Math.pow(getLevelScalingFactor(), game.prestige || 0);
+      return Math.max(1, Math.floor(scaled));
+    }
+
+    function getScaledMissionRewardAmount(mission) {
+      const baseReward = mission?.reward?.amount || 0;
+      return Math.max(1, Math.floor(baseReward * Math.pow(getLevelScalingFactor(), game.prestige || 0)));
+    }
+
+    function applyMissionReward(reward, mission = null) {
+      if (!reward) return;
+
+      const rewardAmount = mission ? getScaledMissionRewardAmount(mission) : (reward.amount || 0);
+
+      if (reward.type === 'data') {
+        game.data += rewardAmount;
+        if (game.stats) game.stats.totalData += rewardAmount;
+        return;
+      }
+
+      if (reward.type === 'resource') {
+        // Vorbereitung für Punkt 5: Ressourcenbelohnungen
+        if (!game.resources) game.resources = {};
+        const key = reward.resourceKey;
+        if (!key) return;
+        game.resources[key] = (game.resources[key] || 0) + rewardAmount;
+      }
+    }
+
+    function markMissionsDirty() {
+      window.__missionsDirty = true;
+    }
+
+    function getMissionsRenderSignature() {
+      ensureActiveMissions();
+      const parts = [];
+      parts.push(`done:${game.missions.completedCount}`);
+      parts.push(`active:${(game.missions.activeIds || []).join(',')}`);
+
+      (game.missions.activeIds || []).forEach(id => {
+        const mission = getMissionTemplateById(id);
+        if (!mission) return;
+        const currentValue = getMissionCurrentValue(mission);
+        const targetValue = getScaledMissionAmount(mission);
+        parts.push(`${id}:${Math.floor(currentValue)}:${targetValue}`);
+      });
+
+      return parts.join('|');
+    }
+
+    function initMissionUIInteractions() {
+      const container = document.getElementById('missionsContainer');
+      if (!container || container.dataset.bound === '1') return;
+
+      container.dataset.bound = '1';
+      container.addEventListener('mouseenter', () => {
+        window.__missionsHovering = true;
+      });
+      container.addEventListener('mouseleave', () => {
+        window.__missionsHovering = false;
+        markMissionsDirty();
+        maybeRenderMissions();
+      });
+    }
+
+    function maybeRenderMissions(force = false) {
+      const signature = getMissionsRenderSignature();
+      if (!force && window.__missionsHovering) return;
+      if (!force && !window.__missionsDirty && window.__lastMissionSignature === signature) return;
+      renderMissions();
+      window.__lastMissionSignature = signature;
+      window.__missionsDirty = false;
+    }
+
+    function claimMission(missionId) {
+      if (!game.missions || !game.missions.activeIds.includes(missionId)) return;
+      if (!isMissionCompletedById(missionId)) return;
+
+      const mission = getMissionTemplateById(missionId);
+      if (!mission) return;
+
+      applyMissionReward(mission.reward, mission);
+      game.missions.activeIds = game.missions.activeIds.filter(id => id !== missionId);
+
+      if (!game.missions.claimedIds.includes(missionId)) {
+        game.missions.claimedIds.push(missionId);
+        game.missions.completedCount++;
+      }
+
+      if (game.missions.completedCount >= MISSION_TEMPLATES.length) {
+        markMissionsDirty();
+        updateUI();
+        maybeRenderMissions(true);
+        return;
+      }
+
+      ensureActiveMissions();
+      markMissionsDirty();
+      updateUI();
+      maybeRenderMissions(true);
+    }
+
+    function getMissionTargetText(mission) {
+      if (!mission) return '';
+      const targetAmount = getScaledMissionAmount(mission);
+      if (mission.targetKey === 'building') return `${targetAmount}x ${mission.targetId}`;
+      if (mission.targetKey === 'perSecond') return `${formatData(targetAmount)}/s`;
+      if (mission.targetKey === 'clicks') return `${targetAmount.toLocaleString()} Klicks`;
+      return formatData(targetAmount);
+    }
+
+    function getMissionProgressText(mission, currentValue) {
+      const targetAmount = getScaledMissionAmount(mission);
+      if (mission.targetKey === 'building' || mission.targetKey === 'clicks') {
+        return `${Math.floor(currentValue).toLocaleString()} / ${Math.floor(targetAmount).toLocaleString()}`;
+      }
+      if (mission.targetKey === 'perSecond') {
+        return `${formatData(currentValue)}/s / ${formatData(targetAmount)}/s`;
+      }
+      return `${formatData(currentValue)} / ${formatData(targetAmount)}`;
+    }
+
+    function renderMissions() {
+      const container = document.getElementById('missionsContainer');
+      if (!container) return;
+
+      ensureActiveMissions();
+      container.innerHTML = '';
+
+      const missionLevel = getMissionLevel();
+      const completed = game.missions.completedCount;
+      const levelMissions = MISSION_TEMPLATES.filter(m => (m.level || 1) === missionLevel);
+      const levelClaimed = levelMissions.filter(m => game.missions.claimedIds.includes(m.id)).length;
+
+      const summaryCard = document.createElement('div');
+      summaryCard.className = 'card mission-card';
+      const cycleReady = completed >= MISSION_TEMPLATES.length;
+      summaryCard.innerHTML = `
+        <div class="sub">Missionen</div>
+        <div style="font-size:22px;font-weight:bold;line-height:1.1;margin-top:4px;">Level ${missionLevel} • Rang ${game.prestige}</div>
+        <div class="sub" style="margin-top:4px;">${levelClaimed}/${levelMissions.length} in diesem Level</div>
+        <div class="sub" style="margin-top:4px;">Gesamt abgeschlossen: ${completed}/${MISSION_TEMPLATES.length}</div>
+        <button onclick="startNextLevelCycle()" ${!cycleReady ? 'disabled' : ''} style="margin-top:8px;width:100%;">${cycleReady ? 'Neuen Durchlauf starten' : `Neuer Durchlauf bei ${MISSION_TEMPLATES.length}/${MISSION_TEMPLATES.length}`}</button>
+      `;
+      container.appendChild(summaryCard);
+
+      if (!game.missions.activeIds.length) {
+        const emptyCard = document.createElement('div');
+        emptyCard.className = 'card mission-card';
+        emptyCard.innerHTML = `
+          <div style="font-size:15px;font-weight:bold;">Keine weiteren Missionen</div>
+          <div class="sub" style="margin-top:4px;">Weitere Missionen folgen mit dem nächsten Update.</div>
+        `;
+        container.appendChild(emptyCard);
+        return;
+      }
+
+      game.missions.activeIds.forEach(missionId => {
+        const mission = getMissionTemplateById(missionId);
+        if (!mission) return;
+
+        const currentValue = getMissionCurrentValue(mission);
+        const targetValue = getScaledMissionAmount(mission);
+        const progressRatio = Math.min(1, currentValue / targetValue);
+        const isDone = currentValue >= targetValue;
+        const scaledRewardAmount = getScaledMissionRewardAmount(mission);
+        const rewardText = mission.reward.type === 'data'
+          ? `${formatData(scaledRewardAmount)} Daten`
+          : `${scaledRewardAmount} Ressource`;
+
+        const card = document.createElement('div');
+        card.className = 'card mission-card';
+        card.innerHTML = `
+          <div class="mission-row">
+            <div style="min-width:0;flex:1;">
+              <div style="font-size:15px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${mission.title} <span class="sub">(Lv ${mission.level || 1})</span></div>
+              <div class="sub" style="font-size:12px;line-height:1.25;margin-top:2px;">${getMissionProgressText(mission, currentValue)} • Ziel: ${getMissionTargetText(mission)}</div>
+              <div class="sub" style="font-size:12px;line-height:1.25;">Belohnung: ${rewardText}</div>
+            </div>
+            <button onclick="claimMission('${mission.id}')" ${!isDone ? 'disabled' : ''} style="min-width:92px;padding:8px 10px;font-size:12px;">${isDone ? 'Abholen' : 'In Arbeit'}</button>
+          </div>
+          <div class="mission-track">
+            <div class="mission-fill ${isDone ? 'done' : ''}" style="width:${(progressRatio * 100).toFixed(1)}%;"></div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
     function productionPerSecond() {
       if (!game.buildings || game.buildings.length === 0) return 0;
 
@@ -1096,15 +1566,12 @@
       document.getElementById('offlineHours').innerText = `${hours}h ${minutes}m`;
 
       document.getElementById('prestige').innerText = game.prestige;
-      document.getElementById('prestigeLevel').innerText = game.prestige;
-      document.getElementById('prestigeBonus').innerText = (game.prestige * (PRESTIGE_BONUS_PER_LEVEL * 100)).toFixed(0);
-      document.getElementById('prestigeRequirement').innerText = formatData(game.prestigeRequirement);
       document.getElementById('offlineUpgradeCost').innerText = formatData(game.offlineUpgradeCost);
       document.getElementById('offlineUpgradesCount').innerText = game.offlineUpgradesBought;
 
       document.getElementById('aiUpgradeCost').innerText = formatData(game.aiUpgradeCost);
       document.getElementById('formulaTransferRatio').innerText = `${Math.round(SUPPORT_TRANSFER_RATIO * 100)}%`;
-      document.getElementById('formulaPrestigeBonus').innerText = (PRESTIGE_BONUS_PER_LEVEL * 100).toFixed(0);
+      document.getElementById('formulaRangBonus').innerText = (PRESTIGE_BONUS_PER_LEVEL * 100).toFixed(0);
       document.getElementById('formulaSoftcapStage1').innerText = formatData(SOFTCAP_STAGE1_START);
       document.getElementById('formulaSoftcapStage2').innerText = formatData(SOFTCAP_STAGE2_START);
 
@@ -1116,11 +1583,13 @@
       updateTabNotifications();
       updateStats();
 
-      // Klick-Upgrades aktualisieren wenn Tab aktiv ist
-      const clickTab = document.getElementById('tab-clickupgrades');
-      if (clickTab && clickTab.classList.contains('active')) {
-        renderClickUpgrades();
+      // Klick-Upgrades nur bei relevanten Änderungen rendern
+      const upgradesTab = document.getElementById('tab-upgrades');
+      if (upgradesTab && upgradesTab.classList.contains('active')) {
+        maybeRenderClickUpgrades();
       }
+
+      maybeRenderMissions();
     }
 
     function updateStats() {
@@ -1143,37 +1612,31 @@
     }
 
     function checkUpgradesTabUnlock() {
-      // Zeige Upgrades-Tab ab 5 MB ODER wenn bereits Upgrades gekauft wurden
+      // Upgrades-Tab ist jetzt immer sichtbar
       const upgradesTab = document.getElementById('upgradesTab');
-      if (game.data >= UPGRADES_TAB_UNLOCK_AT || game.buildingUpgrades.length > 0) {
-        upgradesTab.style.display = 'block';
-      }
+      if (upgradesTab) upgradesTab.style.display = 'block';
     }
 
     function updateTabNotifications() {
       const upgradesTab = document.getElementById('upgradesTab');
-      const researchTab = document.getElementById('researchTab');
-
-      if (!upgradesTab || !researchTab) return;
+      if (!upgradesTab) return;
 
       upgradesTab.classList.remove('has-notification');
-      researchTab.classList.remove('has-notification');
-
       const upgradesActive = document.getElementById('tab-upgrades').classList.contains('active');
-      const researchActive = document.getElementById('tab-research').classList.contains('active');
 
       const hasAffordableBuildingUpgrade = BUILDING_UPGRADES.some((upgrade, index) => {
         return !game.buildingUpgrades.includes(index) && game.data >= upgrade.unlockAt && game.data >= upgrade.cost;
       });
-
+      const hasAffordableClickUpgrade = (() => {
+        const nextIndex = CLICK_UPGRADES.findIndex((u, i) => !game.clickUpgradesBought.includes(i));
+        if (nextIndex === -1) return false;
+        const next = CLICK_UPGRADES[nextIndex];
+        return game.data >= next.unlockAt && game.data >= next.cost;
+      })();
       const hasAffordableResearchUpgrade = (game.data >= game.offlineUpgradeCost) || (!game.aiUpgradeBought && game.data >= game.aiUpgradeCost);
 
-      if (hasAffordableBuildingUpgrade && !upgradesActive) {
+      if ((hasAffordableBuildingUpgrade || hasAffordableClickUpgrade || hasAffordableResearchUpgrade) && !upgradesActive) {
         upgradesTab.classList.add('has-notification');
-      }
-
-      if (hasAffordableResearchUpgrade && !researchActive) {
-        researchTab.classList.add('has-notification');
       }
     }
 
@@ -1193,9 +1656,6 @@
       const tabButtons = {
         'buildings': '#buildingsTab',
         'upgrades': '#upgradesTab',
-        'clickupgrades': '#clickupgradesTab',
-        'research': '#researchTab',
-        'prestige': '#prestigeTab',
         'stats': '#statsTab',
         'account': '#accountTab',
         'help': '#helpTab'
@@ -1207,9 +1667,7 @@
 
       if (tabName === 'upgrades') {
         renderBuildingUpgrades();
-      }
-      if (tabName === 'clickupgrades') {
-        renderClickUpgrades();
+        maybeRenderClickUpgrades(true);
       }
       if (tabName === 'stats') {
         updateStats();
@@ -1316,9 +1774,10 @@
         aiBtn.disabled = game.aiUpgradeBought || game.data < game.aiUpgradeCost;
       }
 
+      // Kein Prestige-Button mehr im UI (Level-Zyklus läuft über Missionen)
       const prestigeBtn = document.getElementById('btnPrestige');
       if (prestigeBtn) {
-        prestigeBtn.disabled = game.data < game.prestigeRequirement;
+        prestigeBtn.disabled = true;
       }
     }
 
@@ -1349,6 +1808,17 @@
         const upgradeMultiplier = getBuildingUpgradeMultiplier(building.name);
         const ownPower = building.owned * building.production * upgradeMultiplier;
 
+        // Zeige gekaufte Upgrades für dieses Gebäude
+        const applicableUpgrades = game.buildingUpgrades
+          .map(upgradeIndex => BUILDING_UPGRADES[upgradeIndex])
+          .filter(upgrade => {
+            const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding : [upgrade.targetBuilding];
+            return targets.includes(building.name);
+          });
+        const upgradesInfo = applicableUpgrades.length > 0
+          ? `<div class="sub" style="color: #a78bfa;">🔧 Upgrades: ${applicableUpgrades.map(u => u.name).join(', ')}</div>`
+          : '';
+
         let productionDisplay = '';
         if (building.owned > 0) {
           if (index === 0) {
@@ -1361,9 +1831,9 @@
               bonusParts.push(`+${upgradeBonusPercent}% Upgrade`);
             }
 
-            const prestigeBonusPercent = (game.prestige * (PRESTIGE_BONUS_PER_LEVEL * 100)).toFixed(0);
+            const rangBonusPercent = (game.prestige * (PRESTIGE_BONUS_PER_LEVEL * 100)).toFixed(0);
             if (game.prestige > 0) {
-              bonusParts.push(`+${prestigeBonusPercent}% Prestige`);
+              bonusParts.push(`+${rangBonusPercent}% Rang`);
             }
 
             if (rawItOutput > SOFTCAP_STAGE1_START) {
@@ -1390,7 +1860,8 @@
             <h3>${building.name}</h3>
             <div>Besitzt: ${ownedDisplay}</div>
             <div>Kosten: ${costLabel}</div>
-            <div class="sub">+${formatData(building.production)}/s pro Einheit</div>
+            <div class="sub">+${formatData(building.production * upgradeMultiplier)}/s pro Einheit${upgradeMultiplier > 1 ? ` <span style="color: #4ade80;">(+${((upgradeMultiplier - 1) * 100).toFixed(0)}% Upgrade)</span>` : ''}</div>
+            ${upgradesInfo}
             ${productionDisplay}
           </div>
           <button onclick="buyBuilding(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
@@ -1498,6 +1969,23 @@
       renderBuildingUpgrades();
     }
 
+    function getClickUpgradeRenderSignature() {
+      const nextIndex = CLICK_UPGRADES.findIndex((u, i) => !game.clickUpgradesBought.includes(i));
+      if (nextIndex === -1) return `done|${game.clickUpgradesBought.join(',')}`;
+
+      const upgrade = CLICK_UPGRADES[nextIndex];
+      const isUnlocked = game.data >= upgrade.unlockAt;
+      const canAfford = game.data >= upgrade.cost;
+      return `${nextIndex}|${isUnlocked ? 1 : 0}|${canAfford ? 1 : 0}|${game.clickUpgradesBought.join(',')}`;
+    }
+
+    function maybeRenderClickUpgrades(force = false) {
+      const signature = getClickUpgradeRenderSignature();
+      if (!force && window.__lastClickUpgradeSignature === signature) return;
+      renderClickUpgrades();
+      window.__lastClickUpgradeSignature = signature;
+    }
+
     function buyClickUpgrade(index) {
       const upgrade = CLICK_UPGRADES[index];
       if (game.clickUpgradesBought.includes(index)) return;
@@ -1507,7 +1995,7 @@
       game.clickPower = upgrade.newClickPower;
       if (game.stats) game.stats.upgradesBought++;
       updateUI();
-      renderClickUpgrades();
+      maybeRenderClickUpgrades(true);
     }
 
     function renderClickUpgrades() {
@@ -1518,10 +2006,9 @@
       const nextIndex = CLICK_UPGRADES.findIndex((u, i) => !game.clickUpgradesBought.includes(i));
 
       const div = document.createElement('div');
-      div.className = 'upgrade';
 
       if (nextIndex === -1) {
-        div.innerHTML = `<h3>✓ Alle Klick-Upgrades gekauft</h3><div class="sub">Dein Klick ist maximal optimiert.</div>`;
+        div.innerHTML = `<div style="font-weight:bold;">✓ Alle Klick-Upgrades gekauft</div><div class="sub">Dein Klick ist maximal optimiert.</div>`;
       } else {
         const upgrade = CLICK_UPGRADES[nextIndex];
         const isUnlocked = game.data >= upgrade.unlockAt;
@@ -1625,20 +2112,44 @@
       }
     }
 
+    function startNextLevelCycle() {
+      game.prestige++;
+      if (game.stats) game.stats.prestigeCount++;
+
+      game.data = 0;
+      game.productionMultiplier = 1;
+      game.aiUpgradeBought = false;
+      game.buildingUpgrades = [];
+      game.buildings = createBuildings();
+      game.offlineUpgradesBought = 0;
+      game.offlineLimit = BASE_OFFLINE_LIMIT;
+      game.offlineUpgradeCost = BASE_OFFLINE_UPGRADE_COST;
+      game.aiUpgradeCost = BASE_AI_UPGRADE_COST;
+      game.clickUpgradesBought = [];
+      game.clickPower = 1;
+
+      game.missions = createMissionState();
+      ensureActiveMissions();
+
+      markMissionsDirty();
+      maybeRenderClickUpgrades(true);
+      updateUI();
+      renderBuildings();
+
+      const offlineInfo = document.getElementById('offlineInfo');
+      if (offlineInfo) {
+        offlineInfo.style.display = 'block';
+        offlineInfo.innerHTML = `<strong>Neuer Level-Durchlauf gestartet</strong><br>Level-Rang: ${game.prestige}<br>Missionen wurden zurückgesetzt und schwerer skaliert.`;
+        setTimeout(() => {
+          offlineInfo.style.display = 'none';
+        }, 5000);
+      }
+    }
+
     function prestige() {
-      if (game.data >= game.prestigeRequirement) {
-        game.prestige++;
-        game.prestigeRequirement = Math.floor(game.prestigeRequirement * PRESTIGE_COST_GROWTH);
-        if (game.stats) game.stats.prestigeCount++;
-
-        game.data = 0;
-        game.productionMultiplier = 1;
-        game.aiUpgradeBought = false;
-        game.buildingUpgrades = [];
-        game.buildings = createBuildings();
-
-        updateUI();
-        renderBuildings();
+      // Legacy-Entry: mapped auf neuen Level-Modus
+      if ((game.missions?.completedCount || 0) >= MISSION_TEMPLATES.length) {
+        startNextLevelCycle();
       }
     }
 
@@ -1781,6 +2292,35 @@
             game.balanceVersion = 6;
             costsMigrated = true;
             break;
+          case 6:
+            // Missionssystem v1
+            if (!game.missions) game.missions = createMissionState();
+            ensureActiveMissions();
+            game.balanceVersion = 7;
+            costsMigrated = true;
+            break;
+          case 7:
+            // Missions-Levels + Prestige-Missionsgate
+            if (!game.missions) game.missions = createMissionState();
+            ensureActiveMissions();
+            game.balanceVersion = 8;
+            costsMigrated = true;
+            break;
+          case 8:
+            // Level-Modus: nächstes Level nur nach vollständigem Abschluss des aktuellen Levels
+            if (!game.missions) game.missions = createMissionState();
+            if (typeof game.missions.currentLevel !== 'number') game.missions.currentLevel = 1;
+            ensureActiveMissions();
+            game.balanceVersion = 9;
+            costsMigrated = true;
+            break;
+          case 9:
+            // Level-Cycle: kompletter Neustart nach 25/25 Missionen
+            if (!game.missions) game.missions = createMissionState();
+            ensureActiveMissions();
+            game.balanceVersion = 10;
+            costsMigrated = true;
+            break;
           default:
             game.balanceVersion = SAVE_BALANCE_VERSION;
             costsMigrated = true;
@@ -1790,6 +2330,10 @@
 
       // Immer final normalisieren, damit manuelle Wertanpassungen im Code in Saves ankommen
       normalizeBalanceValues();
+
+      // Missionsdaten sicherstellen
+      if (!game.missions) game.missions = createMissionState();
+      ensureActiveMissions();
 
       // Migration: Statistiken initialisieren oder korrigieren
       if (game.stats === undefined) {
@@ -1865,7 +2409,11 @@
 
     loadGame();
     renderBuildings();
-    renderClickUpgrades();
+    renderBuildingUpgrades();
+    maybeRenderClickUpgrades(true);
+    initMissionUIInteractions();
+    markMissionsDirty();
+    maybeRenderMissions(true);
     const savedBuyAmount = sessionStorage.getItem('buyAmount');
     setBuyAmount(savedBuyAmount ? parseInt(savedBuyAmount) : 1);
     updateUI();
