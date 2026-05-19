@@ -1407,6 +1407,10 @@
         cloudSyncInProgress = true;
         if (showStatus) setCloudSyncStatus('Cloud-Speicher: synchronisiere...');
 
+        // Stelle sicher dass lastDeviceId aktuell ist
+        game.lastDeviceId = getOrCreateDeviceId();
+        game.lastUpdate = Date.now();
+
         await firestoreDb
           .collection('users')
           .doc(cloudUser.uid)
