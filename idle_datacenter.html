@@ -898,6 +898,56 @@
         multiplier: 6.0,
         requires: 8,
         minBuildings: { 'Submarine Datacenter': 20, 'Satellite Network': 15, 'Quantum Computing Cluster': 8 }
+      },
+      {
+        name: 'Neural Acceleration',
+        description: '+400% Neural Network Matrix',
+        cost: 240000000000000000,
+        unlockAt: 120000000000000000,
+        targetBuilding: 'Neural Network Matrix',
+        multiplier: 5.0,
+        requires: 9,
+        minBuildings: { 'Quantum Computing Cluster': 20, 'Neural Network Matrix': 8 }
+      },
+      {
+        name: 'Holographic Projection',
+        description: '+500% Holographic Processing Array',
+        cost: 1920000000000000000,
+        unlockAt: 960000000000000000,
+        targetBuilding: 'Holographic Processing Array',
+        multiplier: 6.0,
+        requires: 10,
+        minBuildings: { 'Neural Network Matrix': 15, 'Holographic Processing Array': 8 }
+      },
+      {
+        name: 'Quantum Flux Stabilizer',
+        description: '+600% Quantum Entanglement Hub',
+        cost: 15360000000000000000,
+        unlockAt: 7680000000000000000,
+        targetBuilding: 'Quantum Entanglement Hub',
+        multiplier: 7.0,
+        requires: 11,
+        minBuildings: { 'Holographic Processing Array': 12, 'Quantum Entanglement Hub': 8 }
+      },
+      {
+        name: 'Photonic Amplification',
+        description: '+700% Photonic Supercomputer',
+        cost: 122880000000000000000,
+        unlockAt: 61440000000000000000,
+        targetBuilding: 'Photonic Supercomputer',
+        multiplier: 8.0,
+        requires: 12,
+        minBuildings: { 'Quantum Entanglement Hub': 12, 'Photonic Supercomputer': 8 }
+      },
+      {
+        name: 'Biosynthetic Integration',
+        description: '+800% Biosynthetic Computing Network',
+        cost: 983040000000000000000,
+        unlockAt: 491520000000000000000,
+        targetBuilding: 'Biosynthetic Computing Network',
+        multiplier: 9.0,
+        requires: 13,
+        minBuildings: { 'Photonic Supercomputer': 12, 'Biosynthetic Computing Network': 8 }
       }
     ];
 
@@ -991,6 +1041,36 @@
         baseCost: 140737488355328,
         production: 201326592,
         unlockAt: 70368744177664
+      },
+      {
+        name: 'Neural Network Matrix',
+        baseCost: 1125899906842624,
+        production: 805306368,
+        unlockAt: 562949953421312
+      },
+      {
+        name: 'Holographic Processing Array',
+        baseCost: 9007199254740992,
+        production: 3221225472,
+        unlockAt: 4503599627370496
+      },
+      {
+        name: 'Quantum Entanglement Hub',
+        baseCost: 72057594037927936,
+        production: 12884901888,
+        unlockAt: 36028797018963968
+      },
+      {
+        name: 'Photonic Supercomputer',
+        baseCost: 576460752303423488,
+        production: 51539607552,
+        unlockAt: 288230376151711744
+      },
+      {
+        name: 'Biosynthetic Computing Network',
+        baseCost: 4611686018427387904,
+        production: 206158430208,
+        unlockAt: 2305843009213693952
       }
     ];
 
