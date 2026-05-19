@@ -1123,7 +1123,9 @@
 
       try {
         const provider = new firebase.auth.GoogleAuthProvider();
+        console.log('Google Sign-In versucht...', provider);
         await firebaseAuth.signInWithPopup(provider);
+        console.log('Google Sign-In erfolgreich');
       } catch (error) {
         console.error('Google Sign-In Fehler:', error.code, error.message);
         setCloudSyncStatus('Anmeldung fehlgeschlagen: ' + (error.code || error.message), true);
@@ -2456,6 +2458,12 @@
     const savedBuyAmount = sessionStorage.getItem('buyAmount');
     setBuyAmount(savedBuyAmount ? parseInt(savedBuyAmount) : 1);
     updateUI();
+
+    // Initialisiere Cloud-Speicher (wird auch am Ende via Script-Tag aufgerufen)
+    if (window.firebase) {
+      console.log('Firebase verfügbar in Startup, initialisiere Cloud-Speicher...');
+      setTimeout(() => initializeCloudSave(), 100);
+    }
     initializeCloudSave();
 
     setInterval(gameLoop, 100);
@@ -2532,6 +2540,20 @@
       console.log('Summe:', game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0));
       console.log('Stats zeigt:', game.stats.upgradesBought);
     };
+  </script>
+
+  <!-- Firebase Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Initialize Firebase after scripts load
+    if (window.firebase) {
+      console.log('Firebase SDK geladen, initialisiere Cloud-Speicher...');
+      initializeCloudSave();
+    } else {
+      console.error('Firebase SDK konnte nicht geladen werden!');
+    }
   </script>
 </body>
 </html>
