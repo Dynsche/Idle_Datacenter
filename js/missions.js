@@ -10,6 +10,18 @@ function getAllMissionTemplates() {
   return [...MISSION_TEMPLATES, ...RESOURCE_MISSION_TEMPLATES];
 }
 
+// Nur Missionen die abgeschlossen sind oder prinzipiell erreichbar (kein unlösbar gesperrtes Ressourcenziel)
+function getReachableMissionTemplates() {
+  const claimed = game.missions?.claimedIds || [];
+  return getAllMissionTemplates().filter(m => {
+    if (claimed.includes(m.id)) return true; // bereits abgeschlossen zählt immer
+    if (m.targetKey !== 'resource') return true;
+    const def = RESOURCE_DEFS.find(d => d.id === m.targetId);
+    if (!def) return false;
+    return Object.values(game.resourceBuildings[def.id] || {}).some(v => v > 0);
+  });
+}
+
 function getMissionCurrentValue(mission) {
   if (!mission) return 0;
   if (mission.targetKey === 'building') {
@@ -57,7 +69,7 @@ function getMissionLevel() {
 }
 
 function areAllMissionsOfLevelClaimed(level) {
-  const levelMissions = getAllMissionTemplates().filter(m => (m.level || 1) === level);
+  const levelMissions = getReachableMissionTemplates().filter(m => (m.level || 1) === level);
   if (levelMissions.length === 0) return false;
   const claimed = game.missions?.claimedIds || [];
   return levelMissions.every(m => claimed.includes(m.id));
@@ -155,7 +167,7 @@ function claimMission(missionId) {
 
   showFloatingText('🎉 Mission abgeschlossen!', 'purchase');
 
-  if (game.missions.completedCount >= getAllMissionTemplates().length) {
+  if (game.missions.completedCount >= getReachableMissionTemplates().length) {
     markMissionsDirty();
     updateUI();
     maybeRenderMissions(true);
@@ -238,19 +250,19 @@ function renderMissions() {
 
   const missionLevel   = getMissionLevel();
   const completed      = game.missions.completedCount;
-  const allTemplates   = getAllMissionTemplates();
-  const levelMissions  = allTemplates.filter(m => (m.level || 1) === missionLevel);
+  const reachable      = getReachableMissionTemplates();
+  const levelMissions  = reachable.filter(m => (m.level || 1) === missionLevel);
   const levelClaimed   = levelMissions.filter(m => game.missions.claimedIds.includes(m.id)).length;
 
   const summaryCard = document.createElement('div');
   summaryCard.className = 'card mission-card';
-  const cycleReady = completed >= allTemplates.length;
+  const cycleReady = completed >= reachable.length;
   summaryCard.innerHTML = `
     <div class="sub">Missionen</div>
     <div style="font-size:22px;font-weight:bold;line-height:1.1;margin-top:4px;">Level ${missionLevel} • Rang ${game.prestige}</div>
     <div class="sub" style="margin-top:4px;">${levelClaimed}/${levelMissions.length} in diesem Level</div>
-    <div class="sub" style="margin-top:4px;">Gesamt abgeschlossen: ${completed}/${allTemplates.length}</div>
-    <button onclick="startNextLevelCycle()" ${!cycleReady ? 'disabled' : ''} style="margin-top:8px;width:100%;">${cycleReady ? 'Neuen Durchlauf starten' : `Neuer Durchlauf bei ${allTemplates.length}/${allTemplates.length}`}</button>
+    <div class="sub" style="margin-top:4px;">Gesamt abgeschlossen: ${completed}/${reachable.length}</div>
+    <button onclick="startNextLevelCycle()" ${!cycleReady ? 'disabled' : ''} style="margin-top:8px;width:100%;">${cycleReady ? 'Neuen Durchlauf starten' : `Neuer Durchlauf bei ${reachable.length}/${reachable.length}`}</button>
   `;
   container.appendChild(summaryCard);
 
