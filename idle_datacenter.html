@@ -2173,7 +2173,7 @@
       const upgradesTab = document.getElementById('tab-upgrades');
       if (upgradesTab && upgradesTab.classList.contains('active')) {
         maybeRenderClickUpgrades();
-        renderResearchUpgrades();
+        maybeRenderResearchUpgrades();
       }
 
       const achievementsTab = document.getElementById('tab-achievements');
@@ -2613,6 +2613,14 @@
       renderBuildingUpgrades();
     }
 
+    let _lastResearchUpgradesState = null;
+    function maybeRenderResearchUpgrades() {
+      const stateKey = `${game.offlineUpgradesBought}|${game.offlineUpgradeCost}|${game.data >= game.offlineUpgradeCost}|${game.aiUpgradeBought}|${game.data >= game.aiUpgradeCost}`;
+      if (stateKey === _lastResearchUpgradesState) return;
+      _lastResearchUpgradesState = stateKey;
+      renderResearchUpgrades();
+    }
+
     function renderResearchUpgrades() {
       const container = document.getElementById('researchUpgradesContainer');
       if (!container) return;
@@ -2800,6 +2808,7 @@
         game.offlineUpgradeCost = Math.floor(game.offlineUpgradeCost * OFFLINE_UPGRADE_COST_GROWTH);
         if (game.stats) game.stats.upgradesBought++;
 
+        _lastResearchUpgradesState = null;
         updateUI();
       }
     }
