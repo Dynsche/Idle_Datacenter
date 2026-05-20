@@ -19,7 +19,7 @@ const SOFTCAP_STAGE1_START        = 1073741824;    // 1 GB/s
 const SOFTCAP_STAGE1_POWER        = 0.82;
 const SOFTCAP_STAGE2_START        = 1099511627776; // 1 TB/s
 const SOFTCAP_STAGE2_POWER        = 0.65;
-const SAVE_BALANCE_VERSION        = 12;
+const SAVE_BALANCE_VERSION        = 13;
 
 // ============================================================
 // Missionen
@@ -319,3 +319,91 @@ const FIREBASE_CONFIG = {
   appId: '1:503758094362:web:b3fbb6e62c53efee3fd1a3'
 };
 const CLOUD_SAVE_DOC_ID = 'main';
+
+// ============================================================
+// Ressourcen-Definitionen
+// Abhängigkeitskette: Strom → Kühlung → Bandbreite → Rechenleistung
+// ============================================================
+const RESOURCE_DEFS = [
+  {
+    id: 'power',
+    name: 'Strom',
+    icon: '⚡',
+    unit: 'kW',
+    unlockAt: 1048576,           // 1 MB Daten
+    dependsOn: null,
+    productionBonus: 0.04,       // +4% Datenproduktion pro 100 Einheiten
+    bonusPerUnits: 100,
+    maxBonus: 2.0,               // max +200%
+    buildings: [
+      { id: 'power_gen',      name: 'Notstromaggregat',   baseCost: 500000,      production: 1,   unlockAt: 0 },
+      { id: 'power_solar',    name: 'Solaranlage',         baseCost: 8000000,     production: 8,   unlockAt: 5 },
+      { id: 'power_nuclear',  name: 'Kleinreaktor',        baseCost: 200000000,   production: 60,  unlockAt: 20 }
+    ]
+  },
+  {
+    id: 'cooling',
+    name: 'Kühlung',
+    icon: '❄️',
+    unit: 'kJ/s',
+    unlockAt: 1073741824,        // 1 GB Daten
+    dependsOn: 'power',
+    productionBonus: 0.05,       // +5% pro 100 Einheiten
+    bonusPerUnits: 100,
+    maxBonus: 3.0,
+    buildings: [
+      { id: 'cool_fan',       name: 'Lüftersystem',        baseCost: 50000000,    production: 1,   unlockAt: 0 },
+      { id: 'cool_liquid',    name: 'Flüssigkühlung',      baseCost: 750000000,   production: 8,   unlockAt: 5 },
+      { id: 'cool_cryo',      name: 'Kryokühlung',         baseCost: 20000000000, production: 60,  unlockAt: 20 }
+    ]
+  },
+  {
+    id: 'bandwidth',
+    name: 'Bandbreite',
+    icon: '📡',
+    unit: 'Gbps',
+    unlockAt: 1099511627776,     // 1 TB Daten
+    dependsOn: 'cooling',
+    productionBonus: 0.06,
+    bonusPerUnits: 100,
+    maxBonus: 4.0,
+    buildings: [
+      { id: 'bw_fiber',       name: 'Glasfaseranschluss',  baseCost: 5000000000,  production: 1,   unlockAt: 0 },
+      { id: 'bw_backbone',    name: 'Internet-Backbone',   baseCost: 80000000000, production: 8,   unlockAt: 5 },
+      { id: 'bw_satellite',   name: 'Satelliten-Uplink',   baseCost: 2000000000000, production: 60, unlockAt: 20 }
+    ]
+  },
+  {
+    id: 'compute',
+    name: 'Rechenleistung',
+    icon: '🖥️',
+    unit: 'TFLOPS',
+    unlockAt: 1125899906842624,  // ~1 PB Daten
+    dependsOn: 'bandwidth',
+    productionBonus: 0.08,
+    bonusPerUnits: 100,
+    maxBonus: 6.0,
+    buildings: [
+      { id: 'comp_gpu',       name: 'GPU-Cluster',         baseCost: 500000000000,    production: 1,   unlockAt: 0 },
+      { id: 'comp_asic',      name: 'ASIC-Farm',           baseCost: 8000000000000,   production: 8,   unlockAt: 5 },
+      { id: 'comp_quantum',   name: 'Quanten-Prozessor',   baseCost: 200000000000000, production: 60,  unlockAt: 20 }
+    ]
+  }
+];
+
+// Ressourcen-Missions-Templates (hängen an bestehende MISSION_TEMPLATES an)
+const RESOURCE_MISSION_TEMPLATES = [
+  // Strom
+  { id: 'rm-power-50',    level: 2, title: 'Stromversorgung I',   type: 'reach', targetKey: 'resource', targetId: 'power',     amount: 50,   reward: { type: 'data', amount: 5000000 } },
+  { id: 'rm-power-500',   level: 3, title: 'Stromversorgung II',  type: 'reach', targetKey: 'resource', targetId: 'power',     amount: 500,  reward: { type: 'data', amount: 80000000 } },
+  { id: 'rm-power-2000',  level: 4, title: 'Stromversorgung III', type: 'reach', targetKey: 'resource', targetId: 'power',     amount: 2000, reward: { type: 'data', amount: 1500000000 } },
+  // Kühlung
+  { id: 'rm-cool-50',     level: 3, title: 'Kühlung I',           type: 'reach', targetKey: 'resource', targetId: 'cooling',   amount: 50,   reward: { type: 'data', amount: 200000000 } },
+  { id: 'rm-cool-500',    level: 4, title: 'Kühlung II',          type: 'reach', targetKey: 'resource', targetId: 'cooling',   amount: 500,  reward: { type: 'data', amount: 3000000000 } },
+  { id: 'rm-cool-2000',   level: 5, title: 'Kühlung III',         type: 'reach', targetKey: 'resource', targetId: 'cooling',   amount: 2000, reward: { type: 'data', amount: 40000000000 } },
+  // Bandbreite
+  { id: 'rm-bw-50',       level: 4, title: 'Bandbreite I',        type: 'reach', targetKey: 'resource', targetId: 'bandwidth', amount: 50,   reward: { type: 'data', amount: 8000000000 } },
+  { id: 'rm-bw-500',      level: 5, title: 'Bandbreite II',       type: 'reach', targetKey: 'resource', targetId: 'bandwidth', amount: 500,  reward: { type: 'data', amount: 100000000000 } },
+  // Rechenleistung
+  { id: 'rm-comp-50',     level: 5, title: 'Rechenleistung I',    type: 'reach', targetKey: 'resource', targetId: 'compute',   amount: 50,   reward: { type: 'data', amount: 500000000000 } }
+];

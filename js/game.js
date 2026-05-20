@@ -70,8 +70,24 @@ let game = {
     startTime: Date.now()
   },
   missions: createMissionState(),
-  achievements: {}
+  achievements: {},
+  resources: {},           // wird in initResourceState() befüllt
+  resourceBuildings: {}    // wird in initResourceState() befüllt
 };
+
+// Nach dem Laden von RESOURCE_DEFS direkt initialisieren
+function initResourceState() {
+  const rs = createResourceState();
+  Object.keys(rs.resources).forEach(k => {
+    if (!(k in game.resources)) game.resources[k] = rs.resources[k];
+  });
+  Object.keys(rs.resourceBuildings).forEach(k => {
+    if (!game.resourceBuildings[k]) game.resourceBuildings[k] = {};
+    Object.keys(rs.resourceBuildings[k]).forEach(b => {
+      if (!(b in game.resourceBuildings[k])) game.resourceBuildings[k][b] = 0;
+    });
+  });
+}
 
 // ============================================================
 // Produktionsberechnung
@@ -124,7 +140,8 @@ function productionPerSecond() {
   }
 
   const itOutput  = effectiveProduction[0] || 0;
-  const rawOutput = itOutput * game.productionMultiplier * (1 + game.prestige * PRESTIGE_BONUS_PER_LEVEL);
+  const resourceMult = getResourceProductionMultiplier();
+  const rawOutput = itOutput * game.productionMultiplier * (1 + game.prestige * PRESTIGE_BONUS_PER_LEVEL) * resourceMult;
   return applyProductionSoftcap(rawOutput);
 }
 
@@ -188,6 +205,69 @@ function canAffordMultiplier(amount) {
     }
   }
   return false;
+}
+
+// ============================================================
+// Ressourcen-Hilfsfunktionen
+// ============================================================
+function createResourceState() {
+  const resources = {};
+  const resourceBuildings = {};
+  RESOURCE_DEFS.forEach(def => {
+    resources[def.id] = 0;
+    resourceBuildings[def.id] = {};
+    def.buildings.forEach(b => {
+      resourceBuildings[def.id][b.id] = 0;
+    });
+  });
+  return { resources, resourceBuildings };
+}
+
+function isResourceUnlocked(def) {
+  if (game.data < def.unlockAt) return false;
+  if (def.dependsOn) {
+    const dep = RESOURCE_DEFS.find(d => d.id === def.dependsOn);
+    if (!dep) return false;
+    // Abhängigkeit: mindestens 1 Gebäude der Vorgänger-Ressource gebaut
+    const depBuildings = game.resourceBuildings[dep.id] || {};
+    const totalOwned = Object.values(depBuildings).reduce((s, v) => s + v, 0);
+    if (totalOwned < 1) return false;
+  }
+  return true;
+}
+
+function resourceProductionPerSecond(resId) {
+  const def = RESOURCE_DEFS.find(d => d.id === resId);
+  if (!def) return 0;
+  const buildings = game.resourceBuildings[resId] || {};
+  let total = 0;
+  def.buildings.forEach(b => {
+    total += (buildings[b.id] || 0) * b.production;
+  });
+  return total;
+}
+
+function getResourceBuildingCost(resId, buildingId) {
+  const def = RESOURCE_DEFS.find(d => d.id === resId);
+  if (!def) return Infinity;
+  const bDef = def.buildings.find(b => b.id === buildingId);
+  if (!bDef) return Infinity;
+  const owned = (game.resourceBuildings[resId] || {})[buildingId] || 0;
+  return Math.floor(bDef.baseCost * Math.pow(1.15, owned));
+}
+
+function getResourceProductionMultiplier() {
+  let multiplier = 1;
+  RESOURCE_DEFS.forEach(def => {
+    const amount = (game.resources[def.id] || 0);
+    if (amount <= 0) return;
+    const bonus = Math.min(
+      (amount / def.bonusPerUnits) * def.productionBonus,
+      def.maxBonus
+    );
+    multiplier += bonus;
+  });
+  return multiplier;
 }
 
 // ============================================================

@@ -112,6 +112,18 @@ function loadGame(loadedGameOverride = null) {
           game.clickPower = CLICK_UPGRADES[lastBought].newClickPower;
         }
         game.balanceVersion = 12; costsMigrated = true; break;
+      case 12:
+        if (!game.resources)         game.resources         = {};
+        if (!game.resourceBuildings) game.resourceBuildings = {};
+        RESOURCE_DEFS.forEach(def => {
+          if (!(def.id in game.resources))         game.resources[def.id]         = 0;
+          if (!game.resourceBuildings[def.id])     game.resourceBuildings[def.id] = {};
+          def.buildings.forEach(b => {
+            if (!(b.id in game.resourceBuildings[def.id])) game.resourceBuildings[def.id][b.id] = 0;
+          });
+        });
+        ensureActiveMissions();
+        game.balanceVersion = 13; costsMigrated = true; break;
       default:
         game.balanceVersion = SAVE_BALANCE_VERSION; costsMigrated = true; break;
     }

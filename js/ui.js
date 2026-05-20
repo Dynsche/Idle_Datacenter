@@ -109,6 +109,18 @@ function updateTabNotifications() {
   if ((hasAffordableBuildingUpgrade || hasAffordableClickUpgrade || hasAffordableResearchUpgrade) && !upgradesActive) {
     upgradesTab.classList.add('has-notification');
   }
+
+  // Ressourcen-Tab Notification: neues Gebäude kaufbar
+  const resourcesTab = document.getElementById('resourcesTab');
+  if (resourcesTab) {
+    resourcesTab.classList.remove('has-notification');
+    const resActive = document.getElementById('tab-resources')?.classList.contains('active');
+    const hasAffordableResource = RESOURCE_DEFS.some(def => {
+      if (!isResourceUnlocked(def)) return false;
+      return def.buildings.some(bDef => game.data >= getResourceBuildingCost(def.id, bDef.id));
+    });
+    if (hasAffordableResource && !resActive) resourcesTab.classList.add('has-notification');
+  }
 }
 
 function switchTab(tabName) {
@@ -119,11 +131,12 @@ function switchTab(tabName) {
   if (el) el.classList.add('active');
 
   const tabButtons = {
-    buildings: '#buildingsTab',
-    upgrades:  '#upgradesTab',
-    stats:     '#statsTab',
-    account:   '#accountTab',
-    help:      '#helpTab'
+    buildings:  '#buildingsTab',
+    upgrades:   '#upgradesTab',
+    resources:  '#resourcesTab',
+    stats:      '#statsTab',
+    account:    '#accountTab',
+    help:       '#helpTab'
   };
   if (tabButtons[tabName]) {
     document.querySelector(tabButtons[tabName])?.classList.add('active');
@@ -134,6 +147,7 @@ function switchTab(tabName) {
     renderResearchUpgrades();
     maybeRenderClickUpgrades(true);
   }
+  if (tabName === 'resources') renderResourceTab();
   if (tabName === 'stats')   updateStats();
   if (tabName === 'account') { updateCloudUserUI(); updateStats(); }
 

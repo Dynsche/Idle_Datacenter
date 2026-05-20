@@ -3,7 +3,11 @@
 // ============================================================
 
 function getMissionTemplateById(id) {
-  return MISSION_TEMPLATES.find(m => m.id === id) || null;
+  return [...MISSION_TEMPLATES, ...RESOURCE_MISSION_TEMPLATES].find(m => m.id === id) || null;
+}
+
+function getAllMissionTemplates() {
+  return [...MISSION_TEMPLATES, ...RESOURCE_MISSION_TEMPLATES];
 }
 
 function getMissionCurrentValue(mission) {
@@ -53,7 +57,7 @@ function getMissionLevel() {
 }
 
 function areAllMissionsOfLevelClaimed(level) {
-  const levelMissions = MISSION_TEMPLATES.filter(m => (m.level || 1) === level);
+  const levelMissions = getAllMissionTemplates().filter(m => (m.level || 1) === level);
   if (levelMissions.length === 0) return false;
   const claimed = game.missions?.claimedIds || [];
   return levelMissions.every(m => claimed.includes(m.id));
@@ -70,7 +74,7 @@ function getAvailableMissionPool() {
   const active  = game.missions?.activeIds || [];
   const claimed = game.missions?.claimedIds || [];
   const level   = getMissionLevel();
-  return MISSION_TEMPLATES
+  return getAllMissionTemplates()
     .filter(m => (m.level || 1) === level && !active.includes(m.id) && !claimed.includes(m.id))
     .sort((a, b) => a.amount - b.amount);
 }
@@ -82,7 +86,7 @@ function ensureActiveMissions() {
   if (typeof game.missions.completedCount !== 'number') game.missions.completedCount = 0;
   if (typeof game.missions.currentLevel   !== 'number') game.missions.currentLevel   = 1;
 
-  const validIds = new Set(MISSION_TEMPLATES.map(m => m.id));
+  const validIds = new Set(getAllMissionTemplates().map(m => m.id));
   game.missions.activeIds  = game.missions.activeIds.filter(id => validIds.has(id));
   game.missions.claimedIds = game.missions.claimedIds.filter(id => validIds.has(id));
 
@@ -131,7 +135,7 @@ function claimMission(missionId) {
 
   showFloatingText('🎉 Mission abgeschlossen!', 'purchase');
 
-  if (game.missions.completedCount >= MISSION_TEMPLATES.length) {
+  if (game.missions.completedCount >= getAllMissionTemplates().length) {
     markMissionsDirty();
     updateUI();
     maybeRenderMissions(true);
@@ -214,18 +218,19 @@ function renderMissions() {
 
   const missionLevel   = getMissionLevel();
   const completed      = game.missions.completedCount;
-  const levelMissions  = MISSION_TEMPLATES.filter(m => (m.level || 1) === missionLevel);
+  const allTemplates   = getAllMissionTemplates();
+  const levelMissions  = allTemplates.filter(m => (m.level || 1) === missionLevel);
   const levelClaimed   = levelMissions.filter(m => game.missions.claimedIds.includes(m.id)).length;
 
   const summaryCard = document.createElement('div');
   summaryCard.className = 'card mission-card';
-  const cycleReady = completed >= MISSION_TEMPLATES.length;
+  const cycleReady = completed >= allTemplates.length;
   summaryCard.innerHTML = `
     <div class="sub">Missionen</div>
     <div style="font-size:22px;font-weight:bold;line-height:1.1;margin-top:4px;">Level ${missionLevel} • Rang ${game.prestige}</div>
     <div class="sub" style="margin-top:4px;">${levelClaimed}/${levelMissions.length} in diesem Level</div>
-    <div class="sub" style="margin-top:4px;">Gesamt abgeschlossen: ${completed}/${MISSION_TEMPLATES.length}</div>
-    <button onclick="startNextLevelCycle()" ${!cycleReady ? 'disabled' : ''} style="margin-top:8px;width:100%;">${cycleReady ? 'Neuen Durchlauf starten' : `Neuer Durchlauf bei ${MISSION_TEMPLATES.length}/${MISSION_TEMPLATES.length}`}</button>
+    <div class="sub" style="margin-top:4px;">Gesamt abgeschlossen: ${completed}/${allTemplates.length}</div>
+    <button onclick="startNextLevelCycle()" ${!cycleReady ? 'disabled' : ''} style="margin-top:8px;width:100%;">${cycleReady ? 'Neuen Durchlauf starten' : `Neuer Durchlauf bei ${allTemplates.length}/${allTemplates.length}`}</button>
   `;
   container.appendChild(summaryCard);
 

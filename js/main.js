@@ -90,9 +90,18 @@ function gameLoop() {
   game.data += produced;
   if (game.stats) game.stats.totalData += produced;
 
+  // Ressourcen produzieren
+  RESOURCE_DEFS.forEach(def => {
+    if (isResourceUnlocked(def)) {
+      const rps = resourceProductionPerSecond(def.id);
+      game.resources[def.id] = (game.resources[def.id] || 0) + rps * deltaTime;
+    }
+  });
+
   updateUI();
   checkAchievements();
   maybeRenderMissions();
+  renderResourceTopbar();
 
   if (now - lastBuildingsRenderTime > BUILDINGS_RENDER_INTERVAL) {
     if (hasAffordabilityChanged()) {
@@ -106,6 +115,7 @@ function gameLoop() {
 // Startup
 // ============================================================
 loadGame();
+initResourceState();
 renderBuildings();
 renderBuildingUpgrades();
 maybeRenderClickUpgrades(true);
