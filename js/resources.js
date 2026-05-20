@@ -161,7 +161,7 @@ function renderResourceTopbar() {
   // Karten nachrüsten falls neu freigeschaltet
   if (container.children.length !== unlocked.length) {
     container.innerHTML = unlocked.map(def =>
-      `<div class="card" data-res="${def.id}" style="min-width:140px;">
+      `<div class="card resource-topbar-card" data-res="${def.id}" style="min-width:140px;">
         <div class="sub">${def.icon} ${def.name}</div>
         <div class="resource" style="font-size:22px;"><span class="rb-val"></span> <span style="font-size:13px;">${def.unit}</span></div>
         <div class="sub"><span class="rb-rps"></span> • <span class="rb-bonus" style="color:#4ade80;"></span></div>

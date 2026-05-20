@@ -99,6 +99,14 @@ function ensureActiveMissions() {
   game.missions.activeIds  = game.missions.activeIds.filter(id => validIds.has(id));
   game.missions.claimedIds = game.missions.claimedIds.filter(id => validIds.has(id));
 
+  // Gesperrte Ressourcen-Missionen aus activeIds entfernen
+  game.missions.activeIds = game.missions.activeIds.filter(id => {
+    const tmpl = getMissionTemplateById(id);
+    if (!tmpl || tmpl.targetKey !== 'resource') return true;
+    const def = RESOURCE_DEFS.find(d => d.id === tmpl.targetId);
+    return def && isResourceUnlocked(def);
+  });
+
   updateMissionLevelProgression();
 
   while (game.missions.activeIds.length < MAX_ACTIVE_MISSIONS) {
