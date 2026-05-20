@@ -130,7 +130,7 @@ function renderResourceTab() {
         <span style="font-size:30px;">${def.icon}</span>
         <div style="flex:1;">
           <div style="font-weight:bold;font-size:19px;">${def.name}</div>
-          <div class="sub">${current.toFixed(1)} ${def.unit} • ${perSec.toFixed(1)} ${def.unit}/s</div>
+          <div class="sub">${current.toFixed(0)} ${def.unit} • ${perSec.toFixed(1)} ${def.unit}/s</div>
           <div class="sub" style="color:#4ade80;">${bonusText}</div>
           ${depBlocked ? `<div class="sub" style="color:#f59e0b;margin-top:4px;">⚠️ Benötigt mind. 1 ${RESOURCE_DEFS.find(d=>d.id===def.dependsOn)?.name}-Gebäude</div>` : ''}
         </div>
