@@ -176,9 +176,9 @@ function renderResourceTopbar() {
     const perSec  = resourceProductionPerSecond(def.id);
     const bonus   = Math.min((current / def.bonusPerUnits) * def.productionBonus, def.maxBonus);
     const atMax   = bonus >= def.maxBonus;
-    card.querySelector('.rb-val').textContent   = atMax ? 'MAX' : current.toFixed(0);
-    card.querySelector('.rb-rps').textContent   = atMax ? '' : `${perSec.toFixed(1)}/s`;
-    card.querySelector('.rb-bonus').textContent = `+${(bonus*100).toFixed(1)}%`;
+    card.querySelector('.rb-val').textContent   = current.toFixed(0);
+    card.querySelector('.rb-rps').textContent   = `${perSec.toFixed(1)}/s`;
+    card.querySelector('.rb-bonus').textContent = atMax ? `+${(bonus*100).toFixed(1)}% ★` : `+${(bonus*100).toFixed(1)}%`;
     card.querySelector('.rb-bonus').style.color = atMax ? '#facc15' : '#4ade80';
   });
 }
