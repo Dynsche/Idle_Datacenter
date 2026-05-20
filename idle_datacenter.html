@@ -827,8 +827,8 @@
     };
 
     const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
-    const BASE_OFFLINE_LIMIT = 1500000;
-    const OFFLINE_UPGRADE_BONUS = 1500000;
+    const BASE_OFFLINE_LIMIT = 1500;       // 25 Minuten in Sekunden
+    const OFFLINE_UPGRADE_BONUS = 1500;    // +25 Minuten pro Upgrade in Sekunden
     const BASE_OFFLINE_UPGRADE_COST = 200000000;
     const OFFLINE_UPGRADE_COST_GROWTH = 2.5;
     const BASE_AI_UPGRADE_COST = 2147483648;
@@ -843,7 +843,7 @@
     const SOFTCAP_STAGE1_POWER = 0.82;
     const SOFTCAP_STAGE2_START = 1099511627776; // 1 TB/s
     const SOFTCAP_STAGE2_POWER = 0.65;
-    const SAVE_BALANCE_VERSION = 10;
+    const SAVE_BALANCE_VERSION = 11;
 
     // Firebase / Google Cloud Save (bitte mit echten Projektwerten ersetzen)
     const FIREBASE_CONFIG = {
@@ -2145,8 +2145,8 @@
       if ((el = document.getElementById('data'))) el.innerText = formatData(game.data);
       if ((el = document.getElementById('perSecond'))) el.innerText = formatData(productionPerSecond()) + '/s';
 
-      // offlineLimit is in milliseconds, convert to minutes/seconds
-      const totalSeconds = Math.floor(game.offlineLimit / 1000);
+      // offlineLimit ist in Sekunden
+      const totalSeconds = Math.floor(game.offlineLimit);
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       if ((el = document.getElementById('offlineHours'))) el.innerText = `${hours}h ${minutes}m`;
@@ -3088,6 +3088,16 @@
             if (!game.missions) game.missions = createMissionState();
             ensureActiveMissions();
             game.balanceVersion = 10;
+            costsMigrated = true;
+            break;
+          case 10:
+            // Fix: offlineLimit von Millisekunden auf Sekunden umstellen
+            // Alter Wert war z.B. 1500000 (ms) → neuer Wert 1500 (s)
+            if (game.offlineLimit > 100000) {
+              game.offlineLimit = Math.round(game.offlineLimit / 1000);
+            }
+            normalizeBalanceValues();
+            game.balanceVersion = 11;
             costsMigrated = true;
             break;
           default:
