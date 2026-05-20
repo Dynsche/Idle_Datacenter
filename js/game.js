@@ -11,6 +11,54 @@ function formatData(bits) {
   return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${UNITS[unitIndex]}`;
 }
 
+// ============================================================
+// Hilfsfunktionen
+// ============================================================
+function formatData(bits) {
+  let value = bits;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < UNITS.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${UNITS[unitIndex]}`;
+}
+
+// Formatiert Ressourcen-Werte mit SI-Präfixen (k/M/G/T)
+function formatResource(value, unit) {
+  const prefixes = [
+    { factor: 1e12, prefix: 'T' },
+    { factor: 1e9,  prefix: 'G' },
+    { factor: 1e6,  prefix: 'M' },
+    { factor: 1e3,  prefix: 'k' },
+  ];
+  for (const { factor, prefix } of prefixes) {
+    if (value >= factor) {
+      const v = value / factor;
+      return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${prefix}${unit}`;
+    }
+  }
+  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${unit}`;
+}
+
+// Berechnet wie viele Einheiten eines Ressourcen-Gebäudes man sich leisten kann
+function calculateMaxResourceBuy(resId, buildingId) {
+  const def  = RESOURCE_DEFS.find(d => d.id === resId);
+  if (!def) return 0;
+  const bDef = def.buildings.find(b => b.id === buildingId);
+  if (!bDef) return 0;
+  const owned = (game.resourceBuildings[resId] || {})[buildingId] || 0;
+  let budget = game.data;
+  let count  = 0;
+  while (true) {
+    const cost = Math.floor(bDef.baseCost * Math.pow(1.15, owned + count));
+    if (budget < cost) break;
+    budget -= cost;
+    count++;
+  }
+  return count;
+}
+
 function getOrCreateDeviceId() {
   let deviceId = localStorage.getItem('datacenterDeviceId');
   if (!deviceId) {

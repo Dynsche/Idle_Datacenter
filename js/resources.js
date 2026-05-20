@@ -18,12 +18,22 @@ function buyResourceBuilding(resId, buildingId) {
     if (totalOwned < bDef.unlockAt) return;
   }
 
-  const cost = getResourceBuildingCost(resId, buildingId);
-  if (game.data < cost) return;
+  // Kaufmenge bestimmen
+  const maxBuy = calculateMaxResourceBuy(resId, buildingId);
+  const amount = game.buyAmount === -1 ? maxBuy : Math.min(game.buyAmount, maxBuy);
+  if (amount <= 0) return;
 
-  game.data -= cost;
+  // Gesamtkosten für 'amount' Einheiten berechnen
+  const currentOwned = (game.resourceBuildings[resId] || {})[buildingId] || 0;
+  let totalCost = 0;
+  for (let i = 0; i < amount; i++) {
+    totalCost += Math.floor(bDef.baseCost * Math.pow(1.15, currentOwned + i));
+  }
+  if (game.data < totalCost) return;
+
+  game.data -= totalCost;
   if (!game.resourceBuildings[resId]) game.resourceBuildings[resId] = {};
-  game.resourceBuildings[resId][buildingId] = (game.resourceBuildings[resId][buildingId] || 0) + 1;
+  game.resourceBuildings[resId][buildingId] = (game.resourceBuildings[resId][buildingId] || 0) + amount;
 
   updateUI();
   renderResourceTab();
@@ -64,8 +74,15 @@ function renderResourceTab() {
 
   container.innerHTML = '';
 
+  // Kaufmengen-Buttons (spiegelt die globale Einstellung)
+  const buyLabels = [{v:1,id:'buy1'},{v:10,id:'buy10'},{v:100,id:'buy100'},{v:-1,id:'buyMax'}];
+  const btnBar = document.createElement('div');
+  btnBar.style.cssText = 'display:flex;gap:6px;margin-bottom:14px;';
+  btnBar.innerHTML = buyLabels.map(b =>
+    `<button onclick="setBuyAmount(${b.v})" id="res-${b.id}" class="${game.buyAmount===b.v?'active':''}" style="min-width:54px;">${b.v===-1?'Max':'x'+b.v}</button>`
+  ).join('');
+  container.appendChild(btnBar);
   RESOURCE_DEFS.forEach(def => {
-    const isUnlocked = isResourceUnlocked(def);
     const dataMet    = game.data >= def.unlockAt;
     const hasAny     = (game.resources[def.id] || 0) > 0 || Object.values(game.resourceBuildings[def.id] || {}).some(v => v > 0);
 
@@ -88,6 +105,7 @@ function renderResourceTab() {
     }
 
     // Ressource ist per Datenmenge erreichbar, aber ggf. noch durch Abhängigkeit gesperrt
+    const isUnlocked = isResourceUnlocked(def);
     const depBlocked = dataMet && !isUnlocked;
 
     const section = document.createElement('div');
@@ -97,6 +115,8 @@ function renderResourceTab() {
     const current    = game.resources[def.id] || 0;
     const perSec     = resourceProductionPerSecond(def.id);
     const bonusText  = getResourceBonusText(def);
+    const curFmt     = formatResource(current, def.unit);
+    const rpsFmt     = formatResource(perSec, def.unit);
 
     let buildingsHtml = '';
     def.buildings.forEach(bDef => {
@@ -118,17 +138,25 @@ function renderResourceTab() {
         return;
       }
 
-      const cost      = getResourceBuildingCost(def.id, bDef.id);
-      const canAfford = !depBlocked && game.data >= cost;
+      const maxBuy    = calculateMaxResourceBuy(def.id, bDef.id);
+      const buyAmt    = game.buyAmount === -1 ? maxBuy : Math.min(game.buyAmount, maxBuy);
+      let   bulkCost  = 0;
+      for (let i = 0; i < Math.max(buyAmt, 1); i++) {
+        bulkCost += Math.floor(bDef.baseCost * Math.pow(1.15, ownedCount + i));
+      }
+      const canAfford = !depBlocked && buyAmt > 0 && game.data >= bulkCost;
+      const btnLabel  = game.buyAmount === -1
+        ? `Kaufen (Max: ${maxBuy})`
+        : buyAmt > 1 ? `Kaufen x${buyAmt}` : 'Kaufen';
       buildingsHtml += `
         <div class="building" style="margin-bottom:10px;">
           <div>
             <h3 style="margin:0 0 4px;">${bDef.name}</h3>
             <div>Besitzt: <strong>${ownedCount}</strong></div>
-            <div class="sub">Produziert: +${bDef.production} ${def.unit}/s pro Einheit</div>
-            <div class="sub">Kosten: ${formatData(cost)}</div>
+            <div class="sub">Produziert: +${formatResource(bDef.production * Math.max(buyAmt,1), def.unit)}/s (+${bDef.production} ${def.unit}/s je)</div>
+            <div class="sub">Kosten: ${formatData(bulkCost)}</div>
           </div>
-          <button onclick="buyResourceBuilding('${def.id}','${bDef.id}')" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
+          <button onclick="buyResourceBuilding('${def.id}','${bDef.id}')" ${!canAfford ? 'disabled' : ''}>${btnLabel}</button>
         </div>`;
     });
 
@@ -137,7 +165,7 @@ function renderResourceTab() {
         <span style="font-size:30px;">${def.icon}</span>
         <div style="flex:1;">
           <div style="font-weight:bold;font-size:19px;">${def.name}</div>
-          <div class="sub">${current.toFixed(0)} ${def.unit} • ${perSec.toFixed(1)} ${def.unit}/s</div>
+          <div class="sub">${curFmt} • ${rpsFmt}/s</div>
           <div class="sub" style="color:#4ade80;">${bonusText}</div>
           ${depBlocked ? `<div class="sub" style="color:#f59e0b;margin-top:4px;">⚠️ Benötigt mind. 1 ${RESOURCE_DEFS.find(d=>d.id===def.dependsOn)?.name}-Gebäude</div>` : ''}
         </div>
@@ -169,7 +197,7 @@ function renderResourceTopbar() {
     container.innerHTML = unlocked.map(def =>
       `<div class="card resource-topbar-card" data-res="${def.id}" style="min-width:140px;">
         <div class="sub">${def.icon} ${def.name}</div>
-        <div class="resource" style="font-size:22px;"><span class="rb-val"></span> <span style="font-size:13px;">${def.unit}</span></div>
+        <div class="resource" style="font-size:18px;"><span class="rb-val"></span></div>
         <div class="sub"><span class="rb-rps"></span> • <span class="rb-bonus" style="color:#4ade80;"></span></div>
         <div class="sub rb-excess" style="display:none;color:#f97316;font-size:11px;"></div>
       </div>`
@@ -185,8 +213,8 @@ function renderResourceTopbar() {
     const bonus   = Math.min((current / def.bonusPerUnits) * def.productionBonus, def.maxBonus);
     const atMax   = bonus >= def.maxBonus;
     const excess  = card.querySelector('.rb-excess');
-    card.querySelector('.rb-val').textContent   = current.toFixed(0);
-    card.querySelector('.rb-rps').textContent   = `${perSec.toFixed(1)}/s`;
+    card.querySelector('.rb-val').textContent   = formatResource(current, def.unit);
+    card.querySelector('.rb-rps').textContent   = `${formatResource(perSec, def.unit)}/s`;
     card.querySelector('.rb-bonus').textContent = atMax ? `+${(bonus*100).toFixed(1)}% ★` : `+${(bonus*100).toFixed(1)}%`;
     card.querySelector('.rb-bonus').style.color = atMax ? '#facc15' : '#4ade80';
     if (atMax && perSec > 0) {

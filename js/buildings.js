@@ -119,6 +119,7 @@ function setBuyAmount(amount) {
   if (el) el.classList.add('active');
 
   renderBuildings();
+  if (typeof renderResourceTab === 'function') renderResourceTab();
 }
 
 // ============================================================
