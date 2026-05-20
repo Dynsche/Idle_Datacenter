@@ -141,7 +141,7 @@ function renderResourceTab() {
   });
 }
 
-// Rendert die Ressourcen-Karten in der Topbar (kompakt)
+// Rendert die Ressourcen-Karten in der Topbar (kompakt, in-place Update)
 function renderResourceTopbar() {
   const container = document.getElementById('resourceTopbar');
   if (!container) return;
@@ -157,15 +157,26 @@ function renderResourceTopbar() {
   }
 
   container.style.display = '';
-  container.innerHTML = unlocked.map(def => {
+
+  // Karten nachrüsten falls neu freigeschaltet
+  if (container.children.length !== unlocked.length) {
+    container.innerHTML = unlocked.map(def =>
+      `<div class="card" data-res="${def.id}" style="min-width:140px;">
+        <div class="sub">${def.icon} ${def.name}</div>
+        <div class="resource" style="font-size:22px;"><span class="rb-val"></span> <span style="font-size:13px;">${def.unit}</span></div>
+        <div class="sub rb-stat"></div>
+      </div>`
+    ).join('');
+  }
+
+  // Nur Texte aktualisieren — kein innerHTML-Neubau
+  unlocked.forEach(def => {
+    const card = container.querySelector(`[data-res="${def.id}"]`);
+    if (!card) return;
     const current = game.resources[def.id] || 0;
     const perSec  = resourceProductionPerSecond(def.id);
     const bonus   = Math.min((current / def.bonusPerUnits) * def.productionBonus, def.maxBonus);
-    return `
-      <div class="card" style="min-width:140px;">
-        <div class="sub">${def.icon} ${def.name}</div>
-        <div class="resource" style="font-size:22px;">${current.toFixed(0)} <span style="font-size:13px;">${def.unit}</span></div>
-        <div class="sub">${perSec.toFixed(1)}/s • <span style="color:#4ade80;">+${(bonus*100).toFixed(1)}%</span></div>
-      </div>`;
-  }).join('');
+    card.querySelector('.rb-val').textContent  = current.toFixed(0);
+    card.querySelector('.rb-stat').innerHTML   = `${perSec.toFixed(1)}/s • <span style="color:#4ade80;">+${(bonus*100).toFixed(1)}%</span>`;
+  });
 }
