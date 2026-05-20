@@ -60,8 +60,10 @@ function manualClick() {
 // Game-Loop
 // ============================================================
 let lastTickTime = Date.now();
-let lastBuildingsRenderTime = 0;
-let lastAffordabilityState  = null;
+let lastBuildingsRenderTime  = 0;
+let lastAffordabilityState   = null;
+let lastResourcesRenderTime  = 0;
+let lastResourceAffordState  = null;
 const BUILDINGS_RENDER_INTERVAL = 500;
 
 function hasAffordabilityChanged() {
@@ -76,6 +78,22 @@ function hasAffordabilityChanged() {
 
   if (currentState !== lastAffordabilityState) {
     lastAffordabilityState = currentState;
+    return true;
+  }
+  return false;
+}
+
+function hasResourceAffordabilityChanged() {
+  const parts = [];
+  RESOURCE_DEFS.forEach(def => {
+    def.buildings.forEach(bDef => {
+      const cost = getResourceBuildingCost(def.id, bDef.id);
+      parts.push(game.data >= cost ? 1 : 0);
+    });
+  });
+  const state = parts.join(',');
+  if (state !== lastResourceAffordState) {
+    lastResourceAffordState = state;
     return true;
   }
   return false;
@@ -122,6 +140,13 @@ function gameLoop() {
       try { renderBuildings(); } catch (e) { /* Tab nicht sichtbar */ }
     }
     lastBuildingsRenderTime = now;
+  }
+
+  if (now - lastResourcesRenderTime > BUILDINGS_RENDER_INTERVAL) {
+    if (hasResourceAffordabilityChanged()) {
+      try { renderResourceTab(); } catch (e) { /* Tab nicht sichtbar */ }
+    }
+    lastResourcesRenderTime = now;
   }
 }
 
