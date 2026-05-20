@@ -134,6 +134,7 @@ function gameLoop() {
   checkAchievements();
   maybeRenderMissions();
   renderResourceTopbar();
+  updateBuyButtonAffordability();
 
   if (now - lastBuildingsRenderTime > BUILDINGS_RENDER_INTERVAL) {
     if (hasAffordabilityChanged()) {

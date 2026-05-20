@@ -119,6 +119,29 @@ function setBuyAmount(amount) {
   if (typeof renderResourceTab === 'function') renderResourceTab();
 }
 
+// Graut Buy-Buttons aus wenn keine Kaufmöglichkeit für diese Menge existiert
+function updateBuyButtonAffordability() {
+  document.querySelectorAll('.buy-buttons button[data-amount]').forEach(btn => {
+    const raw = btn.dataset.amount;
+    if (raw === 'max') { btn.disabled = false; return; } // Max immer aktiv
+    const amt = parseInt(raw);
+    const canAffordBuilding = game.buildings.some(b => {
+      if (game.data < b.unlockAt && b.owned === 0) return false;
+      return game.data >= calculateBulkCost(b, amt);
+    });
+    const canAffordResource = typeof RESOURCE_DEFS !== 'undefined' && RESOURCE_DEFS.some(def => {
+      if (!isResourceUnlocked(def)) return false;
+      return def.buildings.some(bDef => {
+        const owned = (game.resourceBuildings[def.id] || {})[bDef.id] || 0;
+        let cost = 0;
+        for (let i = 0; i < amt; i++) cost += Math.floor(bDef.baseCost * Math.pow(1.15, owned + i));
+        return game.data >= cost;
+      });
+    });
+    btn.disabled = !canAffordBuilding && !canAffordResource;
+  });
+}
+
 // ============================================================
 // Gebäude-Upgrades
 // ============================================================
