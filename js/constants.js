@@ -349,6 +349,7 @@ const RESOURCE_DEFS = [
     productionBonus: 0.04,
     bonusPerUnits: 25,
     maxBonus: 2.0,
+    excessConversion: 0.5,       // Daten-Bits pro überschüssigem kW/s
     buildings: [
       { id: 'power_gen',      name: 'Notstromaggregat',   baseCost: 750000,      production: 1,   unlockAt: 0 },
       { id: 'power_solar',    name: 'Solaranlage',         baseCost: 10000000,    production: 8,   unlockAt: 5 },
@@ -365,6 +366,7 @@ const RESOURCE_DEFS = [
     productionBonus: 0.05,
     bonusPerUnits: 25,
     maxBonus: 3.0,
+    excessConversion: 4,         // Daten-Bits pro überschüssigem kJ/s
     buildings: [
       { id: 'cool_fan',       name: 'Lüftersystem',        baseCost: 80000000,    production: 1,   unlockAt: 0 },
       { id: 'cool_liquid',    name: 'Flüssigkühlung',      baseCost: 800000000,   production: 8,   unlockAt: 5 },
@@ -381,6 +383,7 @@ const RESOURCE_DEFS = [
     productionBonus: 0.06,
     bonusPerUnits: 25,
     maxBonus: 4.0,
+    excessConversion: 32,        // Daten-Bits pro überschüssigem Gbps/s
     buildings: [
       { id: 'bw_fiber',       name: 'Glasfaseranschluss',  baseCost: 6000000000,  production: 1,   unlockAt: 0 },
       { id: 'bw_backbone',    name: 'Internet-Backbone',   baseCost: 80000000000, production: 8,   unlockAt: 5 },
@@ -397,6 +400,7 @@ const RESOURCE_DEFS = [
     productionBonus: 0.08,
     bonusPerUnits: 25,
     maxBonus: 6.0,
+    excessConversion: 256,       // Daten-Bits pro überschüssigem TFLOPS/s
     buildings: [
       { id: 'comp_gpu',       name: 'GPU-Cluster',         baseCost: 650000000000,    production: 1,   unlockAt: 0 },
       { id: 'comp_asic',      name: 'ASIC-Farm',           baseCost: 8000000000000,   production: 8,   unlockAt: 5 },

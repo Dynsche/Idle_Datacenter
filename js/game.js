@@ -256,6 +256,20 @@ function getResourceBuildingCost(resId, buildingId) {
   return Math.floor(bDef.baseCost * Math.pow(1.15, owned));
 }
 
+// Maximale Ressourcen-Einheiten, die noch Bonus liefern (darüber → Überschuss)
+function getMaxResourceUnits(def) {
+  return (def.maxBonus / def.productionBonus) * def.bonusPerUnits;
+}
+
+// Daten-Bits pro Sekunde, die aus Überschuss-Produktion entstehen
+function getExcessDataRate(def) {
+  const amount = game.resources[def.id] || 0;
+  const max = getMaxResourceUnits(def);
+  if (amount < max) return 0;
+  const rps = resourceProductionPerSecond(def.id);
+  return rps * def.excessConversion;
+}
+
 function getResourceProductionMultiplier() {
   let multiplier = 1;
   RESOURCE_DEFS.forEach(def => {

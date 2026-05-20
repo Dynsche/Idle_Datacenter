@@ -94,7 +94,21 @@ function gameLoop() {
   RESOURCE_DEFS.forEach(def => {
     if (isResourceUnlocked(def)) {
       const rps = resourceProductionPerSecond(def.id);
-      game.resources[def.id] = (game.resources[def.id] || 0) + rps * deltaTime;
+      const max = getMaxResourceUnits(def);
+      const current = game.resources[def.id] || 0;
+      const produced = rps * deltaTime;
+      if (current >= max) {
+        // Ressource ist voll → Überschuss in Daten umwandeln
+        game.data += produced * def.excessConversion;
+        game.resources[def.id] = max;
+      } else if (current + produced > max) {
+        // Nur der Überschuss-Teil wird zu Daten
+        const overflow = (current + produced) - max;
+        game.resources[def.id] = max;
+        game.data += overflow * def.excessConversion;
+      } else {
+        game.resources[def.id] = current + produced;
+      }
     }
   });
 

@@ -35,7 +35,14 @@ function getResourceBonusText(def) {
     (amount / def.bonusPerUnits) * def.productionBonus,
     def.maxBonus
   );
-  return `+${(bonus * 100).toFixed(1)}% Daten (max +${(def.maxBonus * 100).toFixed(0)}%)`;
+  const atMax = bonus >= def.maxBonus;
+  const base = `+${(bonus * 100).toFixed(1)}% Daten (max +${(def.maxBonus * 100).toFixed(0)}%)`;
+  if (atMax) {
+    const perSec = resourceProductionPerSecond(def.id);
+    const dataRate = perSec * def.excessConversion;
+    return `${base} ★ <span style="color:#f97316">+${formatData(dataRate)}/s aus Überschuss</span>`;
+  }
+  return base;
 }
 
 function renderResourceTab() {
@@ -164,6 +171,7 @@ function renderResourceTopbar() {
         <div class="sub">${def.icon} ${def.name}</div>
         <div class="resource" style="font-size:22px;"><span class="rb-val"></span> <span style="font-size:13px;">${def.unit}</span></div>
         <div class="sub"><span class="rb-rps"></span> • <span class="rb-bonus" style="color:#4ade80;"></span></div>
+        <div class="sub rb-excess" style="display:none;color:#f97316;font-size:11px;"></div>
       </div>`
     ).join('');
   }
@@ -176,9 +184,17 @@ function renderResourceTopbar() {
     const perSec  = resourceProductionPerSecond(def.id);
     const bonus   = Math.min((current / def.bonusPerUnits) * def.productionBonus, def.maxBonus);
     const atMax   = bonus >= def.maxBonus;
+    const excess  = card.querySelector('.rb-excess');
     card.querySelector('.rb-val').textContent   = current.toFixed(0);
     card.querySelector('.rb-rps').textContent   = `${perSec.toFixed(1)}/s`;
     card.querySelector('.rb-bonus').textContent = atMax ? `+${(bonus*100).toFixed(1)}% ★` : `+${(bonus*100).toFixed(1)}%`;
     card.querySelector('.rb-bonus').style.color = atMax ? '#facc15' : '#4ade80';
+    if (atMax && perSec > 0) {
+      const dataRate = perSec * def.excessConversion;
+      excess.textContent = `+${formatData(dataRate)}/s aus Überschuss`;
+      excess.style.display = '';
+    } else {
+      excess.style.display = 'none';
+    }
   });
 }
