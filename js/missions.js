@@ -75,7 +75,16 @@ function getAvailableMissionPool() {
   const claimed = game.missions?.claimedIds || [];
   const level   = getMissionLevel();
   return getAllMissionTemplates()
-    .filter(m => (m.level || 1) === level && !active.includes(m.id) && !claimed.includes(m.id))
+    .filter(m => {
+      if ((m.level || 1) !== level) return false;
+      if (active.includes(m.id) || claimed.includes(m.id)) return false;
+      // Ressourcen-Missionen nur wenn Ressource freigeschaltet
+      if (m.targetKey === 'resource') {
+        const def = RESOURCE_DEFS.find(d => d.id === m.targetId);
+        if (!def || !isResourceUnlocked(def)) return false;
+      }
+      return true;
+    })
     .sort((a, b) => a.amount - b.amount);
 }
 

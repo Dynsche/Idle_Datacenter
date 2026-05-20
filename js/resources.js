@@ -164,7 +164,7 @@ function renderResourceTopbar() {
       `<div class="card" data-res="${def.id}" style="min-width:140px;">
         <div class="sub">${def.icon} ${def.name}</div>
         <div class="resource" style="font-size:22px;"><span class="rb-val"></span> <span style="font-size:13px;">${def.unit}</span></div>
-        <div class="sub rb-stat"></div>
+        <div class="sub"><span class="rb-rps"></span> • <span class="rb-bonus" style="color:#4ade80;"></span></div>
       </div>`
     ).join('');
   }
@@ -176,7 +176,8 @@ function renderResourceTopbar() {
     const current = game.resources[def.id] || 0;
     const perSec  = resourceProductionPerSecond(def.id);
     const bonus   = Math.min((current / def.bonusPerUnits) * def.productionBonus, def.maxBonus);
-    card.querySelector('.rb-val').textContent  = current.toFixed(0);
-    card.querySelector('.rb-stat').innerHTML   = `${perSec.toFixed(1)}/s • <span style="color:#4ade80;">+${(bonus*100).toFixed(1)}%</span>`;
+    card.querySelector('.rb-val').textContent   = current.toFixed(0);
+    card.querySelector('.rb-rps').textContent   = `${perSec.toFixed(1)}/s`;
+    card.querySelector('.rb-bonus').textContent = `+${(bonus*100).toFixed(1)}%`;
   });
 }
