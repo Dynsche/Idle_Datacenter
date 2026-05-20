@@ -843,7 +843,7 @@
     const SOFTCAP_STAGE1_POWER = 0.82;
     const SOFTCAP_STAGE2_START = 1099511627776; // 1 TB/s
     const SOFTCAP_STAGE2_POWER = 0.65;
-    const SAVE_BALANCE_VERSION = 11;
+    const SAVE_BALANCE_VERSION = 12;
 
     // Firebase / Google Cloud Save (bitte mit echten Projektwerten ersetzen)
     const FIREBASE_CONFIG = {
@@ -885,21 +885,21 @@
         description: 'Klicks bringen 1 KB',
         cost: 5000000,
         unlockAt: 1000000,
-        newClickPower: 1024
+        newClickPower: 1048576
       },
       {
         name: 'Makro-Tool',
         description: 'Klicks bringen 32 KB',
         cost: 500000000,
         unlockAt: 100000000,
-        newClickPower: 32768
+        newClickPower: 33554432
       },
       {
         name: 'Bot-Assistent',
         description: 'Klicks bringen 1 MB',
         cost: 50000000000,
         unlockAt: 10000000000,
-        newClickPower: 1048576
+        newClickPower: 1073741824
       }
     ];
 
@@ -3107,6 +3107,16 @@
             }
             normalizeBalanceValues();
             game.balanceVersion = 11;
+            costsMigrated = true;
+            break;
+          case 11:
+            // Fix: clickPower Werte waren zu klein (Byte statt Bit-Basis)
+            // clickPower aus bereits gekauften Upgrades korrekt wiederherstellen
+            if (game.clickUpgradesBought && game.clickUpgradesBought.length > 0) {
+              const lastBought = Math.max(...game.clickUpgradesBought);
+              game.clickPower = CLICK_UPGRADES[lastBought].newClickPower;
+            }
+            game.balanceVersion = 12;
             costsMigrated = true;
             break;
           default:
