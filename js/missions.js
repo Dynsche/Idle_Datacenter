@@ -78,10 +78,12 @@ function getAvailableMissionPool() {
     .filter(m => {
       if ((m.level || 1) !== level) return false;
       if (active.includes(m.id) || claimed.includes(m.id)) return false;
-      // Ressourcen-Missionen nur wenn Ressource freigeschaltet
+      // Ressourcen-Missionen nur wenn mind. 1 Gebäude der Ressource gekauft
       if (m.targetKey === 'resource') {
         const def = RESOURCE_DEFS.find(d => d.id === m.targetId);
-        if (!def || !isResourceUnlocked(def)) return false;
+        if (!def) return false;
+        const hasBuilding = Object.values(game.resourceBuildings[def.id] || {}).some(v => v > 0);
+        if (!hasBuilding) return false;
       }
       return true;
     })
@@ -99,12 +101,13 @@ function ensureActiveMissions() {
   game.missions.activeIds  = game.missions.activeIds.filter(id => validIds.has(id));
   game.missions.claimedIds = game.missions.claimedIds.filter(id => validIds.has(id));
 
-  // Gesperrte Ressourcen-Missionen aus activeIds entfernen
+  // Ressourcen-Missionen aus activeIds entfernen wenn noch kein Gebäude gekauft
   game.missions.activeIds = game.missions.activeIds.filter(id => {
     const tmpl = getMissionTemplateById(id);
     if (!tmpl || tmpl.targetKey !== 'resource') return true;
     const def = RESOURCE_DEFS.find(d => d.id === tmpl.targetId);
-    return def && isResourceUnlocked(def);
+    if (!def) return false;
+    return Object.values(game.resourceBuildings[def.id] || {}).some(v => v > 0);
   });
 
   updateMissionLevelProgression();

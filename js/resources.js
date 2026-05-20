@@ -147,7 +147,6 @@ function renderResourceTopbar() {
   if (!container) return;
 
   const unlocked = RESOURCE_DEFS.filter(def =>
-    game.data >= def.unlockAt ||
     Object.values(game.resourceBuildings[def.id] || {}).some(v => v > 0)
   );
 
