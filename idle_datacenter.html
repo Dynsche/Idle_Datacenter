@@ -61,10 +61,10 @@
     <div style="margin-bottom: 15px;">
       <div class="sub" style="margin-bottom: 8px;">Kaufmenge:</div>
       <div class="buy-buttons">
-        <button onclick="setBuyAmount(1)" id="buy1" class="active">x1</button>
-        <button onclick="setBuyAmount(10)" id="buy10">x10</button>
-        <button onclick="setBuyAmount(100)" id="buy100">x100</button>
-        <button onclick="setBuyAmount(-1)" id="buyMax">Max</button>
+        <button onclick="setBuyAmount(1)" data-amount="1" class="active">x1</button>
+        <button onclick="setBuyAmount(10)" data-amount="10">x10</button>
+        <button onclick="setBuyAmount(100)" data-amount="100">x100</button>
+        <button onclick="setBuyAmount(-1)" data-amount="max">Max</button>
       </div>
     </div>
 
@@ -90,7 +90,18 @@
     </div>
   </div>
 
-  <div id="tab-resources" class="tab-content"></div>
+  <div id="tab-resources" class="tab-content">
+    <div style="margin-bottom: 15px;">
+      <div class="sub" style="margin-bottom: 8px;">Kaufmenge:</div>
+      <div class="buy-buttons">
+        <button onclick="setBuyAmount(1)" data-amount="1" class="active">x1</button>
+        <button onclick="setBuyAmount(10)" data-amount="10">x10</button>
+        <button onclick="setBuyAmount(100)" data-amount="100">x100</button>
+        <button onclick="setBuyAmount(-1)" data-amount="max">Max</button>
+      </div>
+    </div>
+    <div id="resources-content"></div>
+  </div>
 
   <div id="tab-achievements" class="tab-content">
     <div class="upgrade">

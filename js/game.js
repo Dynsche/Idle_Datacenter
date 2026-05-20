@@ -24,15 +24,31 @@ function formatData(bits) {
   return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${UNITS[unitIndex]}`;
 }
 
-// Formatiert Ressourcen-Werte mit SI-Präfixen (k/M/G/T)
+// Formatiert Ressourcen-Werte mit passenden Einheiten-Ketten
+// Kennt die Basis-Einheit und skaliert korrekt ohne Präfix-Stapelung
 function formatResource(value, unit) {
-  const prefixes = [
-    { factor: 1e12, prefix: 'T' },
-    { factor: 1e9,  prefix: 'G' },
-    { factor: 1e6,  prefix: 'M' },
-    { factor: 1e3,  prefix: 'k' },
-  ];
-  for (const { factor, prefix } of prefixes) {
+  // Einheitenketten: [Schwellwert, Anzeigeeinheit]
+  const chains = {
+    'kW':    [[1e9,'TW'],[1e6,'GW'],[1e3,'MW'],[1,'kW']],
+    'kJ/s':  [[1e9,'TJ/s'],[1e6,'GJ/s'],[1e3,'MJ/s'],[1,'kJ/s']],
+    'Gbps':  [[1e6,'Pbps'],[1e3,'Tbps'],[1,'Gbps'],[1e-3,'Mbps']],
+    'TFLOPS':[[1e6,'EFLOPS'],[1e3,'PFLOPS'],[1,'TFLOPS'],[1e-3,'GFLOPS']],
+  };
+  const steps = chains[unit];
+  if (steps) {
+    for (const [factor, label] of steps) {
+      if (value >= factor) {
+        const v = value / factor;
+        return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${label}`;
+      }
+    }
+    // Unterhalb der kleinsten Einheit
+    const [, label] = steps[steps.length - 1];
+    return `${value.toFixed(2)} ${label}`;
+  }
+  // Fallback: generische SI-Skalierung
+  const prefixes = [[1e12,'T'],[1e9,'G'],[1e6,'M'],[1e3,'k']];
+  for (const [factor, prefix] of prefixes) {
     if (value >= factor) {
       const v = value / factor;
       return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${prefix}${unit}`;

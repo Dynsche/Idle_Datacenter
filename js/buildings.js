@@ -109,14 +109,11 @@ function setBuyAmount(amount) {
   game.buyAmount = amount;
   sessionStorage.setItem('buyAmount', amount);
 
-  ['buy1', 'buy10', 'buy100', 'buyMax'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
+  // Alle Buy-Buttons im gesamten Dokument synchronisieren (Gebäude + Ressourcen)
+  document.querySelectorAll('.buy-buttons button[data-amount]').forEach(btn => {
+    const v = btn.dataset.amount === 'max' ? -1 : parseInt(btn.dataset.amount);
+    btn.classList.toggle('active', v === amount);
   });
-
-  const activeId = amount === 1 ? 'buy1' : amount === 10 ? 'buy10' : amount === 100 ? 'buy100' : 'buyMax';
-  const el = document.getElementById(activeId);
-  if (el) el.classList.add('active');
 
   renderBuildings();
   if (typeof renderResourceTab === 'function') renderResourceTab();

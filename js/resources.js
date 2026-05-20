@@ -56,7 +56,8 @@ function getResourceBonusText(def) {
 }
 
 function renderResourceTab() {
-  const container = document.getElementById('tab-resources');
+  // Inhalt in #resources-content rendern (Buy-Leiste bleibt fest im HTML)
+  const container = document.getElementById('resources-content');
   if (!container) return;
 
   // Prüfe ob überhaupt eine Ressource freigeschaltet ist
@@ -74,14 +75,6 @@ function renderResourceTab() {
 
   container.innerHTML = '';
 
-  // Kaufmengen-Buttons (spiegelt die globale Einstellung)
-  const buyLabels = [{v:1,id:'buy1'},{v:10,id:'buy10'},{v:100,id:'buy100'},{v:-1,id:'buyMax'}];
-  const btnBar = document.createElement('div');
-  btnBar.style.cssText = 'display:flex;gap:6px;margin-bottom:14px;';
-  btnBar.innerHTML = buyLabels.map(b =>
-    `<button onclick="setBuyAmount(${b.v})" id="res-${b.id}" class="${game.buyAmount===b.v?'active':''}" style="min-width:54px;">${b.v===-1?'Max':'x'+b.v}</button>`
-  ).join('');
-  container.appendChild(btnBar);
   RESOURCE_DEFS.forEach(def => {
     const dataMet    = game.data >= def.unlockAt;
     const hasAny     = (game.resources[def.id] || 0) > 0 || Object.values(game.resourceBuildings[def.id] || {}).some(v => v > 0);
