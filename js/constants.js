@@ -19,7 +19,7 @@ const SOFTCAP_STAGE1_START        = 1073741824;    // 1 GB/s
 const SOFTCAP_STAGE1_POWER        = 0.82;
 const SOFTCAP_STAGE2_START        = 1099511627776; // 1 TB/s
 const SOFTCAP_STAGE2_POWER        = 0.65;
-const SAVE_BALANCE_VERSION        = 13;
+const SAVE_BALANCE_VERSION        = 14;
 
 // ============================================================
 // Missionen
@@ -35,37 +35,51 @@ const CLICK_UPGRADES = [
   {
     name: 'Bessere Maus',
     description: 'Klicks bringen 8 Bit statt 1 Bit',
-    cost: 500,
+    cost: 200,
     unlockAt: 0,
     newClickPower: 8
   },
   {
     name: 'Mechanische Tastatur',
     description: 'Klicks bringen 64 Bit',
-    cost: 50000,
-    unlockAt: 10000,
+    cost: 8192,
+    unlockAt: 2048,
     newClickPower: 64
   },
   {
+    name: 'USB-Optimierung',
+    description: 'Klicks bringen 512 Bit',
+    cost: 204800,
+    unlockAt: 61440,
+    newClickPower: 512
+  },
+  {
     name: 'Skript-Automatisierung',
-    description: 'Klicks bringen 1 KB',
-    cost: 5000000,
-    unlockAt: 1000000,
-    newClickPower: 1048576
+    description: 'Klicks bringen 8 KB',
+    cost: 8388608,
+    unlockAt: 2097152,
+    newClickPower: 8192
   },
   {
     name: 'Makro-Tool',
-    description: 'Klicks bringen 32 KB',
-    cost: 500000000,
-    unlockAt: 100000000,
-    newClickPower: 33554432
+    description: 'Klicks bringen 128 KB',
+    cost: 629145600,
+    unlockAt: 157286400,
+    newClickPower: 131072
   },
   {
     name: 'Bot-Assistent',
-    description: 'Klicks bringen 1 MB',
-    cost: 50000000000,
-    unlockAt: 10000000000,
-    newClickPower: 1073741824
+    description: 'Klicks bringen 2 MB',
+    cost: 53687091200,
+    unlockAt: 12884901888,
+    newClickPower: 2097152
+  },
+  {
+    name: 'KI-Cluster',
+    description: 'Klicks bringen 32 MB',
+    cost: 3298534883328,
+    unlockAt: 751619276800,
+    newClickPower: 33554432
   }
 ];
 
@@ -330,15 +344,15 @@ const RESOURCE_DEFS = [
     name: 'Strom',
     icon: '⚡',
     unit: 'kW',
-    unlockAt: 1048576,           // 1 MB Daten
+    unlockAt: 1048576,
     dependsOn: null,
-    productionBonus: 0.04,       // +4% Datenproduktion pro 100 Einheiten
-    bonusPerUnits: 100,
-    maxBonus: 2.0,               // max +200%
+    productionBonus: 0.04,
+    bonusPerUnits: 25,
+    maxBonus: 2.0,
     buildings: [
-      { id: 'power_gen',      name: 'Notstromaggregat',   baseCost: 500000,      production: 1,   unlockAt: 0 },
-      { id: 'power_solar',    name: 'Solaranlage',         baseCost: 8000000,     production: 8,   unlockAt: 5 },
-      { id: 'power_nuclear',  name: 'Kleinreaktor',        baseCost: 200000000,   production: 60,  unlockAt: 20 }
+      { id: 'power_gen',      name: 'Notstromaggregat',   baseCost: 409600,      production: 1,   unlockAt: 0 },
+      { id: 'power_solar',    name: 'Solaranlage',         baseCost: 5242880,     production: 8,   unlockAt: 5 },
+      { id: 'power_nuclear',  name: 'Kleinreaktor',        baseCost: 104857600,   production: 60,  unlockAt: 20 }
     ]
   },
   {
@@ -346,15 +360,15 @@ const RESOURCE_DEFS = [
     name: 'Kühlung',
     icon: '❄️',
     unit: 'kJ/s',
-    unlockAt: 1073741824,        // 1 GB Daten
+    unlockAt: 1073741824,
     dependsOn: 'power',
-    productionBonus: 0.05,       // +5% pro 100 Einheiten
-    bonusPerUnits: 100,
+    productionBonus: 0.05,
+    bonusPerUnits: 25,
     maxBonus: 3.0,
     buildings: [
-      { id: 'cool_fan',       name: 'Lüftersystem',        baseCost: 50000000,    production: 1,   unlockAt: 0 },
-      { id: 'cool_liquid',    name: 'Flüssigkühlung',      baseCost: 750000000,   production: 8,   unlockAt: 5 },
-      { id: 'cool_cryo',      name: 'Kryokühlung',         baseCost: 20000000000, production: 60,  unlockAt: 20 }
+      { id: 'cool_fan',       name: 'Lüftersystem',        baseCost: 36700160,    production: 1,   unlockAt: 0 },
+      { id: 'cool_liquid',    name: 'Flüssigkühlung',      baseCost: 471859200,   production: 8,   unlockAt: 5 },
+      { id: 'cool_cryo',      name: 'Kryokühlung',         baseCost: 10737418240, production: 60,  unlockAt: 20 }
     ]
   },
   {
@@ -362,15 +376,15 @@ const RESOURCE_DEFS = [
     name: 'Bandbreite',
     icon: '📡',
     unit: 'Gbps',
-    unlockAt: 1099511627776,     // 1 TB Daten
+    unlockAt: 1099511627776,
     dependsOn: 'cooling',
     productionBonus: 0.06,
-    bonusPerUnits: 100,
+    bonusPerUnits: 25,
     maxBonus: 4.0,
     buildings: [
-      { id: 'bw_fiber',       name: 'Glasfaseranschluss',  baseCost: 5000000000,  production: 1,   unlockAt: 0 },
-      { id: 'bw_backbone',    name: 'Internet-Backbone',   baseCost: 80000000000, production: 8,   unlockAt: 5 },
-      { id: 'bw_satellite',   name: 'Satelliten-Uplink',   baseCost: 2000000000000, production: 60, unlockAt: 20 }
+      { id: 'bw_fiber',       name: 'Glasfaseranschluss',  baseCost: 3758096384,  production: 1,   unlockAt: 0 },
+      { id: 'bw_backbone',    name: 'Internet-Backbone',   baseCost: 53687091200, production: 8,   unlockAt: 5 },
+      { id: 'bw_satellite',   name: 'Satelliten-Uplink',   baseCost: 1099511627776, production: 60, unlockAt: 20 }
     ]
   },
   {
@@ -378,15 +392,15 @@ const RESOURCE_DEFS = [
     name: 'Rechenleistung',
     icon: '🖥️',
     unit: 'TFLOPS',
-    unlockAt: 1125899906842624,  // ~1 PB Daten
+    unlockAt: 1125899906842624,
     dependsOn: 'bandwidth',
     productionBonus: 0.08,
-    bonusPerUnits: 100,
+    bonusPerUnits: 25,
     maxBonus: 6.0,
     buildings: [
-      { id: 'comp_gpu',       name: 'GPU-Cluster',         baseCost: 500000000000,    production: 1,   unlockAt: 0 },
-      { id: 'comp_asic',      name: 'ASIC-Farm',           baseCost: 8000000000000,   production: 8,   unlockAt: 5 },
-      { id: 'comp_quantum',   name: 'Quanten-Prozessor',   baseCost: 200000000000000, production: 60,  unlockAt: 20 }
+      { id: 'comp_gpu',       name: 'GPU-Cluster',         baseCost: 375809638400,    production: 1,   unlockAt: 0 },
+      { id: 'comp_asic',      name: 'ASIC-Farm',           baseCost: 5497558138880,   production: 8,   unlockAt: 5 },
+      { id: 'comp_quantum',   name: 'Quanten-Prozessor',   baseCost: 109951162777600, production: 60,  unlockAt: 20 }
     ]
   }
 ];

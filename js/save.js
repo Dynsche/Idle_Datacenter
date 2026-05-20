@@ -124,6 +124,17 @@ function loadGame(loadedGameOverride = null) {
         });
         ensureActiveMissions();
         game.balanceVersion = 13; costsMigrated = true; break;
+      case 13:
+        // Klick-Power neu berechnen nach Balance-Anpassung (neue Stufen, neue Werte)
+        if (game.clickUpgradesBought && game.clickUpgradesBought.length > 0) {
+          const lastBought = Math.max(...game.clickUpgradesBought);
+          if (CLICK_UPGRADES[lastBought]) {
+            game.clickPower = CLICK_UPGRADES[lastBought].newClickPower;
+          }
+        } else {
+          game.clickPower = 1;
+        }
+        game.balanceVersion = 14; costsMigrated = true; break;
       default:
         game.balanceVersion = SAVE_BALANCE_VERSION; costsMigrated = true; break;
     }
