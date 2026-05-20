@@ -137,19 +137,19 @@ function renderResourceTab() {
       for (let i = 0; i < Math.max(buyAmt, 1); i++) {
         bulkCost += Math.floor(bDef.baseCost * Math.pow(1.15, ownedCount + i));
       }
-      const canAfford = !depBlocked && buyAmt > 0 && game.data >= bulkCost;
-      const btnLabel  = game.buyAmount === -1
-        ? `Kaufen (Max: ${maxBuy})`
-        : buyAmt > 1 ? `Kaufen x${buyAmt}` : 'Kaufen';
+      const canAfford   = !depBlocked && buyAmt > 0 && game.data >= bulkCost;
+      const ownedDisplay = buyAmt > 0
+        ? `${ownedCount} <span style="color:#4ade80;">+${buyAmt}</span>`
+        : `${ownedCount}`;
       buildingsHtml += `
         <div class="building" style="margin-bottom:10px;">
           <div>
             <h3 style="margin:0 0 4px;">${bDef.name}</h3>
-            <div>Besitzt: <strong>${ownedCount}</strong></div>
+            <div>Besitzt: <strong>${ownedDisplay}</strong></div>
             <div class="sub">Produziert: +${formatResource(bDef.production * Math.max(buyAmt,1), def.unit)}/s (+${bDef.production} ${def.unit}/s je)</div>
             <div class="sub">Kosten: ${formatData(bulkCost)}</div>
           </div>
-          <button onclick="buyResourceBuilding('${def.id}','${bDef.id}')" ${!canAfford ? 'disabled' : ''}>${btnLabel}</button>
+          <button onclick="buyResourceBuilding('${def.id}','${bDef.id}')" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
         </div>`;
     });
 
