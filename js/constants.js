@@ -344,15 +344,15 @@ const RESOURCE_DEFS = [
     name: 'Strom',
     icon: '⚡',
     unit: 'kW',
-    unlockAt: 1048576,
+    unlockAt: 1048576,           // 1 MB
     dependsOn: null,
     productionBonus: 0.04,
     bonusPerUnits: 25,
     maxBonus: 2.0,
     buildings: [
-      { id: 'power_gen',      name: 'Notstromaggregat',   baseCost: 409600,      production: 1,   unlockAt: 0 },
-      { id: 'power_solar',    name: 'Solaranlage',         baseCost: 5242880,     production: 8,   unlockAt: 5 },
-      { id: 'power_nuclear',  name: 'Kleinreaktor',        baseCost: 104857600,   production: 60,  unlockAt: 20 }
+      { id: 'power_gen',      name: 'Notstromaggregat',   baseCost: 750000,      production: 1,   unlockAt: 0 },
+      { id: 'power_solar',    name: 'Solaranlage',         baseCost: 10000000,    production: 8,   unlockAt: 5 },
+      { id: 'power_nuclear',  name: 'Kleinreaktor',        baseCost: 150000000,   production: 60,  unlockAt: 20 }
     ]
   },
   {
@@ -360,15 +360,15 @@ const RESOURCE_DEFS = [
     name: 'Kühlung',
     icon: '❄️',
     unit: 'kJ/s',
-    unlockAt: 1073741824,
+    unlockAt: 1073741824,        // 1 GB
     dependsOn: 'power',
     productionBonus: 0.05,
     bonusPerUnits: 25,
     maxBonus: 3.0,
     buildings: [
-      { id: 'cool_fan',       name: 'Lüftersystem',        baseCost: 36700160,    production: 1,   unlockAt: 0 },
-      { id: 'cool_liquid',    name: 'Flüssigkühlung',      baseCost: 471859200,   production: 8,   unlockAt: 5 },
-      { id: 'cool_cryo',      name: 'Kryokühlung',         baseCost: 10737418240, production: 60,  unlockAt: 20 }
+      { id: 'cool_fan',       name: 'Lüftersystem',        baseCost: 80000000,    production: 1,   unlockAt: 0 },
+      { id: 'cool_liquid',    name: 'Flüssigkühlung',      baseCost: 800000000,   production: 8,   unlockAt: 5 },
+      { id: 'cool_cryo',      name: 'Kryokühlung',         baseCost: 15000000000, production: 60,  unlockAt: 20 }
     ]
   },
   {
@@ -376,15 +376,15 @@ const RESOURCE_DEFS = [
     name: 'Bandbreite',
     icon: '📡',
     unit: 'Gbps',
-    unlockAt: 1099511627776,
+    unlockAt: 1099511627776,     // 1 TB
     dependsOn: 'cooling',
     productionBonus: 0.06,
     bonusPerUnits: 25,
     maxBonus: 4.0,
     buildings: [
-      { id: 'bw_fiber',       name: 'Glasfaseranschluss',  baseCost: 3758096384,  production: 1,   unlockAt: 0 },
-      { id: 'bw_backbone',    name: 'Internet-Backbone',   baseCost: 53687091200, production: 8,   unlockAt: 5 },
-      { id: 'bw_satellite',   name: 'Satelliten-Uplink',   baseCost: 1099511627776, production: 60, unlockAt: 20 }
+      { id: 'bw_fiber',       name: 'Glasfaseranschluss',  baseCost: 6000000000,  production: 1,   unlockAt: 0 },
+      { id: 'bw_backbone',    name: 'Internet-Backbone',   baseCost: 80000000000, production: 8,   unlockAt: 5 },
+      { id: 'bw_satellite',   name: 'Satelliten-Uplink',   baseCost: 1500000000000, production: 60, unlockAt: 20 }
     ]
   },
   {
@@ -392,15 +392,15 @@ const RESOURCE_DEFS = [
     name: 'Rechenleistung',
     icon: '🖥️',
     unit: 'TFLOPS',
-    unlockAt: 1125899906842624,
+    unlockAt: 1125899906842624,  // 1 PB
     dependsOn: 'bandwidth',
     productionBonus: 0.08,
     bonusPerUnits: 25,
     maxBonus: 6.0,
     buildings: [
-      { id: 'comp_gpu',       name: 'GPU-Cluster',         baseCost: 375809638400,    production: 1,   unlockAt: 0 },
-      { id: 'comp_asic',      name: 'ASIC-Farm',           baseCost: 5497558138880,   production: 8,   unlockAt: 5 },
-      { id: 'comp_quantum',   name: 'Quanten-Prozessor',   baseCost: 109951162777600, production: 60,  unlockAt: 20 }
+      { id: 'comp_gpu',       name: 'GPU-Cluster',         baseCost: 650000000000,    production: 1,   unlockAt: 0 },
+      { id: 'comp_asic',      name: 'ASIC-Farm',           baseCost: 8000000000000,   production: 8,   unlockAt: 5 },
+      { id: 'comp_quantum',   name: 'Quanten-Prozessor',   baseCost: 150000000000000, production: 60,  unlockAt: 20 }
     ]
   }
 ];
