@@ -143,7 +143,8 @@ async function loadGameFromCloud() {
     const cloudData      = cloudSave.data || 0;
     const cloudServerTs  = doc.data().updatedAt ? doc.data().updatedAt.toMillis() : 0;
     const localSaveRaw   = localStorage.getItem('datacenterIdleSave');
-    const localSave      = localSaveRaw ? JSON.parse(localSaveRaw) : null;
+    const localSave      = localSaveRaw ? safeParseSavedGame(localSaveRaw, 'Lokaler Spielstand') : null;
+    if (localSaveRaw && !localSave) quarantineCorruptLocalSave(localSaveRaw);
     const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
     const localData      = localSave ? (localSave.data || 0) : 0;
 

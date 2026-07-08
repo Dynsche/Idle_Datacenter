@@ -21,6 +21,7 @@ function updateUI() {
   if ((el = document.getElementById('formulaSoftcapStage1')))el.innerText = formatData(SOFTCAP_STAGE1_START);
   if ((el = document.getElementById('formulaSoftcapStage2')))el.innerText = formatData(SOFTCAP_STAGE2_START);
   if ((el = document.getElementById('clickPowerDisplay')))   el.innerText = formatData(game.clickPower);
+  if ((el = document.getElementById('gameVersion')))         el.innerText = GAME_VERSION;
 
   updateBuyButtons();
   updateUpgradeButtons();

@@ -222,8 +222,8 @@ window.runBalanceCheck = function() {
 
 window.resetStats = function() {
   if (game.stats) {
-    game.stats.upgradesBought  = game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
-    game.stats.buildingsBought = game.buildings.reduce((sum, b) => sum + b.owned, 0);
+    game.stats.upgradesBought  = countOwnedUpgrades();
+    game.stats.buildingsBought = countOwnedBuildings();
     saveGame();
     updateUI();
   }
@@ -232,8 +232,9 @@ window.resetStats = function() {
 window.debugGame = function() {
   console.log('=== Game Debug Info ===');
   console.log('Gebäude-Upgrades:', game.buildingUpgrades.length);
+  console.log('Klick-Upgrades:',    game.clickUpgradesBought.length);
   console.log('Offline-Upgrades:', game.offlineUpgradesBought);
   console.log('KI-Upgrade:',       game.aiUpgradeBought ? 1 : 0);
-  console.log('Summe:',            game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0));
+  console.log('Summe:',            countOwnedUpgrades());
   console.log('Stats zeigt:',      game.stats.upgradesBought);
 };

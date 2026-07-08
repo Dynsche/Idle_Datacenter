@@ -2,6 +2,67 @@
 // Speichern & Laden
 // ============================================================
 
+function safeParseSavedGame(raw, sourceLabel) {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('Spielstand ist kein Objekt');
+    }
+    return parsed;
+  } catch (error) {
+    console.error(`${sourceLabel} konnte nicht gelesen werden:`, error);
+    return null;
+  }
+}
+
+function quarantineCorruptLocalSave(raw) {
+  if (!raw) return;
+  const backupKey = `datacenterIdleSaveCorrupt-${Date.now()}`;
+  try {
+    localStorage.setItem(backupKey, raw);
+    localStorage.removeItem('datacenterIdleSave');
+    if (typeof setCloudSyncStatus === 'function') {
+      setCloudSyncStatus(`Lokaler Spielstand beschaedigt - Backup: ${backupKey}`, true);
+    }
+  } catch (error) {
+    console.error('Beschaedigter Spielstand konnte nicht gesichert werden:', error);
+  }
+}
+
+function countOwnedBuildings() {
+  return (game.buildings || []).reduce((sum, b) => sum + (b.owned || 0), 0);
+}
+
+function countOwnedUpgrades() {
+  return (game.clickUpgradesBought || []).length +
+    (game.buildingUpgrades || []).length +
+    (game.offlineUpgradesBought || 0) +
+    (game.aiUpgradeBought ? 1 : 0);
+}
+
+function normalizeStats() {
+  const now = Date.now();
+  const defaults = {
+    totalData: game.data || 0,
+    totalClicks: 0,
+    buildingsBought: countOwnedBuildings(),
+    upgradesBought: countOwnedUpgrades(),
+    prestigeCount: game.prestige || 0,
+    playTime: 0,
+    offlineTime: 0,
+    offlineTimeUsed: 0,
+    startTime: now
+  };
+
+  game.stats = { ...defaults, ...(game.stats || {}) };
+  Object.keys(defaults).forEach(key => {
+    if (typeof game.stats[key] !== 'number' || !Number.isFinite(game.stats[key])) {
+      game.stats[key] = defaults[key];
+    }
+  });
+}
+
 function saveGame() {
   if (cloudUser && !cloudLoadCompleted) return;
   game.lastUpdate = Date.now();
@@ -18,9 +79,20 @@ function loadGame(loadedGameOverride = null) {
   const save = loadedGameOverride ? null : localStorage.getItem('datacenterIdleSave');
   if (!loadedGameOverride && !save) return;
 
-  const loadedGame = loadedGameOverride || JSON.parse(save);
+  const loadedGame = loadedGameOverride || safeParseSavedGame(save, 'Lokaler Spielstand');
+  if (!loadedGame) {
+    if (!loadedGameOverride) quarantineCorruptLocalSave(save);
+    return;
+  }
+  if (typeof loadedGame !== 'object' || Array.isArray(loadedGame)) {
+    console.error('Spielstand hat ein ungueltiges Format:', loadedGame);
+    return;
+  }
 
   game = { ...game, ...loadedGame };
+  game.clickUpgradesBought = Array.isArray(game.clickUpgradesBought) ? game.clickUpgradesBought : [];
+  game.buildingUpgrades    = Array.isArray(game.buildingUpgrades) ? game.buildingUpgrades : [];
+  game.achievements        = game.achievements && typeof game.achievements === 'object' ? game.achievements : {};
 
   // Migration: altes 6-Gebäude-System
   const isOldSave = loadedGame.buildings && loadedGame.buildings.length === 6;
@@ -151,29 +223,11 @@ function loadGame(loadedGameOverride = null) {
     game.buildingUpgrades = [];
   }
 
-  // Statistiken initialisieren
-  if (game.stats === undefined) {
-    const totalBuildingsBought = game.buildings.reduce((sum, b) => sum + b.owned, 0);
-    const totalUpgradesBought  = game.clickUpgradesBought.length + game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
-    game.stats = {
-      totalData: game.data,
-      totalClicks: 0,
-      buildingsBought: totalBuildingsBought,
-      upgradesBought: totalUpgradesBought,
-      prestigeCount: game.prestige || 0,
-      playTime: 0,
-      offlineTime: 0,
-      startTime: Date.now()
-    };
-  }
-
-  if (game.stats && game.stats.startTime === undefined) game.stats.startTime = Date.now();
+  normalizeStats();
 
   if (game.stats && game.stats.statsCorrected !== true) {
-    const actualUpgrades = game.clickUpgradesBought.length + game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
-    const actualBuildings = game.buildings.reduce((sum, b) => sum + b.owned, 0);
-    game.stats.upgradesBought  = actualUpgrades;
-    game.stats.buildingsBought = actualBuildings;
+    game.stats.upgradesBought  = countOwnedUpgrades();
+    game.stats.buildingsBought = countOwnedBuildings();
     game.stats.statsCorrected  = true;
   }
 
@@ -226,7 +280,11 @@ function importSaveFromFile() {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const importedData = JSON.parse(e.target.result);
+      const importedData = safeParseSavedGame(e.target.result, 'Importierter Spielstand');
+      if (!importedData) {
+        alert('Fehler beim Lesen der Datei: Spielstand ist kein gueltiges JSON');
+        return;
+      }
       if (!importedData.buildings || importedData.data === undefined) {
         alert('Ungültiger Spielstand: Datei ist nicht kompatibel');
         return;

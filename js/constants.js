@@ -2,6 +2,7 @@
 // Einheiten & Basis-Konstanten
 // ============================================================
 const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+const GAME_VERSION = '0.2.0-beta';
 
 const BASE_OFFLINE_LIMIT          = 1500;          // 25 Minuten in Sekunden
 const OFFLINE_UPGRADE_BONUS       = 1500;          // +25 Minuten pro Upgrade
