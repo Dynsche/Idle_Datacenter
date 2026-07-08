@@ -16,6 +16,9 @@ function startNextLevelCycle() {
   game.aiUpgradeCost       = BASE_AI_UPGRADE_COST;
   game.clickUpgradesBought = [];
   game.clickPower          = 1;
+  const resourceState      = createResourceState();
+  game.resources           = resourceState.resources;
+  game.resourceBuildings   = resourceState.resourceBuildings;
   game.missions            = createMissionState();
 
   ensureActiveMissions();
@@ -23,6 +26,7 @@ function startNextLevelCycle() {
   maybeRenderClickUpgrades(true);
   updateUI();
   renderBuildings();
+  renderResourceTopbar();
 
   const offlineInfo = document.getElementById('offlineInfo');
   if (offlineInfo) {
@@ -33,7 +37,7 @@ function startNextLevelCycle() {
 }
 
 function prestige() {
-  if ((game.missions?.completedCount || 0) >= MISSION_TEMPLATES.length) {
+  if ((game.missions?.completedCount || 0) >= getReachableMissionTemplates().length) {
     startNextLevelCycle();
   }
 }
@@ -134,7 +138,6 @@ function gameLoop() {
   checkAchievements();
   maybeRenderMissions();
   renderResourceTopbar();
-  updateBuyButtonAffordability();
 
   if (now - lastBuildingsRenderTime > BUILDINGS_RENDER_INTERVAL) {
     if (hasAffordabilityChanged()) {

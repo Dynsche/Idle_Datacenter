@@ -11,19 +11,6 @@ function formatData(bits) {
   return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${UNITS[unitIndex]}`;
 }
 
-// ============================================================
-// Hilfsfunktionen
-// ============================================================
-function formatData(bits) {
-  let value = bits;
-  let unitIndex = 0;
-  while (value >= 1024 && unitIndex < UNITS.length - 1) {
-    value /= 1024;
-    unitIndex++;
-  }
-  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${UNITS[unitIndex]}`;
-}
-
 // Formatiert Ressourcen-Werte mit passenden Einheiten-Ketten
 // Kennt die Basis-Einheit und skaliert korrekt ohne Präfix-Stapelung
 function formatResource(value, unit) {

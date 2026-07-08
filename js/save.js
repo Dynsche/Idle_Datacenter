@@ -154,7 +154,7 @@ function loadGame(loadedGameOverride = null) {
   // Statistiken initialisieren
   if (game.stats === undefined) {
     const totalBuildingsBought = game.buildings.reduce((sum, b) => sum + b.owned, 0);
-    const totalUpgradesBought  = game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
+    const totalUpgradesBought  = game.clickUpgradesBought.length + game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
     game.stats = {
       totalData: game.data,
       totalClicks: 0,
@@ -170,7 +170,7 @@ function loadGame(loadedGameOverride = null) {
   if (game.stats && game.stats.startTime === undefined) game.stats.startTime = Date.now();
 
   if (game.stats && game.stats.statsCorrected !== true) {
-    const actualUpgrades = game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
+    const actualUpgrades = game.clickUpgradesBought.length + game.buildingUpgrades.length + game.offlineUpgradesBought + (game.aiUpgradeBought ? 1 : 0);
     const actualBuildings = game.buildings.reduce((sum, b) => sum + b.owned, 0);
     game.stats.upgradesBought  = actualUpgrades;
     game.stats.buildingsBought = actualBuildings;

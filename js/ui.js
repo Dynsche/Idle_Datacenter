@@ -73,7 +73,7 @@ function updateStats() {
   const totalBuildings = game.buildings.reduce((sum, b) => sum + b.owned, 0);
   if ((el = document.getElementById('statCurrentBuildings'))) el.innerText = totalBuildings.toLocaleString();
 
-  const activeUpgrades = game.buildingUpgrades.length + (game.aiUpgradeBought ? 1 : 0) + game.offlineUpgradesBought;
+  const activeUpgrades = game.clickUpgradesBought.length + game.buildingUpgrades.length + (game.aiUpgradeBought ? 1 : 0) + game.offlineUpgradesBought;
   if ((el = document.getElementById('statActiveUpgrades'))) el.innerText = activeUpgrades.toLocaleString();
 
   const unlockedAchievements = Object.keys(game.achievements || {}).filter(k => game.achievements[k] === true).length;
@@ -134,6 +134,7 @@ function switchTab(tabName) {
     buildings:  '#buildingsTab',
     upgrades:   '#upgradesTab',
     resources:  '#resourcesTab',
+    achievements: '#achievementsTab',
     stats:      '#statsTab',
     account:    '#accountTab',
     help:       '#helpTab'
@@ -148,6 +149,7 @@ function switchTab(tabName) {
     maybeRenderClickUpgrades(true);
   }
   if (tabName === 'resources') renderResourceTab();
+  if (tabName === 'achievements') renderAchievements();
   if (tabName === 'stats')   updateStats();
   if (tabName === 'account') { updateCloudUserUI(); updateStats(); }
 
@@ -155,12 +157,9 @@ function switchTab(tabName) {
 }
 
 function updateBuyButtons() {
-  const multipliers = [1, 10, 100, -1];
-  const buttonIds   = ['buy1', 'buy10', 'buy100', 'buyMax'];
-  multipliers.forEach((mult, index) => {
-    const button = document.getElementById(buttonIds[index]);
-    if (button) button.disabled = !canAffordMultiplier(mult);
-  });
+  if (typeof updateBuyButtonAffordability === 'function') {
+    updateBuyButtonAffordability();
+  }
 }
 
 function updateUpgradeButtons() {
@@ -169,9 +168,6 @@ function updateUpgradeButtons() {
 
   const aiBtn = document.getElementById('btnAIUpgrade');
   if (aiBtn)  aiBtn.disabled = game.aiUpgradeBought || game.data < game.aiUpgradeCost;
-
-  const prestigeBtn = document.getElementById('btnPrestige');
-  if (prestigeBtn) prestigeBtn.disabled = true;
 }
 
 // ============================================================

@@ -33,6 +33,7 @@
       <div class="resource"><span id="offlineHours">0h 25m</span></div>
     </div>
   </div>
+  <div id="offlineInfo" class="offline-box" style="display:none;"></div>
 
   <div class="section-title">Manuelle Datensammlung</div>
 
@@ -137,9 +138,9 @@
       </div>
       <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importSaveFromFile()" />
     </div>
-    </div>
+  </div>
 
-    <div id="tab-stats" class="tab-content">
+  <div id="tab-stats" class="tab-content">
     <div class="upgrade">
       <h3>📊 Spielstatistiken</h3>
       <div style="line-height: 1.8;">
@@ -176,7 +177,6 @@
       <div style="line-height: 1.8;">
         <div><strong>Erfolge freigeschaltet:</strong> <span id="statAchievements">0/10</span></div>
       </div>
-    </div>
     </div>
   </div>
 
