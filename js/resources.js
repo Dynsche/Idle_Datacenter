@@ -54,14 +54,26 @@ function renderResourceTopbar() {
   }
 
   container.style.display = '';
-  container.innerHTML = unlocked.map(def => {
-    const industry = getIndustryState(def.id);
-    return `
-      <div class="card resource-topbar-card" style="min-width:140px;">
+
+  const signature = unlocked.map(def => def.id).join('|');
+  if (container.dataset.signature !== signature) {
+    container.dataset.signature = signature;
+    container.innerHTML = unlocked.map(def => `
+      <div class="card resource-topbar-card" data-industry="${def.id}" style="min-width:140px;">
         <div class="sub">${def.icon} ${def.name}</div>
-        <div class="resource" style="font-size:18px;">${formatIndustryAmount(def, industry.amount)}</div>
-        <div class="sub">${formatIndustryAmount(def, getIndustryPrimaryRate(def.id))}/s</div>
+        <div class="resource rt-amount" style="font-size:18px;"></div>
+        <div class="sub"><span class="rt-rate"></span>/s</div>
       </div>
-    `;
-  }).join('');
+    `).join('');
+  }
+
+  unlocked.forEach(def => {
+    const industry = getIndustryState(def.id);
+    const card = container.querySelector(`[data-industry="${def.id}"]`);
+    if (!card) return;
+    const amountEl = card.querySelector('.rt-amount');
+    const rateEl = card.querySelector('.rt-rate');
+    if (amountEl) amountEl.textContent = formatIndustryAmount(def, industry.amount);
+    if (rateEl) rateEl.textContent = formatIndustryAmount(def, getIndustryPrimaryRate(def.id));
+  });
 }

@@ -68,6 +68,7 @@ function manualClick() {
 let lastTickTime = Date.now();
 let lastBuildingsRenderTime = 0;
 let lastAffordabilityState = null;
+let buildingsHovering = false;
 const BUILDINGS_RENDER_INTERVAL = 500;
 
 function getChainAffordabilitySignature() {
@@ -129,7 +130,7 @@ function gameLoop() {
   renderResourceTopbar();
 
   if (now - lastBuildingsRenderTime > BUILDINGS_RENDER_INTERVAL) {
-    if (hasAffordabilityChanged()) {
+    if (!buildingsHovering && hasAffordabilityChanged()) {
       try { renderBuildings(); } catch (e) { /* Tab nicht sichtbar */ }
     }
     lastBuildingsRenderTime = now;
@@ -165,6 +166,18 @@ window.addEventListener('focus', () => {
 });
 
 window.addEventListener('beforeunload', saveGame);
+
+const buildingsContainer = document.getElementById('buildings');
+if (buildingsContainer) {
+  buildingsContainer.addEventListener('mouseenter', () => {
+    buildingsHovering = true;
+  });
+  buildingsContainer.addEventListener('mouseleave', () => {
+    buildingsHovering = false;
+    lastAffordabilityState = null;
+    renderBuildings();
+  });
+}
 
 // ============================================================
 // Debug / Balance-Helfer
