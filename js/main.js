@@ -166,11 +166,6 @@ window.addEventListener('focus', () => {
 
 window.addEventListener('beforeunload', saveGame);
 
-const buildingsContainer = document.getElementById('buildings');
-if (buildingsContainer) {
-  buildingsContainer.addEventListener('mouseenter', () => renderBuildings());
-}
-
 // ============================================================
 // Debug / Balance-Helfer
 // ============================================================
