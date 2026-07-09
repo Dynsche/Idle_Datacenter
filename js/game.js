@@ -44,6 +44,29 @@ function formatResource(value, unit) {
   return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${unit}`;
 }
 
+function formatNumberShort(value) {
+  if (!Number.isFinite(value)) return 'unbegrenzt';
+  const sign = value < 0 ? '-' : '';
+  const abs = Math.abs(value);
+  if (abs < 1000) return `${sign}${Math.floor(abs).toLocaleString()}`;
+  if (abs >= 1e27) return `${sign}${abs.toExponential(2).replace('+', '')}`;
+
+  const units = [
+    { value: 1e24, label: 'Sp' },
+    { value: 1e21, label: 'Sx' },
+    { value: 1e18, label: 'Qi' },
+    { value: 1e15, label: 'Qa' },
+    { value: 1e12, label: 'T' },
+    { value: 1e9, label: 'B' },
+    { value: 1e6, label: 'M' },
+    { value: 1e3, label: 'K' }
+  ];
+
+  const unit = units.find(entry => abs >= entry.value);
+  const scaled = abs / unit.value;
+  return `${sign}${scaled.toFixed(scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2)} ${unit.label}`;
+}
+
 // Berechnet wie viele Einheiten eines Ressourcen-Gebäudes man sich leisten kann
 function calculateMaxResourceBuy(resId, buildingId) {
   const def  = RESOURCE_DEFS.find(d => d.id === resId);
@@ -123,6 +146,7 @@ let game = {
   buildingUpgrades: [],
   prestigeRequirement: BASE_PRESTIGE_REQUIREMENT,
   balanceVersion: SAVE_BALANCE_VERSION,
+  chainSaveVersion: CHAIN_SAVE_VERSION,
   stats: {
     totalData: 0,
     totalClicks: 0,
@@ -282,7 +306,8 @@ function getProducerCost(industryId, producerIndex, offset = 0) {
   const producerDef = def?.producers?.[producerIndex];
   const state = getProducerState(industryId, producerIndex);
   if (!producerDef || !state) return Infinity;
-  return Math.floor(producerDef.baseCost * Math.pow(PRODUCER_COST_GROWTH, state.owned + offset));
+  const cost = producerDef.baseCost * Math.pow(PRODUCER_COST_GROWTH, state.owned + offset);
+  return Number.isFinite(cost) ? Math.floor(cost) : Infinity;
 }
 
 function calculateProducerBulkCost(industryId, producerIndex, amount) {

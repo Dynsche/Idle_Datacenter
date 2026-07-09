@@ -67,6 +67,16 @@ function normalizeStats() {
   });
 }
 
+function resetChainProgressForNewBalance() {
+  game.data = 0;
+  game.operators = 0;
+  game.totalOperatorsEarned = 0;
+  game.industries = createIndustryState();
+  game.missions = createMissionState();
+  game.chainSaveVersion = CHAIN_SAVE_VERSION;
+  ensureActiveMissions();
+}
+
 function saveGame() {
   if (cloudUser && !cloudLoadCompleted) return;
   game.lastUpdate = Date.now();
@@ -93,11 +103,17 @@ function loadGame(loadedGameOverride = null) {
     return;
   }
 
+  let costsMigrated = false;
   game = { ...game, ...loadedGame };
   ensureIndustryState();
   game.clickUpgradesBought = Array.isArray(game.clickUpgradesBought) ? game.clickUpgradesBought : [];
   game.buildingUpgrades    = Array.isArray(game.buildingUpgrades) ? game.buildingUpgrades : [];
   game.achievements        = game.achievements && typeof game.achievements === 'object' ? game.achievements : {};
+
+  if ((loadedGame.chainSaveVersion || 0) < CHAIN_SAVE_VERSION) {
+    resetChainProgressForNewBalance();
+    costsMigrated = true;
+  }
 
   // Migration: altes 6-Gebäude-System
   const isOldSave = loadedGame.buildings && loadedGame.buildings.length === 6;
@@ -113,8 +129,6 @@ function loadGame(loadedGameOverride = null) {
   } else {
     game.buildings = loadedGame.buildings || createBuildings();
   }
-
-  let costsMigrated = false;
 
   function normalizeBalanceValues() {
     game.offlineUpgradesBought = Math.max(0, Math.floor(game.offlineUpgradesBought || 0));

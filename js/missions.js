@@ -200,27 +200,27 @@ function claimMission(missionId) {
 function getMissionTargetText(mission) {
   if (!mission) return '';
   const targetAmount = getScaledMissionAmount(mission);
-  if (mission.targetKey === 'building')  return `${targetAmount}x ${mission.targetId}`;
+  if (mission.targetKey === 'building')  return `${formatNumberShort(targetAmount)}x ${mission.targetId}`;
   if (mission.targetKey === 'producer') {
     const [industryId, indexRaw] = String(mission.targetId || '').split(':');
     const industryDef = getIndustryDef(industryId);
     const producer = industryDef?.producers?.[parseInt(indexRaw, 10)];
-    return `${targetAmount.toLocaleString()}x ${producer?.name || mission.targetId}`;
+    return `${formatNumberShort(targetAmount)}x ${producer?.name || mission.targetId}`;
   }
-  if (mission.targetKey === 'operators' || mission.targetKey === 'operatorsEarned') return `${targetAmount.toLocaleString()} Operatoren`;
+  if (mission.targetKey === 'operators' || mission.targetKey === 'operatorsEarned') return `${formatNumberShort(targetAmount)} Operatoren`;
   if (mission.targetKey === 'industry') {
     const industryDef = getIndustryDef(mission.targetId);
     return `${formatIndustryAmount(industryDef, targetAmount)} ${industryDef?.name || ''}`;
   }
   if (mission.targetKey === 'perSecond') return `${formatData(targetAmount)}/s`;
-  if (mission.targetKey === 'clicks')    return `${targetAmount.toLocaleString()} Klicks`;
+  if (mission.targetKey === 'clicks')    return `${formatNumberShort(targetAmount)} Klicks`;
   return formatData(targetAmount);
 }
 
 function getMissionProgressText(mission, currentValue) {
   const targetAmount = getScaledMissionAmount(mission);
   if (mission.targetKey === 'building' || mission.targetKey === 'clicks' || mission.targetKey === 'producer' || mission.targetKey === 'operators' || mission.targetKey === 'operatorsEarned') {
-    return `${Math.floor(currentValue).toLocaleString()} / ${Math.floor(targetAmount).toLocaleString()}`;
+    return `${formatNumberShort(currentValue)} / ${formatNumberShort(targetAmount)}`;
   }
   if (mission.targetKey === 'perSecond') {
     return `${formatData(currentValue)}/s / ${formatData(targetAmount)}/s`;
@@ -275,7 +275,7 @@ function updateMissionProgressDisplay() {
     const isDone = currentValue >= targetValue;
 
     const progressText = card.querySelector('[data-mission-progress]');
-    if (progressText) progressText.textContent = `${getMissionProgressText(mission, currentValue)} • Ziel: ${getMissionTargetText(mission)}`;
+    if (progressText) progressText.textContent = `${getMissionProgressText(mission, currentValue)} - Ziel: ${getMissionTargetText(mission)}`;
 
     const fill = card.querySelector('[data-mission-fill]');
     if (fill) {
@@ -309,7 +309,7 @@ function renderMissions() {
   const cycleReady = completed >= reachable.length;
   summaryCard.innerHTML = `
     <div class="sub">Missionen</div>
-    <div style="font-size:22px;font-weight:bold;line-height:1.1;margin-top:4px;">Level ${missionLevel} • Rang ${game.prestige}</div>
+    <div style="font-size:22px;font-weight:bold;line-height:1.1;margin-top:4px;">Level ${missionLevel} - Rang ${game.prestige}</div>
     <div class="sub" style="margin-top:4px;">${levelClaimed}/${levelMissions.length} in diesem Level</div>
     <div class="sub" style="margin-top:4px;">Gesamt abgeschlossen: ${completed}/${reachable.length}</div>
     <button onclick="startNextLevelCycle()" ${!cycleReady ? 'disabled' : ''} style="margin-top:8px;width:100%;">${cycleReady ? 'Neuen Durchlauf starten' : `Neuer Durchlauf bei ${reachable.length}/${reachable.length}`}</button>
@@ -339,8 +339,8 @@ function renderMissions() {
     const rewardText       = mission.reward.type === 'data'
       ? `${formatData(scaledRewardAmt)} Daten`
       : mission.reward.type === 'operators'
-        ? `${scaledRewardAmt.toLocaleString()} Operatoren`
-        : `${scaledRewardAmt} Ressource`;
+        ? `${formatNumberShort(scaledRewardAmt)} Operatoren`
+        : `${formatNumberShort(scaledRewardAmt)} Ressource`;
 
     const card = document.createElement('div');
     card.className = 'card mission-card';
@@ -349,7 +349,7 @@ function renderMissions() {
       <div class="mission-row">
         <div style="min-width:0;flex:1;">
           <div style="font-size:15px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${mission.title} <span class="sub">(Lv ${mission.level || 1})</span></div>
-          <div class="sub" data-mission-progress style="font-size:12px;line-height:1.25;margin-top:2px;">${getMissionProgressText(mission, currentValue)} • Ziel: ${getMissionTargetText(mission)}</div>
+          <div class="sub" data-mission-progress style="font-size:12px;line-height:1.25;margin-top:2px;">${getMissionProgressText(mission, currentValue)} - Ziel: ${getMissionTargetText(mission)}</div>
           <div class="sub" style="font-size:12px;line-height:1.25;">Belohnung: ${rewardText}</div>
           <button data-mission-claim onclick="claimMission('${mission.id}')" ${!isDone ? 'disabled' : ''} style="margin-top:8px;">${isDone ? 'Abholen' : 'In Arbeit'}</button>
         </div>

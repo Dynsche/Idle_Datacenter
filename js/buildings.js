@@ -33,8 +33,8 @@ function renderBuildings() {
   operatorCard.style.marginBottom = '15px';
   operatorCard.innerHTML = `
     <div class="sub">Operatoren</div>
-    <div class="resource" style="font-size:26px;">${Math.floor(game.operators).toLocaleString()}</div>
-    <div class="sub">+${getOperatorRate().toFixed(2)}/s · Kaufwährung für alle Produktionsketten</div>
+    <div class="resource" data-operator-count style="font-size:26px;">${formatNumberShort(game.operators)}</div>
+    <div class="sub"><span data-operator-rate>+${formatNumberShort(getOperatorRate())}/s</span> - Kaufwaehrung fuer alle Produktionsketten</div>
   `;
   container.appendChild(operatorCard);
 
@@ -79,8 +79,8 @@ function renderBuildings() {
       row.innerHTML = `
         <div>
           <h3>${producerDef.name}</h3>
-          <div>Besitzt: <span data-owned-industry="${industryDef.id}" data-owned-index="${producerIndex}">${Math.floor(state.owned).toLocaleString()}</span>${buyAmount > 0 ? ` <span data-buy-preview-industry="${industryDef.id}" data-buy-preview-index="${producerIndex}" style="color:#4ade80;">+${buyAmount}</span>` : ''}</div>
-          <div>Kosten: <span data-cost-industry="${industryDef.id}" data-cost-index="${producerIndex}">${Math.floor(cost).toLocaleString()}</span> Operatoren</div>
+          <div>Besitzt: <span data-owned-industry="${industryDef.id}" data-owned-index="${producerIndex}">${formatNumberShort(state.owned)}</span>${buyAmount > 0 ? ` <span data-buy-preview-industry="${industryDef.id}" data-buy-preview-index="${producerIndex}" style="color:#4ade80;">+${formatNumberShort(buyAmount)}</span>` : ''}</div>
+          <div>Kosten: <span data-cost-industry="${industryDef.id}" data-cost-index="${producerIndex}">${formatNumberShort(cost)}</span> Operatoren</div>
           <div class="sub">${producerIndex === 0 ? 'Produziert' : 'Erzeugt'} ${targetName}: ${getProducerRate(industryDef.id, producerIndex).toFixed(2)}/s</div>
           <div class="sub">${producerDef.description}</div>
           ${!unlocked ? `<div class="sub" style="color:#f59e0b;">Benötigt ${producerDef.unlockAt} ${targetName}</div>` : ''}
@@ -149,9 +149,15 @@ function updateBuyButtonAffordability() {
 function updateProducerAffordability() {
   if (!document.querySelector('[data-producer-industry]')) return;
 
+  const operatorCount = document.querySelector('[data-operator-count]');
+  if (operatorCount) operatorCount.textContent = formatNumberShort(game.operators);
+
+  const operatorRate = document.querySelector('[data-operator-rate]');
+  if (operatorRate) operatorRate.textContent = `+${formatNumberShort(getOperatorRate())}/s`;
+
   document.querySelectorAll('[data-owned-industry]').forEach(el => {
     const state = getProducerState(el.dataset.ownedIndustry, parseInt(el.dataset.ownedIndex, 10));
-    if (state) el.textContent = Math.floor(state.owned).toLocaleString();
+    if (state) el.textContent = formatNumberShort(state.owned);
   });
 
   document.querySelectorAll('[data-producer-industry]').forEach(button => {
@@ -169,10 +175,10 @@ function updateProducerAffordability() {
     button.disabled = !canAfford;
 
     const costEl = document.querySelector(`[data-cost-industry="${industryId}"][data-cost-index="${producerIndex}"]`);
-    if (costEl) costEl.textContent = Math.floor(cost).toLocaleString();
+    if (costEl) costEl.textContent = formatNumberShort(cost);
 
     const previewEl = document.querySelector(`[data-buy-preview-industry="${industryId}"][data-buy-preview-index="${producerIndex}"]`);
-    if (previewEl) previewEl.textContent = buyAmount > 0 ? `+${buyAmount}` : '+0';
+    if (previewEl) previewEl.textContent = buyAmount > 0 ? `+${formatNumberShort(buyAmount)}` : '+0';
   });
 }
 
