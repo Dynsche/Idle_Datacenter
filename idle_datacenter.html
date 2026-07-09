@@ -29,6 +29,12 @@
     </div>
 
     <div class="card">
+      <div class="sub">Operatoren</div>
+      <div class="resource"><span id="operators">0</span></div>
+      <div class="sub">+<span id="operatorsPerSecond">0</span>/s</div>
+    </div>
+
+    <div class="card">
       <div class="sub">Offline Limit</div>
       <div class="resource"><span id="offlineHours">0h 25m</span></div>
     </div>
@@ -46,12 +52,12 @@
     <button onclick="manualClick()">Daten sammeln</button>
   </div>
 
-  <div class="section-title">Mitarbeiter & Infrastruktur</div>
+  <div class="section-title">Produktionsketten & Infrastruktur</div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('buildings')" id="buildingsTab">Gebäude</button>
+    <button class="tab active" onclick="switchTab('buildings')" id="buildingsTab">Ketten</button>
     <button class="tab" onclick="switchTab('upgrades')" id="upgradesTab">Upgrades</button>
-    <button class="tab" onclick="switchTab('resources')" id="resourcesTab">⚡ Ressourcen</button>
+    <button class="tab" onclick="switchTab('resources')" id="resourcesTab">⚡ Industrien</button>
     <button class="tab" onclick="switchTab('achievements')" id="achievementsTab">🏆 Erfolge</button>
     <button class="tab" onclick="switchTab('stats')" id="statsTab">Statistiken</button>
     <button class="tab" onclick="switchTab('account')" id="accountTab">Konto</button>
@@ -73,7 +79,7 @@
   </div>
 
   <div id="tab-upgrades" class="tab-content">
-    <div class="sub" style="margin-bottom: 12px;">Alle Upgrades zentral: Klick, Gebäude und Forschung.</div>
+    <div class="sub" style="margin-bottom: 12px;">Alle Upgrades zentral: Klick, Produktionsketten und Forschung.</div>
 
     <div class="upgrade">
       <h3>Klick-Upgrades</h3>
@@ -81,7 +87,7 @@
     </div>
 
     <div class="upgrade">
-      <h3>Gebäude-Upgrades</h3>
+      <h3>Karten & Manager</h3>
       <div id="buildingUpgrades"></div>
     </div>
 
@@ -152,10 +158,10 @@
     </div>
 
     <div class="upgrade">
-      <h3>🏢 Gebäude & Upgrades</h3>
+      <h3>🏢 Ketten & Upgrades</h3>
       <div style="line-height: 1.8;">
-        <div><strong>Gebäude gekauft (Gesamt):</strong> <span id="statBuildingsBought">0</span></div>
-        <div><strong>Aktuelle Gebäude:</strong> <span id="statCurrentBuildings">0</span></div>
+        <div><strong>Producer gekauft (Gesamt):</strong> <span id="statBuildingsBought">0</span></div>
+        <div><strong>Aktuelle Producer:</strong> <span id="statCurrentBuildings">0</span></div>
         <div><strong>Upgrades gekauft:</strong> <span id="statUpgradesBought">0</span></div>
         <div><strong>Aktive Upgrades:</strong> <span id="statActiveUpgrades">0</span></div>
       </div>
@@ -190,18 +196,18 @@
         <div style="margin-top: 12px;"><strong>🖱️ Manuell klicken</strong></div>
         <div class="sub">Am Anfang sammelst du Daten per Klick auf <em>Daten sammeln</em>. Jeder Klick bringt 1 Bit.</div>
 
-        <div style="margin-top: 12px;"><strong>🏢 Gebäude kaufen</strong></div>
-        <div class="sub">Kaufe Gebäude die automatisch Daten produzieren. Jedes Gebäude produziert pro Sekunde Daten. Höhere Gebäude schalten sich erst ab einer bestimmten Datenmenge frei.</div>
-        <div class="sub" style="margin-top: 4px;">Die Reihenfolge: <em>IT Mitarbeiter → Mini Server → Server Rack → Blade Cluster → Datacenter Halle → Cloud Region → Hyperscale Campus → Quantenrechner</em></div>
+        <div style="margin-top: 12px;"><strong>🏢 Produktionsketten kaufen</strong></div>
+        <div class="sub">Kaufe Producer mit Operatoren. Die erste Stufe einer Industrie erzeugt die Ressource direkt. Jede höhere Stufe erzeugt automatisch die darunterliegende Stufe.</div>
+        <div class="sub" style="margin-top: 4px;">Beispiel Daten: <em>Manueller Upload → Batch Script → CI Pipeline → Server Rack → Cloud Region</em></div>
 
-        <div style="margin-top: 12px;"><strong>⛓️ Gebäudekette</strong></div>
-        <div class="sub">Höhere Gebäude unterstützen niedrigere – sie übertragen einen Teil ihrer Leistung nach unten und verstärken diese zusätzlich. Je mehr höhere Gebäude du hast, desto mehr profitieren die IT Mitarbeiter.</div>
+        <div style="margin-top: 12px;"><strong>⛓️ Kettenlogik</strong></div>
+        <div class="sub">Höhere Producer erzeugen niedrigere Producer. Dadurch wächst die Produktion nicht nur linear, sondern baut sich als Kette auf.</div>
 
         <div style="margin-top: 12px;"><strong>📦 Kaufmenge</strong></div>
-        <div class="sub">Wähle x1, x10, x100 oder Max um mehrere Gebäude auf einmal zu kaufen. Max kauft so viele wie du dir leisten kannst.</div>
+        <div class="sub">Wähle x1, x10, x100 oder Max um mehrere Producer auf einmal zu kaufen. Max kauft so viele wie du dir leisten kannst.</div>
 
-        <div style="margin-top: 12px;"><strong>🔬 Gebäude-Upgrades</strong></div>
-        <div class="sub">Ab 15 MB schalten sich Upgrades frei die einzelne Gebäude dauerhaft stärker machen. Jedes Upgrade verdoppelt die Produktion des jeweiligen Gebäudes.</div>
+        <div style="margin-top: 12px;"><strong>🔬 Karten & Manager</strong></div>
+        <div class="sub">Dieser Bereich wird als nächstes ausgebaut: Karten sollen einzelne Producer verstärken und Manager später Automatisierung/Multiplikatoren tragen.</div>
 
         <div style="margin-top: 12px;"><strong>🧪 Forschung</strong></div>
         <div class="sub"><em>Offline-Speichererweiterung:</em> Verlängert die Zeit für Offline-Produktion um je 25 Minuten pro Kauf.<br>

@@ -2,7 +2,9 @@
 // Einheiten & Basis-Konstanten
 // ============================================================
 const UNITS = ['Bit', 'Byte', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
-const GAME_VERSION = '0.2.0-beta';
+const GAME_VERSION = '0.3.0-chain-rework';
+const SAVE_KEY = 'datacenterIdleChainSave';
+const LEGACY_SAVE_KEY = 'datacenterIdleSave';
 
 const BASE_OFFLINE_LIMIT          = 1500;          // 25 Minuten in Sekunden
 const OFFLINE_UPGRADE_BONUS       = 1500;          // +25 Minuten pro Upgrade
@@ -21,6 +23,48 @@ const SOFTCAP_STAGE1_POWER        = 0.82;
 const SOFTCAP_STAGE2_START        = 1099511627776; // 1 TB/s
 const SOFTCAP_STAGE2_POWER        = 0.65;
 const SAVE_BALANCE_VERSION        = 14;
+const CHAIN_SAVE_VERSION          = 1;
+const BASE_OPERATOR_RATE          = 1;
+const OPERATOR_RATE_PER_RANK      = 0.35;
+const PRODUCER_COST_GROWTH        = 1.16;
+const PRODUCER_BULK_LIMIT         = 10000;
+
+// ============================================================
+// Adventure-Communist-artige Produktionsketten
+// Höhere Stufen erzeugen die darunterliegende Stufe.
+// Stufe 0 erzeugt die Hauptressource der Industrie.
+// ============================================================
+const INDUSTRY_DEFS = [
+  {
+    id: 'data',
+    name: 'Daten',
+    icon: '📊',
+    unit: 'Daten',
+    resourceLabel: 'Daten',
+    unlockAt: 0,
+    producers: [
+      { id: 'manual_upload', name: 'Manueller Upload', description: 'Schreibt Daten direkt ins System.', baseCost: 10, rate: 1, unlockAt: 0 },
+      { id: 'batch_script', name: 'Batch Script', description: 'Erzeugt manuelle Uploads.', baseCost: 80, rate: 0.18, unlockAt: 25 },
+      { id: 'ci_pipeline', name: 'CI Pipeline', description: 'Erzeugt Batch Scripts.', baseCost: 650, rate: 0.08, unlockAt: 120 },
+      { id: 'server_rack', name: 'Server Rack', description: 'Erzeugt CI Pipelines.', baseCost: 6000, rate: 0.035, unlockAt: 850 },
+      { id: 'cloud_region', name: 'Cloud Region', description: 'Erzeugt Server Racks.', baseCost: 60000, rate: 0.014, unlockAt: 6500 }
+    ]
+  },
+  {
+    id: 'power',
+    name: 'Strom',
+    icon: '⚡',
+    unit: 'kW',
+    resourceLabel: 'Strom',
+    unlockAt: 5000,
+    producers: [
+      { id: 'outlet', name: 'Steckdose', description: 'Liefert Strom direkt.', baseCost: 35, rate: 1, unlockAt: 0 },
+      { id: 'ups', name: 'USV-Schrank', description: 'Erzeugt Steckdosen.', baseCost: 320, rate: 0.16, unlockAt: 35 },
+      { id: 'generator', name: 'Generator', description: 'Erzeugt USV-Schränke.', baseCost: 3000, rate: 0.07, unlockAt: 250 },
+      { id: 'solar_field', name: 'Solarfeld', description: 'Erzeugt Generatoren.', baseCost: 28000, rate: 0.03, unlockAt: 1500 }
+    ]
+  }
+];
 
 // ============================================================
 // Missionen
@@ -28,6 +72,25 @@ const SAVE_BALANCE_VERSION        = 14;
 const MAX_ACTIVE_MISSIONS  = 3;
 const MISSIONS_PER_LEVEL   = 5;
 const MAX_MISSION_LEVEL    = 5;
+
+const CHAIN_MISSION_TEMPLATES = [
+  { id: 'c-data-250', level: 1, title: 'Erste Datenlieferung', targetKey: 'data', amount: 250, reward: { type: 'operators', amount: 60 } },
+  { id: 'c-ops-100', level: 1, title: 'Operatoren einteilen', targetKey: 'operatorsEarned', amount: 100, reward: { type: 'operators', amount: 90 } },
+  { id: 'c-upload-25', level: 1, title: 'Upload-Team aufbauen', targetKey: 'producer', targetId: 'data:0', amount: 25, reward: { type: 'operators', amount: 150 } },
+  { id: 'c-script-10', level: 1, title: 'Scripts starten', targetKey: 'producer', targetId: 'data:1', amount: 10, reward: { type: 'operators', amount: 250 } },
+  { id: 'c-data-10k', level: 2, title: 'Datendrehzahl', targetKey: 'data', amount: 10000, reward: { type: 'operators', amount: 700 } },
+  { id: 'c-pipeline-5', level: 2, title: 'Pipeline-Betrieb', targetKey: 'producer', targetId: 'data:2', amount: 5, reward: { type: 'operators', amount: 1200 } },
+  { id: 'c-power-100', level: 2, title: 'Stromversorgung', targetKey: 'industry', targetId: 'power', amount: 100, reward: { type: 'operators', amount: 1500 } },
+  { id: 'c-outlet-30', level: 2, title: 'Steckdosenfeld', targetKey: 'producer', targetId: 'power:0', amount: 30, reward: { type: 'operators', amount: 1800 } },
+  { id: 'c-data-1m', level: 3, title: 'Megabyte-Betrieb', targetKey: 'data', amount: 1048576, reward: { type: 'operators', amount: 5000 } },
+  { id: 'c-rack-3', level: 3, title: 'Rack-Kette', targetKey: 'producer', targetId: 'data:3', amount: 3, reward: { type: 'operators', amount: 8000 } },
+  { id: 'c-generator-3', level: 3, title: 'Generatorenpark', targetKey: 'producer', targetId: 'power:2', amount: 3, reward: { type: 'operators', amount: 9000 } },
+  { id: 'c-data-64m', level: 4, title: 'Produktionsnetz', targetKey: 'data', amount: 67108864, reward: { type: 'operators', amount: 25000 } },
+  { id: 'c-cloud-2', level: 4, title: 'Cloud-Region', targetKey: 'producer', targetId: 'data:4', amount: 2, reward: { type: 'operators', amount: 40000 } },
+  { id: 'c-power-50k', level: 4, title: 'Energiepuffer', targetKey: 'industry', targetId: 'power', amount: 50000, reward: { type: 'operators', amount: 45000 } },
+  { id: 'c-data-1g', level: 5, title: 'Gigabyte-Schicht', targetKey: 'data', amount: 1073741824, reward: { type: 'operators', amount: 120000 } },
+  { id: 'c-ops-250k', level: 5, title: 'Operatoren-Apparat', targetKey: 'operatorsEarned', amount: 250000, reward: { type: 'operators', amount: 150000 } }
+];
 
 // ============================================================
 // Klick-Upgrades
@@ -133,7 +196,7 @@ const ACHIEVEMENTS = [
   { id: 'data-collector',    title: '📊 Datensammler',        description: 'Sammle 1 GB Daten',                             check: (g) => (g.stats?.totalData || 0) >= 1073741824 },
   { id: 'first-prestige',    title: '🎊 Erster Durchlauf',    description: 'Starte deinen ersten Level-Durchlauf',          check: (g) => g.prestige >= 1 },
   { id: 'prestige-5',        title: '👑 Fünffach König',      description: 'Erreiche Level 5 (5 Durchläufe)',               check: (g) => g.prestige >= 5 },
-  { id: 'building-collector',title: '🏢 Gebäude-Tycoon',      description: 'Besitze mindestens 50 Gebäude',                 check: (g) => (g.buildings || []).reduce((sum, b) => sum + b.owned, 0) >= 50 },
+  { id: 'building-collector',title: '🏢 Ketten-Tycoon',        description: 'Besitze mindestens 50 Produktionsstufen',       check: () => countOwnedBuildings() >= 50 },
   { id: 'upgrade-master',    title: '🔧 Upgrade-Meister',     description: 'Kaufe 20 Upgrades',                             check: (g) => (g.stats?.upgradesBought || 0) >= 20 },
   { id: 'offline-producer',  title: '😴 Offline-Produzent',  description: 'Nutze 1 Stunde Offline-Produktion',             check: (g) => (g.stats?.offlineTimeUsed || 0) >= 3600 },
   { id: 'mission-master',    title: '🎯 Missionen-Meister',   description: 'Schließe 25 Missionen ab',                      check: (g) => (g.missions?.completedCount || 0) >= 25 },
@@ -333,7 +396,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: '503758094362',
   appId: '1:503758094362:web:b3fbb6e62c53efee3fd1a3'
 };
-const CLOUD_SAVE_DOC_ID = 'main';
+const CLOUD_SAVE_DOC_ID = 'chain-v1';
 
 // ============================================================
 // Ressourcen-Definitionen

@@ -6,6 +6,8 @@ function updateUI() {
   let el;
   if ((el = document.getElementById('data')))       el.innerText = formatData(game.data);
   if ((el = document.getElementById('perSecond')))  el.innerText = formatData(productionPerSecond()) + '/s';
+  if ((el = document.getElementById('operators')))  el.innerText = Math.floor(game.operators || 0).toLocaleString();
+  if ((el = document.getElementById('operatorsPerSecond'))) el.innerText = getOperatorRate().toFixed(2);
 
   const totalSeconds = Math.floor(game.offlineLimit);
   const hours   = Math.floor(totalSeconds / 3600);
@@ -71,10 +73,10 @@ function updateStats() {
   const dataPerHour = totalPlayTime > 0 ? Math.round((game.stats.totalData / totalPlayTime) * 3600000) : 0;
   if ((el = document.getElementById('statDataPerHour'))) el.innerText = formatData(dataPerHour);
 
-  const totalBuildings = game.buildings.reduce((sum, b) => sum + b.owned, 0);
+  const totalBuildings = countOwnedBuildings();
   if ((el = document.getElementById('statCurrentBuildings'))) el.innerText = totalBuildings.toLocaleString();
 
-  const activeUpgrades = game.clickUpgradesBought.length + game.buildingUpgrades.length + (game.aiUpgradeBought ? 1 : 0) + game.offlineUpgradesBought;
+  const activeUpgrades = countOwnedUpgrades();
   if ((el = document.getElementById('statActiveUpgrades'))) el.innerText = activeUpgrades.toLocaleString();
 
   const unlockedAchievements = Object.keys(game.achievements || {}).filter(k => game.achievements[k] === true).length;
@@ -116,10 +118,11 @@ function updateTabNotifications() {
   if (resourcesTab) {
     resourcesTab.classList.remove('has-notification');
     const resActive = document.getElementById('tab-resources')?.classList.contains('active');
-    const hasAffordableResource = RESOURCE_DEFS.some(def => {
-      if (!isResourceUnlocked(def)) return false;
-      return def.buildings.some(bDef => game.data >= getResourceBuildingCost(def.id, bDef.id));
-    });
+    const hasAffordableResource = INDUSTRY_DEFS.some(industryDef =>
+      isIndustryUnlocked(industryDef) && industryDef.producers.some((producerDef, index) =>
+        isProducerUnlocked(industryDef, index) && calculateMaxProducerBuy(industryDef.id, index) > 0
+      )
+    );
     if (hasAffordableResource && !resActive) resourcesTab.classList.add('has-notification');
   }
 }

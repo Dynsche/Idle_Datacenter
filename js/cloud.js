@@ -142,7 +142,7 @@ async function loadGameFromCloud() {
     const cloudSave      = doc.data().saveData;
     const cloudData      = cloudSave.data || 0;
     const cloudServerTs  = doc.data().updatedAt ? doc.data().updatedAt.toMillis() : 0;
-    const localSaveRaw   = localStorage.getItem('datacenterIdleSave');
+    const localSaveRaw   = localStorage.getItem(SAVE_KEY);
     const localSave      = localSaveRaw ? safeParseSavedGame(localSaveRaw, 'Lokaler Spielstand') : null;
     if (localSaveRaw && !localSave) quarantineCorruptLocalSave(localSaveRaw);
     const localLastUpdate = localSave ? (localSave.lastUpdate || 0) : 0;
@@ -163,7 +163,7 @@ async function loadGameFromCloud() {
       try {
         loadGame(cloudSave);
         setTimeout(() => {
-          localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+          localStorage.setItem(SAVE_KEY, JSON.stringify(getSerializableGameState()));
           try { renderBuildings(); } catch (e) { /* Tab nicht sichtbar */ }
           try { updateUI(); }       catch (e) { /* ignorieren */ }
           setCloudSyncStatus('Cloud-Speicher: Spielstand geladen ✓');
@@ -191,7 +191,7 @@ async function syncCloudSaveNow() {
   if (!cloudUser)       { setCloudSyncStatus('Nicht angemeldet', true); return; }
   if (!firestoreDb)     { setCloudSyncStatus('Firestore nicht bereit', true); return; }
   game.lastUpdate = Date.now();
-  localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+  localStorage.setItem(SAVE_KEY, JSON.stringify(getSerializableGameState()));
   cloudSyncInProgress = false;
   await saveGameToCloud(true);
 }

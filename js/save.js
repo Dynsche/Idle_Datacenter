@@ -18,10 +18,10 @@ function safeParseSavedGame(raw, sourceLabel) {
 
 function quarantineCorruptLocalSave(raw) {
   if (!raw) return;
-  const backupKey = `datacenterIdleSaveCorrupt-${Date.now()}`;
+  const backupKey = `${SAVE_KEY}Corrupt-${Date.now()}`;
   try {
     localStorage.setItem(backupKey, raw);
-    localStorage.removeItem('datacenterIdleSave');
+    localStorage.removeItem(SAVE_KEY);
     if (typeof setCloudSyncStatus === 'function') {
       setCloudSyncStatus(`Lokaler Spielstand beschaedigt - Backup: ${backupKey}`, true);
     }
@@ -31,7 +31,11 @@ function quarantineCorruptLocalSave(raw) {
 }
 
 function countOwnedBuildings() {
-  return (game.buildings || []).reduce((sum, b) => sum + (b.owned || 0), 0);
+  ensureIndustryState();
+  return INDUSTRY_DEFS.reduce((sum, industryDef) => {
+    const industry = game.industries[industryDef.id];
+    return sum + industry.producers.reduce((inner, producer) => inner + Math.floor(producer.owned || 0), 0);
+  }, 0);
 }
 
 function countOwnedUpgrades() {
@@ -70,13 +74,13 @@ function saveGame() {
     game.stats.playTime += (Date.now() - game.stats.startTime);
     game.stats.startTime = Date.now();
   }
-  localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+  localStorage.setItem(SAVE_KEY, JSON.stringify(getSerializableGameState()));
   showAutosaveIndicator();
   saveGameToCloud(false);
 }
 
 function loadGame(loadedGameOverride = null) {
-  const save = loadedGameOverride ? null : localStorage.getItem('datacenterIdleSave');
+  const save = loadedGameOverride ? null : localStorage.getItem(SAVE_KEY);
   if (!loadedGameOverride && !save) return;
 
   const loadedGame = loadedGameOverride || safeParseSavedGame(save, 'Lokaler Spielstand');
@@ -90,6 +94,7 @@ function loadGame(loadedGameOverride = null) {
   }
 
   game = { ...game, ...loadedGame };
+  ensureIndustryState();
   game.clickUpgradesBought = Array.isArray(game.clickUpgradesBought) ? game.clickUpgradesBought : [];
   game.buildingUpgrades    = Array.isArray(game.buildingUpgrades) ? game.buildingUpgrades : [];
   game.achievements        = game.achievements && typeof game.achievements === 'object' ? game.achievements : {};
@@ -236,7 +241,9 @@ function loadGame(loadedGameOverride = null) {
   const offlineSeconds = Math.min(Math.floor((now - game.lastUpdate) / 1000), game.offlineLimit);
   if (offlineSeconds > 3) {
     const gained = offlineSeconds * productionPerSecond();
-    game.data += gained;
+    ensureIndustryState();
+    game.industries.data.amount += gained;
+    game.data = game.industries.data.amount;
     if (game.stats) {
       game.stats.totalData    += gained;
       game.stats.offlineTimeUsed = (game.stats.offlineTimeUsed || 0) + offlineSeconds;
@@ -249,7 +256,7 @@ function loadGame(loadedGameOverride = null) {
   }
 
   if (costsMigrated) {
-    localStorage.setItem('datacenterIdleSave', JSON.stringify(game));
+    localStorage.setItem(SAVE_KEY, JSON.stringify(game));
   }
 }
 
@@ -291,7 +298,7 @@ function importSaveFromFile() {
       }
       if (confirm('Lokalen Spielstand mit importierter Datei ersetzen?')) {
         Object.assign(game, importedData);
-        localStorage.setItem('datacenterIdleSave', JSON.stringify(getSerializableGameState()));
+        localStorage.setItem(SAVE_KEY, JSON.stringify(getSerializableGameState()));
         location.reload();
       }
     } catch (error) {
@@ -304,7 +311,7 @@ function importSaveFromFile() {
 
 function deleteLocalSave() {
   if (confirm('Lokalen Spielstand wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) {
-    localStorage.removeItem('datacenterIdleSave');
+    localStorage.removeItem(SAVE_KEY);
     location.reload();
   }
 }

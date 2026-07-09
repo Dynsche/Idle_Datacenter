@@ -7,7 +7,7 @@ function getMissionTemplateById(id) {
 }
 
 function getAllMissionTemplates() {
-  return [...MISSION_TEMPLATES, ...RESOURCE_MISSION_TEMPLATES];
+  return CHAIN_MISSION_TEMPLATES;
 }
 
 // Nur Missionen die abgeschlossen sind oder prinzipiell erreichbar (kein unlösbar gesperrtes Ressourcenziel)
@@ -32,6 +32,16 @@ function getMissionCurrentValue(mission) {
   if (mission.targetKey === 'perSecond') return productionPerSecond();
   if (mission.targetKey === 'clicks')    return game.stats ? (game.stats.totalClicks || 0) : 0;
   if (mission.targetKey === 'totalData') return game.stats ? (game.stats.totalData || 0) : (game.data || 0);
+  if (mission.targetKey === 'operators') return game.operators || 0;
+  if (mission.targetKey === 'operatorsEarned') return game.totalOperatorsEarned || 0;
+  if (mission.targetKey === 'industry') {
+    return game.industries?.[mission.targetId]?.amount || 0;
+  }
+  if (mission.targetKey === 'producer') {
+    const [industryId, indexRaw] = String(mission.targetId || '').split(':');
+    const index = parseInt(indexRaw, 10);
+    return game.industries?.[industryId]?.producers?.[index]?.owned || 0;
+  }
   if (mission.targetKey === 'resource') {
     if (!game.resources || !mission.targetId) return 0;
     return game.resources[mission.targetId] || 0;
@@ -138,8 +148,15 @@ function applyMissionReward(reward, mission = null) {
   const totalReward       = Math.floor(rewardAmount * prestigeMissionBonus);
 
   if (reward.type === 'data') {
-    game.data += totalReward;
+    ensureIndustryState();
+    game.industries.data.amount += totalReward;
+    game.data = game.industries.data.amount;
     if (game.stats) game.stats.totalData += totalReward;
+    return;
+  }
+  if (reward.type === 'operators') {
+    game.operators += totalReward;
+    game.totalOperatorsEarned += totalReward;
     return;
   }
   if (reward.type === 'resource') {
@@ -184,6 +201,17 @@ function getMissionTargetText(mission) {
   if (!mission) return '';
   const targetAmount = getScaledMissionAmount(mission);
   if (mission.targetKey === 'building')  return `${targetAmount}x ${mission.targetId}`;
+  if (mission.targetKey === 'producer') {
+    const [industryId, indexRaw] = String(mission.targetId || '').split(':');
+    const industryDef = getIndustryDef(industryId);
+    const producer = industryDef?.producers?.[parseInt(indexRaw, 10)];
+    return `${targetAmount.toLocaleString()}x ${producer?.name || mission.targetId}`;
+  }
+  if (mission.targetKey === 'operators' || mission.targetKey === 'operatorsEarned') return `${targetAmount.toLocaleString()} Operatoren`;
+  if (mission.targetKey === 'industry') {
+    const industryDef = getIndustryDef(mission.targetId);
+    return `${formatIndustryAmount(industryDef, targetAmount)} ${industryDef?.name || ''}`;
+  }
   if (mission.targetKey === 'perSecond') return `${formatData(targetAmount)}/s`;
   if (mission.targetKey === 'clicks')    return `${targetAmount.toLocaleString()} Klicks`;
   return formatData(targetAmount);
@@ -191,7 +219,7 @@ function getMissionTargetText(mission) {
 
 function getMissionProgressText(mission, currentValue) {
   const targetAmount = getScaledMissionAmount(mission);
-  if (mission.targetKey === 'building' || mission.targetKey === 'clicks') {
+  if (mission.targetKey === 'building' || mission.targetKey === 'clicks' || mission.targetKey === 'producer' || mission.targetKey === 'operators' || mission.targetKey === 'operatorsEarned') {
     return `${Math.floor(currentValue).toLocaleString()} / ${Math.floor(targetAmount).toLocaleString()}`;
   }
   if (mission.targetKey === 'perSecond') {
@@ -288,7 +316,9 @@ function renderMissions() {
     const scaledRewardAmt  = getScaledMissionRewardAmount(mission);
     const rewardText       = mission.reward.type === 'data'
       ? `${formatData(scaledRewardAmt)} Daten`
-      : `${scaledRewardAmt} Ressource`;
+      : mission.reward.type === 'operators'
+        ? `${scaledRewardAmt.toLocaleString()} Operatoren`
+        : `${scaledRewardAmt} Ressource`;
 
     const card = document.createElement('div');
     card.className = 'card mission-card';

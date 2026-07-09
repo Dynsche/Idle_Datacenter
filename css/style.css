@@ -409,6 +409,34 @@ button:disabled:hover {
   padding: 14px;
 }
 
+.chain-section {
+  margin-bottom: 22px;
+}
+
+.chain-header {
+  align-items: center;
+  background: linear-gradient(135deg, #182433 0%, #111827 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+}
+
+.chain-header h3 {
+  margin: 0 0 4px 0;
+}
+
+.resource-row {
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto 1.5fr;
+  padding: 8px 0;
+}
+
 /* Mobile Optimierung */
 @media (max-width: 768px) {
   body {
@@ -535,6 +563,10 @@ button:disabled:hover {
   .offline-box {
     padding: 12px;
     font-size: 14px;
+  }
+
+  .resource-row {
+    grid-template-columns: 1fr;
   }
 }
 

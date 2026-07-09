@@ -1,25 +1,25 @@
 // ============================================================
-// Prestige / Level-Durchlauf
+// Rang-Durchlauf
 // ============================================================
 function startNextLevelCycle() {
   game.prestige++;
   if (game.stats) game.stats.prestigeCount++;
 
-  game.data                = 0;
+  game.data = 0;
+  game.operators = 0;
+  game.totalOperatorsEarned = 0;
+  game.industries = createIndustryState();
   game.productionMultiplier = 1;
-  game.aiUpgradeBought     = false;
-  game.buildingUpgrades    = [];
-  game.buildings           = createBuildings();
+  game.aiUpgradeBought = false;
+  game.buildingUpgrades = [];
+  game.buildings = createBuildings();
   game.offlineUpgradesBought = 0;
-  game.offlineLimit        = BASE_OFFLINE_LIMIT;
-  game.offlineUpgradeCost  = BASE_OFFLINE_UPGRADE_COST;
-  game.aiUpgradeCost       = BASE_AI_UPGRADE_COST;
+  game.offlineLimit = BASE_OFFLINE_LIMIT;
+  game.offlineUpgradeCost = BASE_OFFLINE_UPGRADE_COST;
+  game.aiUpgradeCost = BASE_AI_UPGRADE_COST;
   game.clickUpgradesBought = [];
-  game.clickPower          = 1;
-  const resourceState      = createResourceState();
-  game.resources           = resourceState.resources;
-  game.resourceBuildings   = resourceState.resourceBuildings;
-  game.missions            = createMissionState();
+  game.clickPower = 1;
+  game.missions = createMissionState();
 
   ensureActiveMissions();
   markMissionsDirty();
@@ -31,7 +31,7 @@ function startNextLevelCycle() {
   const offlineInfo = document.getElementById('offlineInfo');
   if (offlineInfo) {
     offlineInfo.style.display = 'block';
-    offlineInfo.innerHTML = `<strong>Neuer Level-Durchlauf gestartet</strong><br>Level-Rang: ${game.prestige}<br>Missionen wurden zurückgesetzt und schwerer skaliert.`;
+    offlineInfo.innerHTML = `<strong>Neuer Rang-Durchlauf gestartet</strong><br>Rang: ${game.prestige}<br>Produktionsketten wurden zurueckgesetzt und skalieren jetzt staerker.`;
     setTimeout(() => { offlineInfo.style.display = 'none'; }, 5000);
   }
 }
@@ -43,13 +43,15 @@ function prestige() {
 }
 
 // ============================================================
-// Manueller Klick
+// Manueller Startimpuls
 // ============================================================
 function manualClick() {
+  ensureIndustryState();
   const prestigeClickBonus = Math.pow(1.02, game.prestige);
   const totalClick = game.clickPower * prestigeClickBonus;
 
-  game.data += totalClick;
+  game.industries.data.amount += totalClick;
+  game.data = game.industries.data.amount;
   if (game.stats) {
     game.stats.totalClicks++;
     game.stats.totalData += totalClick;
@@ -64,22 +66,24 @@ function manualClick() {
 // Game-Loop
 // ============================================================
 let lastTickTime = Date.now();
-let lastBuildingsRenderTime  = 0;
-let lastAffordabilityState   = null;
-let lastResourcesRenderTime  = 0;
-let lastResourceAffordState  = null;
+let lastBuildingsRenderTime = 0;
+let lastAffordabilityState = null;
 const BUILDINGS_RENDER_INTERVAL = 500;
 
-function hasAffordabilityChanged() {
-  const currentState = game.buildings.map(b => {
-    const isUnlocked = game.data >= b.unlockAt || b.owned > 0;
-    if (!isUnlocked) return null;
-    const amount      = game.buyAmount === -1 ? calculateMaxBuy(b) : game.buyAmount;
-    const fallbackAmt = game.buyAmount === -1 && amount === 0 ? 1 : amount;
-    const cost        = fallbackAmt > 0 ? calculateBulkCost(b, fallbackAmt) : 0;
-    return fallbackAmt > 0 && game.data >= cost;
-  }).join(',');
+function getChainAffordabilitySignature() {
+  const parts = [Math.floor(game.operators), game.buyAmount];
+  INDUSTRY_DEFS.forEach(industryDef => {
+    const industry = getIndustryState(industryDef.id);
+    parts.push(industryDef.id, Math.floor(industry.amount));
+    industry.producers.forEach((producer, index) => {
+      parts.push(index, Math.floor(producer.owned), calculateMaxProducerBuy(industryDef.id, index));
+    });
+  });
+  return parts.join('|');
+}
 
+function hasAffordabilityChanged() {
+  const currentState = getChainAffordabilitySignature();
   if (currentState !== lastAffordabilityState) {
     lastAffordabilityState = currentState;
     return true;
@@ -87,52 +91,37 @@ function hasAffordabilityChanged() {
   return false;
 }
 
-function hasResourceAffordabilityChanged() {
-  const parts = [];
-  RESOURCE_DEFS.forEach(def => {
-    def.buildings.forEach(bDef => {
-      const cost = getResourceBuildingCost(def.id, bDef.id);
-      parts.push(game.data >= cost ? 1 : 0);
-    });
-  });
-  const state = parts.join(',');
-  if (state !== lastResourceAffordState) {
-    lastResourceAffordState = state;
-    return true;
-  }
-  return false;
-}
+function applyIndustryProduction(deltaTime) {
+  ensureIndustryState();
 
-function gameLoop() {
-  const now       = Date.now();
-  const deltaTime = (now - lastTickTime) / 1000;
-  lastTickTime    = now;
+  const operatorGain = getOperatorRate() * deltaTime;
+  game.operators += operatorGain;
+  game.totalOperatorsEarned += operatorGain;
 
-  const produced = productionPerSecond() * deltaTime;
-  game.data += produced;
-  if (game.stats) game.stats.totalData += produced;
-
-  // Ressourcen produzieren
-  RESOURCE_DEFS.forEach(def => {
-    if (isResourceUnlocked(def)) {
-      const rps = resourceProductionPerSecond(def.id);
-      const max = getMaxResourceUnits(def);
-      const current = game.resources[def.id] || 0;
-      const produced = rps * deltaTime;
-      if (current >= max) {
-        // Ressource ist voll → Überschuss in Daten umwandeln
-        game.data += produced * def.excessConversion;
-        game.resources[def.id] = max;
-      } else if (current + produced > max) {
-        // Nur der Überschuss-Teil wird zu Daten
-        const overflow = (current + produced) - max;
-        game.resources[def.id] = max;
-        game.data += overflow * def.excessConversion;
+  INDUSTRY_DEFS.forEach(industryDef => {
+    const industry = game.industries[industryDef.id];
+    for (let i = industryDef.producers.length - 1; i >= 0; i--) {
+      const produced = getProducerRate(industryDef.id, i) * deltaTime;
+      if (produced <= 0) continue;
+      if (i === 0) {
+        industry.amount += produced;
+        if (industryDef.id === 'data') {
+          game.data = industry.amount;
+          if (game.stats) game.stats.totalData += produced;
+        }
       } else {
-        game.resources[def.id] = current + produced;
+        industry.producers[i - 1].owned += produced;
       }
     }
   });
+}
+
+function gameLoop() {
+  const now = Date.now();
+  const deltaTime = (now - lastTickTime) / 1000;
+  lastTickTime = now;
+
+  applyIndustryProduction(deltaTime);
 
   updateUI();
   checkAchievements();
@@ -145,19 +134,13 @@ function gameLoop() {
     }
     lastBuildingsRenderTime = now;
   }
-
-  if (now - lastResourcesRenderTime > BUILDINGS_RENDER_INTERVAL) {
-    if (hasResourceAffordabilityChanged()) {
-      try { renderResourceTab(); } catch (e) { /* Tab nicht sichtbar */ }
-    }
-    lastResourcesRenderTime = now;
-  }
 }
 
 // ============================================================
 // Startup
 // ============================================================
 loadGame();
+ensureIndustryState();
 initResourceState();
 renderBuildings();
 renderBuildingUpgrades();
@@ -189,7 +172,7 @@ if (buildingsContainer) {
 }
 
 // ============================================================
-// Debug / Balance-Helfer (nur Konsole)
+// Debug / Balance-Helfer
 // ============================================================
 window.balanceTargets = [
   { name: '1 MB', value: 8388608 },
@@ -208,21 +191,21 @@ window.runBalanceCheck = function() {
   const pps = productionPerSecond();
   const results = window.balanceTargets.map(target => {
     const seconds = window.estimateTimeToData(target.value);
-    const minutes = Number.isFinite(seconds) ? (seconds / 60).toFixed(2) : '∞';
+    const minutes = Number.isFinite(seconds) ? (seconds / 60).toFixed(2) : 'inf';
     return `${target.name}: ${minutes} min`;
   });
   return {
-    currentData:     formatData(game.data),
-    perSecond:       formatData(pps) + '/s',
-    softcapStage1:   formatData(SOFTCAP_STAGE1_START) + '/s',
-    softcapStage2:   formatData(SOFTCAP_STAGE2_START) + '/s',
+    currentData: formatData(game.data),
+    operators: Math.floor(game.operators).toLocaleString(),
+    perSecond: formatData(pps) + '/s',
+    operatorRate: getOperatorRate().toFixed(2) + '/s',
     targets: results
   };
 };
 
 window.resetStats = function() {
   if (game.stats) {
-    game.stats.upgradesBought  = countOwnedUpgrades();
+    game.stats.upgradesBought = countOwnedUpgrades();
     game.stats.buildingsBought = countOwnedBuildings();
     saveGame();
     updateUI();
@@ -231,10 +214,8 @@ window.resetStats = function() {
 
 window.debugGame = function() {
   console.log('=== Game Debug Info ===');
-  console.log('Gebäude-Upgrades:', game.buildingUpgrades.length);
-  console.log('Klick-Upgrades:',    game.clickUpgradesBought.length);
-  console.log('Offline-Upgrades:', game.offlineUpgradesBought);
-  console.log('KI-Upgrade:',       game.aiUpgradeBought ? 1 : 0);
-  console.log('Summe:',            countOwnedUpgrades());
-  console.log('Stats zeigt:',      game.stats.upgradesBought);
+  console.log('Rang:', game.prestige);
+  console.log('Operatoren:', game.operators);
+  console.log('Daten/s:', productionPerSecond());
+  console.log('Industrien:', game.industries);
 };

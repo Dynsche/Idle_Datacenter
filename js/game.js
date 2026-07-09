@@ -88,11 +88,25 @@ function createMissionState() {
   };
 }
 
+function createIndustryState() {
+  const industries = {};
+  INDUSTRY_DEFS.forEach(def => {
+    industries[def.id] = {
+      amount: 0,
+      producers: def.producers.map(() => ({ owned: 0, automated: true }))
+    };
+  });
+  return industries;
+}
+
 // ============================================================
 // Spielzustand
 // ============================================================
 let game = {
   data: 0,
+  operators: 0,
+  totalOperatorsEarned: 0,
+  industries: createIndustryState(),
   clickPower: 1,
   clickUpgradesBought: [],
   prestige: 0,
@@ -125,6 +139,28 @@ let game = {
   resources: {},           // wird in initResourceState() befüllt
   resourceBuildings: {}    // wird in initResourceState() befüllt
 };
+
+function ensureIndustryState() {
+  if (!game.industries || typeof game.industries !== 'object') game.industries = {};
+  INDUSTRY_DEFS.forEach(def => {
+    if (!game.industries[def.id]) game.industries[def.id] = { amount: 0, producers: [] };
+    const industry = game.industries[def.id];
+    if (!Array.isArray(industry.producers)) industry.producers = [];
+    def.producers.forEach((producer, index) => {
+      if (!industry.producers[index]) industry.producers[index] = { owned: 0, automated: true };
+      const state = industry.producers[index];
+      state.owned = Number.isFinite(state.owned) ? Math.max(0, state.owned) : 0;
+      state.automated = state.automated !== false;
+    });
+    industry.amount = Number.isFinite(industry.amount) ? Math.max(0, industry.amount) : 0;
+  });
+  if (game.industries.data && game.industries.data.amount <= 0 && game.data > 0) {
+    game.industries.data.amount = game.data;
+  }
+  game.data = game.industries.data?.amount || 0;
+  game.operators = Number.isFinite(game.operators) ? Math.max(0, game.operators) : 0;
+  game.totalOperatorsEarned = Number.isFinite(game.totalOperatorsEarned) ? Math.max(0, game.totalOperatorsEarned) : 0;
+}
 
 // Nach dem Laden von RESOURCE_DEFS direkt initialisieren
 function initResourceState() {
@@ -172,28 +208,49 @@ function applyProductionSoftcap(rawProduction) {
   return capped;
 }
 
-function productionPerSecond() {
-  if (!game.buildings || game.buildings.length === 0) return 0;
+function getOperatorRate() {
+  return BASE_OPERATOR_RATE * (1 + (game.prestige || 0) * OPERATOR_RATE_PER_RANK);
+}
 
-  const effectiveProduction = game.buildings.map(building => {
-    const upgradeMultiplier = getBuildingUpgradeMultiplier(building.name);
-    return building.owned * building.production * upgradeMultiplier;
-  });
+function getIndustryDef(industryId) {
+  return INDUSTRY_DEFS.find(def => def.id === industryId) || null;
+}
 
-  for (let i = game.buildings.length - 1; i > 0; i--) {
-    const supporterOwned = game.buildings[i].owned;
-    const targetOwned   = game.buildings[i - 1].owned;
-    if (supporterOwned > 0 && targetOwned > 0) {
-      const supportMultiplier = getSupportMultiplierFromBuilding(game.buildings[i]);
-      const transferredPower  = effectiveProduction[i] * SUPPORT_TRANSFER_RATIO;
-      effectiveProduction[i - 1] = (effectiveProduction[i - 1] + transferredPower) * supportMultiplier;
-    }
+function getIndustryState(industryId) {
+  ensureIndustryState();
+  return game.industries[industryId] || null;
+}
+
+function getProducerState(industryId, producerIndex) {
+  const industry = getIndustryState(industryId);
+  return industry?.producers?.[producerIndex] || null;
+}
+
+function getIndustryMultiplier(industryId) {
+  let multiplier = game.productionMultiplier * (1 + (game.prestige || 0) * PRESTIGE_BONUS_PER_LEVEL);
+  if (industryId === 'data') multiplier *= getResourceProductionMultiplier();
+  if (industryId === 'data') {
+    const power = game.industries?.power?.amount || 0;
+    multiplier *= 1 + Math.min(power / 2500, 3);
   }
+  return multiplier;
+}
 
-  const itOutput  = effectiveProduction[0] || 0;
-  const resourceMult = getResourceProductionMultiplier();
-  const rawOutput = itOutput * game.productionMultiplier * (1 + game.prestige * PRESTIGE_BONUS_PER_LEVEL) * resourceMult;
-  return applyProductionSoftcap(rawOutput);
+function getProducerRate(industryId, producerIndex) {
+  const def = getIndustryDef(industryId);
+  const producerDef = def?.producers?.[producerIndex];
+  const state = getProducerState(industryId, producerIndex);
+  if (!producerDef || !state) return 0;
+  return state.owned * producerDef.rate * getIndustryMultiplier(industryId);
+}
+
+function getIndustryPrimaryRate(industryId) {
+  return getProducerRate(industryId, 0);
+}
+
+function productionPerSecond() {
+  ensureIndustryState();
+  return applyProductionSoftcap(getIndustryPrimaryRate('data'));
 }
 
 // ============================================================
@@ -216,6 +273,34 @@ function calculateMaxBuy(building) {
     totalCost += Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, building.owned + count) * prestigeDiscount);
     count++;
     if (count > 10000) break;
+  }
+  return count;
+}
+
+function getProducerCost(industryId, producerIndex, offset = 0) {
+  const def = getIndustryDef(industryId);
+  const producerDef = def?.producers?.[producerIndex];
+  const state = getProducerState(industryId, producerIndex);
+  if (!producerDef || !state) return Infinity;
+  return Math.floor(producerDef.baseCost * Math.pow(PRODUCER_COST_GROWTH, state.owned + offset));
+}
+
+function calculateProducerBulkCost(industryId, producerIndex, amount) {
+  let total = 0;
+  for (let i = 0; i < amount; i++) {
+    total += getProducerCost(industryId, producerIndex, i);
+  }
+  return total;
+}
+
+function calculateMaxProducerBuy(industryId, producerIndex) {
+  let count = 0;
+  let total = 0;
+  while (count < PRODUCER_BULK_LIMIT) {
+    const next = getProducerCost(industryId, producerIndex, count);
+    if (game.operators < total + next) break;
+    total += next;
+    count++;
   }
   return count;
 }

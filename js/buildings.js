@@ -1,236 +1,160 @@
 // ============================================================
-// Gebäude-Rendering & Kauf
+// Produktionsketten: Rendering & Kauf
 // ============================================================
+
+function formatIndustryAmount(industryDef, value) {
+  return industryDef.id === 'data' ? formatData(value) : formatResource(value, industryDef.unit);
+}
+
+function isIndustryUnlocked(industryDef) {
+  const industry = getIndustryState(industryDef.id);
+  return industryDef.unlockAt === 0 ||
+    game.data >= industryDef.unlockAt ||
+    (industry && (industry.amount > 0 || industry.producers.some(p => p.owned > 0)));
+}
+
+function isProducerUnlocked(industryDef, producerIndex) {
+  if (producerIndex === 0) return true;
+  const industry = getIndustryState(industryDef.id);
+  const producerDef = industryDef.producers[producerIndex];
+  const previousOwned = industry?.producers?.[producerIndex - 1]?.owned || 0;
+  const currentOwned = industry?.producers?.[producerIndex]?.owned || 0;
+  return currentOwned > 0 || previousOwned >= producerDef.unlockAt;
+}
 
 function renderBuildings() {
   const container = document.getElementById('buildings');
   if (!container) return;
+  ensureIndustryState();
   container.innerHTML = '';
 
-  game.buildings.forEach((building, index) => {
-    const isUnlocked = game.data >= building.unlockAt || building.owned > 0;
-    if (!isUnlocked) return;
+  const operatorCard = document.createElement('div');
+  operatorCard.className = 'card';
+  operatorCard.style.marginBottom = '15px';
+  operatorCard.innerHTML = `
+    <div class="sub">Operatoren</div>
+    <div class="resource" style="font-size:26px;">${Math.floor(game.operators).toLocaleString()}</div>
+    <div class="sub">+${getOperatorRate().toFixed(2)}/s · Kaufwährung für alle Produktionsketten</div>
+  `;
+  container.appendChild(operatorCard);
 
-    const div = document.createElement('div');
-    div.className = 'building';
-
-    const amount       = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
-    const fallbackAmt  = game.buyAmount === -1 && amount === 0 ? 1 : amount;
-    const cost         = fallbackAmt > 0 ? calculateBulkCost(building, fallbackAmt) : 0;
-    const canAfford    = fallbackAmt > 0 && game.data >= cost;
-    const costLabel    = game.buyAmount === -1 && amount === 0
-      ? `${formatData(cost)} <span class="sub" style="color: #f59e0b;">(nächster Kauf)</span>`
-      : formatData(cost);
-
-    const ownedDisplay = game.buyAmount === -1 && amount > 0
-      ? `${building.owned} <span style="color: #4ade80;">+${amount}</span>`
-      : building.owned;
-
-    const upgradeMultiplier = getBuildingUpgradeMultiplier(building.name);
-
-    const applicableUpgrades = game.buildingUpgrades
-      .map(upgradeIndex => BUILDING_UPGRADES[upgradeIndex])
-      .filter(upgrade => {
-        const targets = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding : [upgrade.targetBuilding];
-        return targets.includes(building.name);
-      });
-    const upgradesInfo = applicableUpgrades.length > 0
-      ? `<div class="sub" style="color: #a78bfa;">🔧 Upgrades: ${applicableUpgrades.map(u => u.name).join(', ')}</div>`
-      : '';
-
-    let productionDisplay = '';
-    if (building.owned > 0) {
-      if (index === 0) {
-        const finalItOutput = productionPerSecond();
-        const rawItOutput   = (game.buildings[0].owned * game.buildings[0].production * getBuildingUpgradeMultiplier(game.buildings[0].name))
-          * game.productionMultiplier * (1 + game.prestige * PRESTIGE_BONUS_PER_LEVEL);
-        const bonusParts = [];
-        if (upgradeMultiplier > 1) bonusParts.push(`+${((upgradeMultiplier - 1) * 100).toFixed(0)}% Upgrade`);
-        if (game.prestige > 0)     bonusParts.push(`+${(game.prestige * PRESTIGE_BONUS_PER_LEVEL * 100).toFixed(0)}% Rang`);
-        if (rawItOutput > SOFTCAP_STAGE1_START) bonusParts.push('Softcap aktiv');
-        const bonusText = bonusParts.length > 0
-          ? ` <span style="color: #4ade80;">(${bonusParts.join(' | ')})</span>`
-          : '';
-        productionDisplay = `<div class="sub" style="color: #60a5fa;">Produziert: ${formatData(finalItOutput)}/s${bonusText}</div>`;
-      } else {
-        const supportMultiplier = getSupportMultiplierFromBuilding(building);
-        const targetName        = game.buildings[index - 1]?.name || 'niedrigere Stufe';
-        const isSupportActive   = building.owned > 0 && (game.buildings[index - 1]?.owned || 0) > 0;
-        productionDisplay = isSupportActive
-          ? `<div class="sub" style="color: #60a5fa;">Unterstützt ${targetName}: x${supportMultiplier.toFixed(2)} + ${Math.round(SUPPORT_TRANSFER_RATIO * 100)}% Transfer</div>`
-          : `<div class="sub" style="color: #f59e0b;">Unterstützt ${targetName}: inaktiv (beide Stufen benötigt)</div>`;
-      }
+  INDUSTRY_DEFS.forEach(industryDef => {
+    const industry = getIndustryState(industryDef.id);
+    if (!isIndustryUnlocked(industryDef)) {
+      const locked = document.createElement('div');
+      locked.className = 'card';
+      locked.style.cssText = 'opacity:0.45;margin-bottom:16px;';
+      locked.innerHTML = `
+        <div style="font-weight:bold;font-size:18px;">${industryDef.icon} ${industryDef.name}</div>
+        <div class="sub">Freischaltbar ab ${formatData(industryDef.unlockAt)} Daten</div>
+      `;
+      container.appendChild(locked);
+      return;
     }
 
-    div.innerHTML = `
-      <div>
-        <h3>${building.name}</h3>
-        <div>Besitzt: ${ownedDisplay}</div>
-        <div>Kosten: ${costLabel}</div>
-        <div class="sub">+${formatData(building.production * upgradeMultiplier)}/s pro Einheit${upgradeMultiplier > 1 ? ` <span style="color: #4ade80;">(+${((upgradeMultiplier - 1) * 100).toFixed(0)}% Upgrade)</span>` : ''}</div>
-        ${upgradesInfo}
-        ${productionDisplay}
+    const section = document.createElement('div');
+    section.className = 'chain-section';
+    section.innerHTML = `
+      <div class="chain-header">
+        <div>
+          <h3>${industryDef.icon} ${industryDef.name}</h3>
+          <div class="sub">${formatIndustryAmount(industryDef, industry.amount)} · ${formatIndustryAmount(industryDef, getIndustryPrimaryRate(industryDef.id))}/s</div>
+        </div>
       </div>
-      <button onclick="buyBuilding(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
     `;
 
-    container.appendChild(div);
+    industryDef.producers.forEach((producerDef, producerIndex) => {
+      const state = industry.producers[producerIndex];
+      const targetName = producerIndex === 0 ? industryDef.resourceLabel : industryDef.producers[producerIndex - 1].name;
+      const unlocked = isProducerUnlocked(industryDef, producerIndex);
+      const maxBuy = calculateMaxProducerBuy(industryDef.id, producerIndex);
+      const buyAmount = game.buyAmount === -1 ? maxBuy : game.buyAmount;
+      const displayAmount = game.buyAmount === -1 && buyAmount === 0 ? 1 : buyAmount;
+      const cost = calculateProducerBulkCost(industryDef.id, producerIndex, Math.max(displayAmount, 1));
+      const canAfford = unlocked && buyAmount > 0 && game.operators >= cost;
+
+      const row = document.createElement('div');
+      row.className = 'building';
+      if (!unlocked) row.style.opacity = '0.45';
+      row.innerHTML = `
+        <div>
+          <h3>${producerDef.name}</h3>
+          <div>Besitzt: ${Math.floor(state.owned).toLocaleString()}${buyAmount > 0 ? ` <span style="color:#4ade80;">+${buyAmount}</span>` : ''}</div>
+          <div>Kosten: ${Math.floor(cost).toLocaleString()} Operatoren</div>
+          <div class="sub">${producerIndex === 0 ? 'Produziert' : 'Erzeugt'} ${targetName}: ${getProducerRate(industryDef.id, producerIndex).toFixed(2)}/s</div>
+          <div class="sub">${producerDef.description}</div>
+          ${!unlocked ? `<div class="sub" style="color:#f59e0b;">Benötigt ${producerDef.unlockAt} ${targetName}</div>` : ''}
+        </div>
+        <button onclick="buyProducer('${industryDef.id}', ${producerIndex})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
+      `;
+      section.appendChild(row);
+    });
+
+    container.appendChild(section);
   });
 }
 
-function buyBuilding(index) {
-  const building = game.buildings[index];
-  const amount   = game.buyAmount === -1 ? calculateMaxBuy(building) : game.buyAmount;
-  if (amount === 0) return;
+function buyProducer(industryId, producerIndex) {
+  ensureIndustryState();
+  const industryDef = getIndustryDef(industryId);
+  if (!industryDef || !isProducerUnlocked(industryDef, producerIndex)) return;
 
-  const cost = calculateBulkCost(building, amount);
-  if (game.data >= cost) {
-    const selectedEfficiency = getPurchaseEfficiency(building, amount);
-    const bestOption         = getBestAffordableEfficiency(game.buyAmount);
-    if (bestOption && bestOption.index !== index) {
-      const efficiencyGap = bestOption.efficiency / Math.max(selectedEfficiency, 1e-12);
-      if (efficiencyGap >= 1.75) {
-        const betterBuilding = game.buildings[bestOption.index];
-        const confirmed = confirm(`Warnung: ${betterBuilding.name} ist aktuell effizienter zu kaufen.\nTrotzdem ${building.name} kaufen?`);
-        if (!confirmed) return;
-      }
-    }
+  const amount = game.buyAmount === -1 ? calculateMaxProducerBuy(industryId, producerIndex) : game.buyAmount;
+  if (amount <= 0) return;
 
-    game.data          -= cost;
-    building.owned     += amount;
-    building.cost       = Math.floor(building.baseCost * Math.pow(BUILDING_COST_GROWTH, building.owned));
-    if (game.stats) game.stats.buildingsBought += amount;
-    updateUI();
-    renderBuildings();
-  }
+  const cost = calculateProducerBulkCost(industryId, producerIndex, amount);
+  if (game.operators < cost) return;
+
+  const state = getProducerState(industryId, producerIndex);
+  game.operators -= cost;
+  state.owned += amount;
+  if (game.stats) game.stats.buildingsBought += amount;
+  updateUI();
+  renderBuildings();
 }
 
 function setBuyAmount(amount) {
   game.buyAmount = amount;
   sessionStorage.setItem('buyAmount', amount);
-
-  // Alle Buy-Buttons im gesamten Dokument synchronisieren (Gebäude + Ressourcen)
   document.querySelectorAll('.buy-buttons button[data-amount]').forEach(btn => {
     const v = btn.dataset.amount === 'max' ? -1 : parseInt(btn.dataset.amount);
     btn.classList.toggle('active', v === amount);
   });
-
   renderBuildings();
   if (typeof renderResourceTab === 'function') renderResourceTab();
 }
 
-// Graut Buy-Buttons aus wenn keine Kaufmöglichkeit für diese Menge existiert
 function updateBuyButtonAffordability() {
   document.querySelectorAll('.buy-buttons button[data-amount]').forEach(btn => {
     const raw = btn.dataset.amount;
-    if (raw === 'max') { btn.disabled = false; return; } // Max immer aktiv
-    const amt = parseInt(raw);
-    const canAffordBuilding = game.buildings.some(b => {
-      if (game.data < b.unlockAt && b.owned === 0) return false;
-      return game.data >= calculateBulkCost(b, amt);
-    });
-    const canAffordResource = typeof RESOURCE_DEFS !== 'undefined' && RESOURCE_DEFS.some(def => {
-      if (!isResourceUnlocked(def)) return false;
-      return def.buildings.some(bDef => {
-        const owned = (game.resourceBuildings[def.id] || {})[bDef.id] || 0;
-        let cost = 0;
-        for (let i = 0; i < amt; i++) cost += Math.floor(bDef.baseCost * Math.pow(1.15, owned + i));
-        return game.data >= cost;
-      });
-    });
-    btn.disabled = !canAffordBuilding && !canAffordResource;
+    if (raw === 'max') {
+      btn.disabled = false;
+      return;
+    }
+    const amount = parseInt(raw);
+    const canAfford = INDUSTRY_DEFS.some(industryDef =>
+      isIndustryUnlocked(industryDef) && industryDef.producers.some((producerDef, producerIndex) =>
+        isProducerUnlocked(industryDef, producerIndex) &&
+        game.operators >= calculateProducerBulkCost(industryDef.id, producerIndex, amount)
+      )
+    );
+    btn.disabled = !canAfford;
   });
 }
 
 // ============================================================
-// Gebäude-Upgrades
+// Karten & Automatisierung - Platzhalter für den nächsten Ausbau
 // ============================================================
-function getUpgradeBlockedReason(upgrade) {
-  if (upgrade.requires !== null && upgrade.requires !== undefined) {
-    if (!game.buildingUpgrades.includes(upgrade.requires)) {
-      const prev = BUILDING_UPGRADES[upgrade.requires];
-      return `Benötigt: "${prev.name}" zuerst kaufen`;
-    }
-  }
-  if (upgrade.minBuildings) {
-    for (const [buildingName, minCount] of Object.entries(upgrade.minBuildings)) {
-      const building = game.buildings.find(b => b.name === buildingName);
-      const owned    = building ? building.owned : 0;
-      if (owned < minCount) return `Benötigt: ${minCount}x ${buildingName} (du hast ${owned})`;
-    }
-  }
-  return null;
-}
 
 function renderBuildingUpgrades() {
   const container = document.getElementById('buildingUpgrades');
   if (!container) return;
-  container.innerHTML = '';
-
-  BUILDING_UPGRADES.forEach((upgrade, index) => {
-    const isUnlocked = game.data >= upgrade.unlockAt;
-    const isBought   = game.buildingUpgrades.includes(index);
-    const prevBought = upgrade.requires === null || upgrade.requires === undefined
-      ? true
-      : game.buildingUpgrades.includes(upgrade.requires);
-
-    if (!isBought && (!prevBought || !isUnlocked)) return;
-
-    const div          = document.createElement('div');
-    div.className      = 'upgrade';
-    const blockedReason = !isBought ? getUpgradeBlockedReason(upgrade) : null;
-    const isBlocked    = !!blockedReason;
-    const canAfford    = game.data >= upgrade.cost;
-    const targets      = Array.isArray(upgrade.targetBuilding) ? upgrade.targetBuilding.join(', ') : upgrade.targetBuilding;
-
-    if (isBought) {
-      div.style.opacity       = '0.6';
-      div.style.borderLeftColor = '#4ade80';
-      div.innerHTML = `
-        <h3>${upgrade.name}</h3>
-        <div class="sub">${upgrade.description} – Betrifft: ${targets}</div>
-        <div style="color: #4ade80; font-weight: bold; margin-top: 6px;">✓ Gekauft</div>
-      `;
-    } else if (isBlocked) {
-      div.style.opacity       = '0.7';
-      div.style.borderLeftColor = '#6b7280';
-      div.innerHTML = `
-        <h3>${upgrade.name}</h3>
-        <div>${upgrade.description}</div>
-        <div class="sub">Betrifft: ${targets}</div>
-        <div class="sub" style="color: #f59e0b; margin-top: 6px;">🔒 ${blockedReason}</div>
-        <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
-        <br>
-        <button disabled>Gesperrt</button>
-      `;
-    } else {
-      div.innerHTML = `
-        <h3>${upgrade.name}</h3>
-        <div>${upgrade.description}</div>
-        <div class="sub">Betrifft: ${targets}</div>
-        <div class="sub">Kosten: ${formatData(upgrade.cost)}</div>
-        <br>
-        <button onclick="buyBuildingUpgrade(${index})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
-      `;
-    }
-
-    container.appendChild(div);
-  });
-
-  if (container.children.length === 0) {
-    container.innerHTML = '<div class="sub" style="text-align: center; padding: 40px;">Noch keine Upgrades verfügbar.<br>Sammle mehr Daten!</div>';
-  }
+  container.innerHTML = `
+    <div class="sub" style="line-height:1.7;">
+      Karten und Manager werden im nächsten Schritt auf die neuen Produktionsketten gelegt.
+      Aktuell laufen alle freigeschalteten Stufen automatisch, damit der neue Kernloop spielbar ist.
+    </div>
+  `;
 }
 
-function buyBuildingUpgrade(index) {
-  const upgrade = BUILDING_UPGRADES[index];
-  if (game.buildingUpgrades.includes(index)) return;
-  if (game.data < upgrade.cost) return;
-
-  game.data -= upgrade.cost;
-  game.buildingUpgrades.push(index);
-  if (game.stats) game.stats.upgradesBought++;
-
-  updateUI();
-  renderBuildingUpgrades();
-}
+function buyBuildingUpgrade() {}
