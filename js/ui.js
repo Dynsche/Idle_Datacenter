@@ -397,10 +397,7 @@ function showFloatingText(text, type = 'generic') {
 
 function showClickPulse() {
   const dataElement = document.getElementById('data');
-  if (dataElement) {
-    dataElement.classList.add('pulse-animation');
-    setTimeout(() => dataElement.classList.remove('pulse-animation'), 600);
-  }
+  if (!dataElement) return;
 }
 
 function showOfflineNotification(offlineSeconds, gained) {

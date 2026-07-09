@@ -28,28 +28,18 @@ h1 {
   padding: 18px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(47, 124, 246, 0.15);
-}
-
-/* Ressourcen-Topbar: kein transform-Hover um Flackern zu vermeiden */
 .resource-topbar-card {
   will-change: auto;
   transform: none !important;
-  transition: box-shadow 0.2s ease;
-}
-.resource-topbar-card:hover {
-  transform: none !important;
-  box-shadow: 0 12px 40px rgba(47, 124, 246, 0.15);
+  transition: border-color 0.15s ease;
 }
 
 .mission-card {
   padding: 10px;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  transition: border-color 0.15s ease;
   border: 1px solid transparent;
   min-height: 0;
 }
@@ -108,27 +98,6 @@ h1 {
   }
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 @keyframes shimmer {
   0% { background-position: -1000px 0; }
   100% { background-position: 1000px 0; }
@@ -159,12 +128,6 @@ h1 {
   }
 }
 
-.mission-card:hover {
-  transform: translateY(-1px);
-  border-color: #2f7cf6;
-  box-shadow: 0 0 18px rgba(47,124,246,0.18);
-}
-
 .mission-row {
   display: flex;
   justify-content: space-between;
@@ -191,30 +154,12 @@ h1 {
   background: #22c55e;
 }
 
-.pulse-animation {
-  animation: pulse 0.6s ease-in-out;
-}
-
-.bounce-animation {
-  animation: bounce 0.8s ease-in-out;
-}
-
-.fadeInScale-animation {
-  animation: fadeInScale 0.4s ease-out;
-}
-
-.building:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-
 .building {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.15s ease;
 }
 
 button:active {
-  transform: scale(0.98);
-  transition: transform 0.05s ease;
+  filter: brightness(0.95);
 }
 
 .resource {
@@ -250,7 +195,7 @@ button:active {
   cursor: pointer;
   font-size: 16px;
   border-bottom: 3px solid transparent;
-  transition: all 0.3s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
   min-width: auto;
   font-weight: 500;
   box-shadow: none;
@@ -260,13 +205,6 @@ button:active {
   content: ' •';
   color: #4ade80;
   font-weight: bold;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.tab:hover {
-  color: #2f7cf6;
-  transform: none;
-  border-bottom-color: rgba(47, 124, 246, 0.3);
 }
 
 .tab.active {
@@ -295,12 +233,7 @@ button:active {
   gap: 20px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.building:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(47, 124, 246, 0.2);
+  transition: border-color 0.15s ease;
 }
 
 .building h3 {
@@ -316,14 +249,9 @@ button {
   cursor: pointer;
   font-size: 15px;
   min-width: 130px;
-  transition: 0.2s;
+  transition: filter 0.15s ease, background-color 0.15s ease;
   font-weight: 500;
   box-shadow: 0 4px 15px rgba(47, 124, 246, 0.3);
-}
-
-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(47, 124, 246, 0.4);
 }
 
 button:disabled {
@@ -331,10 +259,6 @@ button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
-}
-
-button:disabled:hover {
-  transform: none;
 }
 
 .upgrade {
@@ -345,12 +269,7 @@ button:disabled:hover {
   margin-bottom: 15px;
   min-height: 120px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.upgrade:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(47, 124, 246, 0.2);
+  transition: border-color 0.15s ease;
 }
 
 .upgrade h3 {
@@ -613,8 +532,4 @@ button:disabled:hover {
   cursor: not-allowed;
   opacity: 0.5;
   box-shadow: none;
-}
-
-.buy-buttons button:disabled:hover {
-  transform: none;
 }

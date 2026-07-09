@@ -237,13 +237,12 @@ function getMissionsRenderSignature() {
   ensureActiveMissions();
   const parts = [];
   parts.push(`done:${game.missions.completedCount}`);
+  parts.push(`level:${getMissionLevel()}`);
   parts.push(`active:${(game.missions.activeIds || []).join(',')}`);
   (game.missions.activeIds || []).forEach(id => {
     const mission = getMissionTemplateById(id);
     if (!mission) return;
-    const currentValue = getMissionCurrentValue(mission);
-    const targetValue  = getScaledMissionAmount(mission);
-    parts.push(`${id}:${Math.floor(currentValue)}:${targetValue}`);
+    parts.push(`${id}:${isMissionCompletedById(id) ? 1 : 0}:${getScaledMissionAmount(mission)}`);
   });
   return parts.join('|');
 }
@@ -252,21 +251,44 @@ function initMissionUIInteractions() {
   const container = document.getElementById('missionsContainer');
   if (!container || container.dataset.bound === '1') return;
   container.dataset.bound = '1';
-  container.addEventListener('mouseenter', () => { window.__missionsHovering = true; });
-  container.addEventListener('mouseleave', () => {
-    window.__missionsHovering = false;
-    markMissionsDirty();
-    maybeRenderMissions();
-  });
 }
 
 function maybeRenderMissions(force = false) {
   const signature = getMissionsRenderSignature();
-  if (!force && window.__missionsHovering) return;
-  if (!force && !window.__missionsDirty && window.__lastMissionSignature === signature) return;
+  if (!force && !window.__missionsDirty && window.__lastMissionSignature === signature) {
+    updateMissionProgressDisplay();
+    return;
+  }
   renderMissions();
   window.__lastMissionSignature = signature;
   window.__missionsDirty = false;
+}
+
+function updateMissionProgressDisplay() {
+  document.querySelectorAll('[data-mission-id]').forEach(card => {
+    const mission = getMissionTemplateById(card.dataset.missionId);
+    if (!mission) return;
+
+    const currentValue = getMissionCurrentValue(mission);
+    const targetValue = getScaledMissionAmount(mission);
+    const progressRatio = Math.min(1, currentValue / targetValue);
+    const isDone = currentValue >= targetValue;
+
+    const progressText = card.querySelector('[data-mission-progress]');
+    if (progressText) progressText.textContent = `${getMissionProgressText(mission, currentValue)} • Ziel: ${getMissionTargetText(mission)}`;
+
+    const fill = card.querySelector('[data-mission-fill]');
+    if (fill) {
+      fill.style.width = `${(progressRatio * 100).toFixed(1)}%`;
+      fill.classList.toggle('done', isDone);
+    }
+
+    const button = card.querySelector('[data-mission-claim]');
+    if (button) {
+      button.disabled = !isDone;
+      button.textContent = isDone ? 'Abholen' : 'In Arbeit';
+    }
+  });
 }
 
 function renderMissions() {
@@ -322,17 +344,18 @@ function renderMissions() {
 
     const card = document.createElement('div');
     card.className = 'card mission-card';
+    card.dataset.missionId = mission.id;
     card.innerHTML = `
       <div class="mission-row">
         <div style="min-width:0;flex:1;">
           <div style="font-size:15px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${mission.title} <span class="sub">(Lv ${mission.level || 1})</span></div>
-          <div class="sub" style="font-size:12px;line-height:1.25;margin-top:2px;">${getMissionProgressText(mission, currentValue)} • Ziel: ${getMissionTargetText(mission)}</div>
+          <div class="sub" data-mission-progress style="font-size:12px;line-height:1.25;margin-top:2px;">${getMissionProgressText(mission, currentValue)} • Ziel: ${getMissionTargetText(mission)}</div>
           <div class="sub" style="font-size:12px;line-height:1.25;">Belohnung: ${rewardText}</div>
-          <button onclick="claimMission('${mission.id}')" ${!isDone ? 'disabled' : ''} style="margin-top:8px;">${isDone ? 'Abholen' : 'In Arbeit'}</button>
+          <button data-mission-claim onclick="claimMission('${mission.id}')" ${!isDone ? 'disabled' : ''} style="margin-top:8px;">${isDone ? 'Abholen' : 'In Arbeit'}</button>
         </div>
       </div>
       <div class="mission-track">
-        <div class="mission-fill ${isDone ? 'done' : ''}" style="width:${(progressRatio * 100).toFixed(1)}%;"></div>
+        <div data-mission-fill class="mission-fill ${isDone ? 'done' : ''}" style="width:${(progressRatio * 100).toFixed(1)}%;"></div>
       </div>
     `;
     container.appendChild(card);

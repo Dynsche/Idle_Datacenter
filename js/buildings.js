@@ -79,13 +79,13 @@ function renderBuildings() {
       row.innerHTML = `
         <div>
           <h3>${producerDef.name}</h3>
-          <div>Besitzt: ${Math.floor(state.owned).toLocaleString()}${buyAmount > 0 ? ` <span style="color:#4ade80;">+${buyAmount}</span>` : ''}</div>
-          <div>Kosten: ${Math.floor(cost).toLocaleString()} Operatoren</div>
+          <div>Besitzt: <span data-owned-industry="${industryDef.id}" data-owned-index="${producerIndex}">${Math.floor(state.owned).toLocaleString()}</span>${buyAmount > 0 ? ` <span data-buy-preview-industry="${industryDef.id}" data-buy-preview-index="${producerIndex}" style="color:#4ade80;">+${buyAmount}</span>` : ''}</div>
+          <div>Kosten: <span data-cost-industry="${industryDef.id}" data-cost-index="${producerIndex}">${Math.floor(cost).toLocaleString()}</span> Operatoren</div>
           <div class="sub">${producerIndex === 0 ? 'Produziert' : 'Erzeugt'} ${targetName}: ${getProducerRate(industryDef.id, producerIndex).toFixed(2)}/s</div>
           <div class="sub">${producerDef.description}</div>
           ${!unlocked ? `<div class="sub" style="color:#f59e0b;">Benötigt ${producerDef.unlockAt} ${targetName}</div>` : ''}
         </div>
-        <button onclick="buyProducer('${industryDef.id}', ${producerIndex})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
+        <button data-producer-industry="${industryDef.id}" data-producer-index="${producerIndex}" onclick="buyProducer('${industryDef.id}', ${producerIndex})" ${!canAfford ? 'disabled' : ''}>Kaufen</button>
       `;
       section.appendChild(row);
     });
@@ -145,6 +145,36 @@ function updateBuyButtonAffordability() {
 // ============================================================
 // Karten & Automatisierung - Platzhalter für den nächsten Ausbau
 // ============================================================
+
+function updateProducerAffordability() {
+  if (!document.querySelector('[data-producer-industry]')) return;
+
+  document.querySelectorAll('[data-owned-industry]').forEach(el => {
+    const state = getProducerState(el.dataset.ownedIndustry, parseInt(el.dataset.ownedIndex, 10));
+    if (state) el.textContent = Math.floor(state.owned).toLocaleString();
+  });
+
+  document.querySelectorAll('[data-producer-industry]').forEach(button => {
+    const industryId = button.dataset.producerIndustry;
+    const producerIndex = parseInt(button.dataset.producerIndex, 10);
+    const industryDef = getIndustryDef(industryId);
+    if (!industryDef) return;
+
+    const maxBuy = calculateMaxProducerBuy(industryId, producerIndex);
+    const buyAmount = game.buyAmount === -1 ? maxBuy : game.buyAmount;
+    const displayAmount = game.buyAmount === -1 && buyAmount === 0 ? 1 : buyAmount;
+    const cost = calculateProducerBulkCost(industryId, producerIndex, Math.max(displayAmount, 1));
+    const canAfford = isProducerUnlocked(industryDef, producerIndex) && buyAmount > 0 && game.operators >= cost;
+
+    button.disabled = !canAfford;
+
+    const costEl = document.querySelector(`[data-cost-industry="${industryId}"][data-cost-index="${producerIndex}"]`);
+    if (costEl) costEl.textContent = Math.floor(cost).toLocaleString();
+
+    const previewEl = document.querySelector(`[data-buy-preview-industry="${industryId}"][data-buy-preview-index="${producerIndex}"]`);
+    if (previewEl) previewEl.textContent = buyAmount > 0 ? `+${buyAmount}` : '+0';
+  });
+}
 
 function renderBuildingUpgrades() {
   const container = document.getElementById('buildingUpgrades');

@@ -24,9 +24,9 @@ const SOFTCAP_STAGE2_START        = 1099511627776; // 1 TB/s
 const SOFTCAP_STAGE2_POWER        = 0.65;
 const SAVE_BALANCE_VERSION        = 14;
 const CHAIN_SAVE_VERSION          = 1;
-const BASE_OPERATOR_RATE          = 1;
+const BASE_OPERATOR_RATE          = 3;
 const OPERATOR_RATE_PER_RANK      = 0.35;
-const PRODUCER_COST_GROWTH        = 1.16;
+const PRODUCER_COST_GROWTH        = 1.06;
 const PRODUCER_BULK_LIMIT         = 10000;
 
 // ============================================================
@@ -43,11 +43,11 @@ const INDUSTRY_DEFS = [
     resourceLabel: 'Daten',
     unlockAt: 0,
     producers: [
-      { id: 'manual_upload', name: 'Manueller Upload', description: 'Schreibt Daten direkt ins System.', baseCost: 10, rate: 1, unlockAt: 0 },
-      { id: 'batch_script', name: 'Batch Script', description: 'Erzeugt manuelle Uploads.', baseCost: 80, rate: 0.18, unlockAt: 25 },
-      { id: 'ci_pipeline', name: 'CI Pipeline', description: 'Erzeugt Batch Scripts.', baseCost: 650, rate: 0.08, unlockAt: 120 },
-      { id: 'server_rack', name: 'Server Rack', description: 'Erzeugt CI Pipelines.', baseCost: 6000, rate: 0.035, unlockAt: 850 },
-      { id: 'cloud_region', name: 'Cloud Region', description: 'Erzeugt Server Racks.', baseCost: 60000, rate: 0.014, unlockAt: 6500 }
+      { id: 'manual_upload', name: 'Manueller Upload', description: 'Schreibt Daten direkt ins System.', baseCost: 5, rate: 1, unlockAt: 0 },
+      { id: 'batch_script', name: 'Batch Script', description: 'Erzeugt manuelle Uploads.', baseCost: 50, rate: 0.22, unlockAt: 10 },
+      { id: 'ci_pipeline', name: 'CI Pipeline', description: 'Erzeugt Batch Scripts.', baseCost: 300, rate: 0.1, unlockAt: 40 },
+      { id: 'server_rack', name: 'Server Rack', description: 'Erzeugt CI Pipelines.', baseCost: 1200, rate: 0.045, unlockAt: 200 },
+      { id: 'cloud_region', name: 'Cloud Region', description: 'Erzeugt Server Racks.', baseCost: 8000, rate: 0.018, unlockAt: 1000 }
     ]
   },
   {
@@ -58,10 +58,10 @@ const INDUSTRY_DEFS = [
     resourceLabel: 'Strom',
     unlockAt: 5000,
     producers: [
-      { id: 'outlet', name: 'Steckdose', description: 'Liefert Strom direkt.', baseCost: 35, rate: 1, unlockAt: 0 },
-      { id: 'ups', name: 'USV-Schrank', description: 'Erzeugt Steckdosen.', baseCost: 320, rate: 0.16, unlockAt: 35 },
-      { id: 'generator', name: 'Generator', description: 'Erzeugt USV-Schränke.', baseCost: 3000, rate: 0.07, unlockAt: 250 },
-      { id: 'solar_field', name: 'Solarfeld', description: 'Erzeugt Generatoren.', baseCost: 28000, rate: 0.03, unlockAt: 1500 }
+      { id: 'outlet', name: 'Steckdose', description: 'Liefert Strom direkt.', baseCost: 20, rate: 1, unlockAt: 0 },
+      { id: 'ups', name: 'USV-Schrank', description: 'Erzeugt Steckdosen.', baseCost: 180, rate: 0.2, unlockAt: 20 },
+      { id: 'generator', name: 'Generator', description: 'Erzeugt USV-Schränke.', baseCost: 700, rate: 0.085, unlockAt: 90 },
+      { id: 'solar_field', name: 'Solarfeld', description: 'Erzeugt Generatoren.', baseCost: 5000, rate: 0.035, unlockAt: 500 }
     ]
   }
 ];

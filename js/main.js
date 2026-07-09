@@ -67,26 +67,25 @@ function manualClick() {
 // ============================================================
 let lastTickTime = Date.now();
 let lastBuildingsRenderTime = 0;
-let lastAffordabilityState = null;
-let buildingsHovering = false;
+let lastChainRenderState = null;
 const BUILDINGS_RENDER_INTERVAL = 500;
 
-function getChainAffordabilitySignature() {
-  const parts = [Math.floor(game.operators), game.buyAmount];
+function getChainRenderSignature() {
+  const parts = [game.buyAmount];
   INDUSTRY_DEFS.forEach(industryDef => {
     const industry = getIndustryState(industryDef.id);
-    parts.push(industryDef.id, Math.floor(industry.amount));
+    parts.push(industryDef.id, isIndustryUnlocked(industryDef) ? 1 : 0);
     industry.producers.forEach((producer, index) => {
-      parts.push(index, Math.floor(producer.owned), calculateMaxProducerBuy(industryDef.id, index));
+      parts.push(index, isProducerUnlocked(industryDef, index) ? 1 : 0);
     });
   });
   return parts.join('|');
 }
 
-function hasAffordabilityChanged() {
-  const currentState = getChainAffordabilitySignature();
-  if (currentState !== lastAffordabilityState) {
-    lastAffordabilityState = currentState;
+function hasChainRenderStateChanged() {
+  const currentState = getChainRenderSignature();
+  if (currentState !== lastChainRenderState) {
+    lastChainRenderState = currentState;
     return true;
   }
   return false;
@@ -128,9 +127,10 @@ function gameLoop() {
   checkAchievements();
   maybeRenderMissions();
   renderResourceTopbar();
+  updateProducerAffordability();
 
   if (now - lastBuildingsRenderTime > BUILDINGS_RENDER_INTERVAL) {
-    if (!buildingsHovering && hasAffordabilityChanged()) {
+    if (hasChainRenderStateChanged()) {
       try { renderBuildings(); } catch (e) { /* Tab nicht sichtbar */ }
     }
     lastBuildingsRenderTime = now;
@@ -166,18 +166,6 @@ window.addEventListener('focus', () => {
 });
 
 window.addEventListener('beforeunload', saveGame);
-
-const buildingsContainer = document.getElementById('buildings');
-if (buildingsContainer) {
-  buildingsContainer.addEventListener('mouseenter', () => {
-    buildingsHovering = true;
-  });
-  buildingsContainer.addEventListener('mouseleave', () => {
-    buildingsHovering = false;
-    lastAffordabilityState = null;
-    renderBuildings();
-  });
-}
 
 // ============================================================
 // Debug / Balance-Helfer
